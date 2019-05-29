@@ -1,12 +1,11 @@
-# AMP Story Ads Preview Tool
+# ⚡ AMP Story Ads Preview Tool
 
 ## Building
 
-[`yarn`](https://yarnpkg.com) is used for package management.
-[Install `yarn`,](https://yarnpkg.com/en/docs/install#mac-stable) then install this project's dependencies through:
+[`yarn`](https://yarnpkg.com) is used for package management:
 
-```sh
-yarn
+```
+yarn build
 ```
 
 ### Developing
@@ -16,6 +15,8 @@ yarn watch
 ```
 
 ### Build & serve
+
+This tasks is mainly to run from a deployed environment, e.g. Heroku.
 
 ```sh
 yarn serve
