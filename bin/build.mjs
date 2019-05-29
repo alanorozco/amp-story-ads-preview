@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {error, log} from '../lib/log';
 import {isRunningFrom} from '../lib/cli';
-import {log} from '../lib/log';
 import babel from 'rollup-plugin-babel';
 import colors from 'colors/safe';
 import commonjs from 'rollup-plugin-commonjs';
@@ -44,5 +44,5 @@ export async function build() {
 }
 
 if (isRunningFrom('build.mjs')) {
-  build();
+  build().catch(error);
 }
