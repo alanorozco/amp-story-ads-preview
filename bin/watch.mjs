@@ -16,15 +16,12 @@
 import {isRunningFrom} from '../lib/cli';
 import nodemon from 'nodemon';
 
-export function watch() {
-  nodemon({
-    script: 'bin/serve.mjs',
-    args: process.argv.slice(2),
-    execMap: {mjs: 'node -r esm'},
-    watch: ['bin', 'lib', 'src'],
-  });
-}
+const config = {
+  execMap: {mjs: 'node -r esm'},
+  script: 'bin/serve.mjs',
+  watch: ['bin', 'lib', 'src'],
+};
 
 if (isRunningFrom('watch.mjs')) {
-  watch();
+  nodemon({args: process.argv.slice(2), ...config}).once('quit', process.exit);
 }

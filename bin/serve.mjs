@@ -20,7 +20,7 @@ import colors from 'colors/safe';
 import express from 'express';
 import log from 'fancy-log';
 
-const {blue} = colors;
+const {blue, red} = colors;
 
 export function serve() {
   const port = process.env.PORT || argv.port || 8001;
@@ -35,5 +35,5 @@ export function serve() {
 }
 
 if (isRunningFrom('serve.mjs')) {
-  build().then(serve);
+  build().then(serve, e => log(red('Error:'), e));
 }
