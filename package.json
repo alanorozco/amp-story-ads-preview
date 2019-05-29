@@ -12,6 +12,7 @@
     "watch": "node -r esm bin/watch.mjs"
   },
   "dependencies": {
+    "@babel/runtime": "7.4.5",
     "esm": "3.2.25"
   },
   "devDependencies": {
