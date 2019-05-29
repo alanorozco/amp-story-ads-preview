@@ -15,25 +15,20 @@
  */
 import {argv, isRunningFrom} from '../lib/cli';
 import {build} from './build';
+import {error, log} from '../lib/log';
 import {route} from '../lib/route';
 import colors from 'colors/safe';
 import express from 'express';
-import log from 'fancy-log';
 
-const {blue, red} = colors;
+const {blue} = colors;
 
 export function serve() {
   const port = process.env.PORT || argv.port || 8001;
-  const app = express();
-  route(app);
-  return app.listen(port, () => {
-    if (argv.quiet) {
-      return;
-    }
+  return route(express()).listen(port, () => {
     log(blue(`🌎 Started on http://localhost:${port}/`));
   });
 }
 
 if (isRunningFrom('serve.mjs')) {
-  build().then(serve, e => log(red('Error:'), e));
+  build().then(serve, error);
 }

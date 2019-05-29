@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {argv, isRunningFrom} from '../lib/cli';
+import {isRunningFrom} from '../lib/cli';
+import {log} from '../lib/log';
 import babel from 'rollup-plugin-babel';
 import colors from 'colors/safe';
 import commonjs from 'rollup-plugin-commonjs';
-import log from 'fancy-log';
 import resolve from 'rollup-plugin-node-resolve';
 import rollup from 'rollup';
 
@@ -40,14 +40,10 @@ const bundles = [
 ];
 
 export async function build() {
-  if (!argv.quiet) {
-    log(magenta('🚧 Building...'));
-  }
+  log(magenta('🚧 Building...'));
   const bundle = await rollup.rollup({input, plugins});
   await Promise.all(bundles.map(options => bundle.write(options)));
-  if (!argv.quiet) {
-    log(blue('✨ Built.'));
-  }
+  log(blue('✨ Built.'));
 }
 
 if (isRunningFrom('build.mjs')) {
