@@ -23,15 +23,12 @@ import rollup from 'rollup';
 
 const {blue, magenta} = colors;
 
-const input = 'src/app.mjs';
+const inputConfig = {
+  input: 'src/app.mjs',
+  plugins: [resolve(), commonjs(), babel({runtimeHelpers: true})],
+};
 
-const plugins = [
-  resolve(),
-  commonjs(),
-  babel({exclude: 'node_modules/**', runtimeHelpers: true}),
-];
-
-const bundles = [
+const outputBundles = [
   {
     file: 'dist/app.js',
     format: 'iife',
@@ -41,8 +38,8 @@ const bundles = [
 
 export async function build() {
   log(magenta('🚧 Building...'));
-  const bundle = await rollup.rollup({input, plugins});
-  await Promise.all(bundles.map(options => bundle.write(options)));
+  const bundle = await rollup.rollup(inputConfig);
+  await Promise.all(outputBundles.map(options => bundle.write(options)));
   log(blue('✨ Built.'));
 }
 
