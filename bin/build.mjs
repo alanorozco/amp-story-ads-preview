@@ -41,12 +41,12 @@ const bundles = [
 
 export async function build() {
   if (!argv.quiet) {
-    log(magenta('Building...'));
+    log(magenta('🚧 Building...'));
   }
   const bundle = await rollup.rollup({input, plugins});
   await Promise.all(bundles.map(options => bundle.write(options)));
   if (!argv.quiet) {
-    log(blue('Built.'));
+    log(blue('✨ Built.'));
   }
 }
 

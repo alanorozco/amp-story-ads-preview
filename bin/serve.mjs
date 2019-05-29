@@ -30,7 +30,7 @@ export function serve() {
     if (argv.quiet) {
       return;
     }
-    log(blue(`Started on http://localhost:${port}/ 🌎`));
+    log(blue(`🌎 Started on http://localhost:${port}/`));
   });
 }
 
