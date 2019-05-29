@@ -27,6 +27,7 @@ export const Scaffold = ({html}, {body, title = 'AMP Story Ad Preview'}) =>
       <head>
         <title>${title}</title>
         <script src="/dist/app.js" async></script>
+        <link rel="shortcut icon" href="/static/favicon.png" />
       </head>
       <body>
         ${body}
