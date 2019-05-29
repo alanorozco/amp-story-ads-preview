@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Scaffold} from '../src/template';
-import express from 'express';
-import litHtmlServer from '@popeindustries/lit-html-server';
 
-const {html, renderToStream} = litHtmlServer;
+/**
+ * @fileoverview
+ * These are universal templates:
+ *  - `html` conforms to `Polymer/lit-html`
+ */
 
-function renderToResponse(response, template, data) {
-  const context = {html};
-  return renderToStream(template(context, data)).pipe(response);
-}
-
-export function route(app) {
-  app.use('/dist', express.static('dist'));
-
-  app.get('/', (_, response) => {
-    renderToResponse(response, Scaffold, {body: ''});
-  });
-
-  return app;
-}
+export const Scaffold = ({html}, {body, title = 'AMP Story Ad Preview'}) =>
+  html`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>${title}</title>
+        <script src="/dist/app.js" async></script>
+      </head>
+      <body>
+        ${body}
+      </body>
+    </html>
+  `;

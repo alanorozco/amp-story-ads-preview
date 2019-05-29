@@ -635,6 +635,11 @@
     lodash "^4.17.11"
     to-fast-properties "^2.0.0"
 
+"@popeindustries/lit-html-server@1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@popeindustries/lit-html-server/-/lit-html-server-1.2.0.tgz#4d718b35d711aece928f6dcad824b308624f71ce"
+  integrity sha512-4rB5c2OltOqdkqJ+On9bidm055WOXOyHJkZdfORo5dKbetZ41JLKzz/GUnFlqLM2/ihese8Irw2fEHnQUdCMdA==
+
 "@types/estree@0.0.39":
   version "0.0.39"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
