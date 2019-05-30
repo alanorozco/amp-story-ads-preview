@@ -14,29 +14,9 @@
  * limitations under the License.
  */
 
-import {n as globalNamespace} from './namespace';
-
-const id = globalNamespace('editor');
-
 /**
- * Prefix a component-scoped name, like an id or a class.
+ * Prefix a document-scoped name, like an id or a class.
  * @param {string} name
  * @return {string}
  */
-const n = name => `${globalNamespace('editor')}-${name}`;
-
-export const renderEditor = ({html}, {content}) =>
-  html`
-    <div id="${id}" class="${n('wrap')}">
-      <textarea>${content}</textarea>
-    </div>
-  `;
-
-export default class Editor {
-  constructor({deps}) {
-    this.codeMirror_ = deps.CodeMirror.fromTextArea(
-      document.querySelector(`#${id} textarea`),
-      {mode: 'htmlmixed'}
-    );
-  }
-}
+export const n = name => `amp-sae-${name}`;

@@ -13,68 +13,67 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {error, log} from '../lib/log';
+import {fatal, step} from '../lib/log';
 import {isRunningFrom} from '../lib/cli';
+import {default as rollupModule} from 'rollup';
+import {default as terser} from 'terser';
 import babel from 'rollup-plugin-babel';
-import colors from 'colors/safe';
 import commonjs from 'rollup-plugin-commonjs';
 import cssnano from 'cssnano';
 import fs from 'fs-extra';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
-import rollup from 'rollup';
-import terser from 'terser';
 
-const {blue, magenta} = colors;
+const {minify} = terser;
+const {rollup} = rollupModule;
 
 const {PROD = false} = process.env;
+const prodOnly = plugin => (PROD ? [plugin()] : []);
 
-const minifyConfig = {mangle: {toplevel: true}};
-
-function inputConfig() {
-  const cssNanoOnProd = PROD ? [cssnano()] : [];
-  return {
-    input: 'src/app.mjs',
-    plugins: [
-      postcss({extract: true, plugins: [...cssNanoOnProd]}),
-      nodeResolve(),
-      commonjs(),
-      babel({runtimeHelpers: true}),
-    ],
-  };
-}
+const inputConfig = () => ({
+  input: 'src/editor-bundle.mjs',
+  plugins: [
+    postcss({extract: true, plugins: postcssPlugins()}),
+    nodeResolve(),
+    commonjs(),
+    babel({runtimeHelpers: true}),
+  ],
+});
 
 const outputBundles = [
   {
-    file: 'dist/app.js',
+    file: 'dist/editor-bundle.js',
     format: 'iife',
     name: 'ampStoryAdPreview',
   },
 ];
 
-export async function build() {
-  log(magenta('🚧 Building...'));
-  const bundle = await rollup.rollup(inputConfig());
-  await Promise.all(outputBundles.map(options => bundle.write(options)));
-  log(blue('✨ Built.'));
+const minifyConfig = {mangle: {toplevel: true}};
+
+const postcssPlugins = () => [...prodOnly(cssnano)];
+
+const withAllBundles = cb => Promise.all(outputBundles.map(cb));
+
+const minifyBundle = async ({file}) =>
+  fs.outputFile(
+    file,
+    minify((await fs.readFile(file)).toString('utf-8'), minifyConfig).code
+  );
+
+export const build = () =>
+  step('🚧 Building', async () => {
+    const mainBundle = await rollup(inputConfig());
+    return withAllBundles(outputBundle => mainBundle.write(outputBundle));
+  });
+
+async function main() {
+  await build();
   if (!PROD) {
     return;
   }
-  minify();
-}
-
-async function minify() {
-  log(magenta('👶 Minifying...'));
-  await Promise.all(
-    outputBundles.map(async ({file}) => {
-      const input = (await fs.readFile(file)).toString('utf-8');
-      const {code} = terser.minify({[file]: input}, minifyConfig);
-      return fs.outputFile(file, code);
-    })
-  );
-  log(blue('✨ Minified.'));
+  await step('👶 Minifying', () => withAllBundles(minifyBundle));
 }
 
 if (isRunningFrom('build.mjs')) {
-  build().catch(error);
+  main().catch(fatal);
 }
