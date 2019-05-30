@@ -1,1 +1,1 @@
-web: yarn serve --quiet
+web: yarn build --quiet && yarn serve --quiet

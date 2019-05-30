@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 import {argv, isRunningFrom} from '../lib/cli';
-import {build} from './build';
-import {error, log} from '../lib/log';
+import {log} from '../lib/log';
 import {route} from '../lib/route';
 import colors from 'colors/safe';
 import express from 'express';
@@ -27,7 +26,7 @@ function logRequest({method, originalUrl}, unusedResponse, next) {
   next();
 }
 
-export function serve() {
+async function serve() {
   const port = process.env.PORT || argv.port || 8001;
   const app = express();
 
@@ -39,5 +38,5 @@ export function serve() {
 }
 
 if (isRunningFrom('serve.mjs')) {
-  build().then(serve, error);
+  serve();
 }
