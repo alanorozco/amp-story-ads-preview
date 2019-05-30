@@ -22,23 +22,18 @@
  *    https://github.com/popeindustries/lit-html-server#universal-templates
  */
 
-export const Scaffold = async (
-  {html},
-  {css, body, title = 'AMP Story Ad Preview'}
-) =>
+export const Scaffold = ({html}, {css, body, title = 'AMP Story Ad Preview'}) =>
   html`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>${title}</title>
-        <script src="/dist/app.js" async></script>
-        <link rel="shortcut icon" href="/static/favicon.png" />
-        <style type="text/css">
-          ${css}
-        </style>
-      </head>
-      <body>
-        ${body}
-      </body>
-    </html>
+    <head>
+      <meta charset="utf-8" />
+      <title>${title}</title>
+      <script src="/dist/app.js" async></script>
+      <link rel="shortcut icon" href="/static/favicon.png" />
+      <style type="text/css">
+        ${css}
+      </style>
+    </head>
+    <body>
+      ${body}
+    </body>
   `;

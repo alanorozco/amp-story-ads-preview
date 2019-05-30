@@ -16,17 +16,16 @@
 
 const id = 'amp-sae-editor';
 
-export default class Editor {
-  static render({html}, {content}) {
-    return html`
-      <div id="${id}">
-        <textarea>${content}</textarea>
-      </div>
-    `;
-  }
+export const renderEditor = ({html}, {content}) =>
+  html`
+    <div id="${id}">
+      <textarea>${content}</textarea>
+    </div>
+  `;
 
+export default class Editor {
   constructor({deps}) {
-    this.cm_ = deps.CodeMirror.fromTextArea(
+    this.codeMirror_ = deps.CodeMirror.fromTextArea(
       document.querySelector(`#${id} textarea`),
       {mode: 'htmlmixed'}
     );

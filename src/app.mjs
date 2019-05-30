@@ -26,6 +26,7 @@ import 'codemirror/addon/selection/selection-pointer.js';
 import 'codemirror/mode/css/css.js';
 import 'codemirror/mode/htmlmixed/htmlmixed.js';
 
+// These are extracted into dist/app.css
 import 'codemirror/addon/hint/show-hint.css';
 import 'codemirror/lib/codemirror.css';
 
