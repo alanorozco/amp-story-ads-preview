@@ -18,14 +18,20 @@ import {isRunningFrom} from '../lib/cli';
 import babel from 'rollup-plugin-babel';
 import colors from 'colors/safe';
 import commonjs from 'rollup-plugin-commonjs';
-import resolve from 'rollup-plugin-node-resolve';
+import nodeResolve from 'rollup-plugin-node-resolve';
+import postcss from 'rollup-plugin-postcss';
 import rollup from 'rollup';
 
 const {blue, magenta} = colors;
 
 const inputConfig = {
   input: 'src/app.mjs',
-  plugins: [resolve(), commonjs(), babel({runtimeHelpers: true})],
+  plugins: [
+    postcss({extract: true}),
+    nodeResolve(),
+    commonjs(),
+    babel({runtimeHelpers: true}),
+  ],
 };
 
 const outputBundles = [

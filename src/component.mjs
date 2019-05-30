@@ -13,20 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import CodeMirror from 'codemirror';
-import Editor from './editor';
 
-import 'codemirror/addon/edit/closebrackets.js';
-import 'codemirror/addon/edit/closetag.js';
-import 'codemirror/addon/hint/css-hint.js';
-import 'codemirror/addon/hint/html-hint.js';
-import 'codemirror/addon/hint/show-hint.js';
-import 'codemirror/addon/selection/active-line.js';
-import 'codemirror/addon/selection/selection-pointer.js';
-import 'codemirror/mode/css/css.js';
-import 'codemirror/mode/htmlmixed/htmlmixed.js';
+export default class Component {
+  constructor(context, data) {
+    this.win = context.win;
+    this.context = context;
+    this.rendered = this.render(context, data);
+  }
 
-import 'codemirror/addon/hint/show-hint.css';
-import 'codemirror/lib/codemirror.css';
+  init() {
+    if (!this.win) {
+      return;
+    }
+  }
 
-new Editor({win: self, deps: {CodeMirror}});
+  async render(unusedContext, unusedData) {
+    throw new Error('Undefined `render`');
+  }
+
+  async hydrate(unusedElement) {
+    throw new Error('Undefined `hydrate`');
+  }
+}

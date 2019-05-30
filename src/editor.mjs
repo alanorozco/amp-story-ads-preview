@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import CodeMirror from 'codemirror';
-import Editor from './editor';
 
-import 'codemirror/addon/edit/closebrackets.js';
-import 'codemirror/addon/edit/closetag.js';
-import 'codemirror/addon/hint/css-hint.js';
-import 'codemirror/addon/hint/html-hint.js';
-import 'codemirror/addon/hint/show-hint.js';
-import 'codemirror/addon/selection/active-line.js';
-import 'codemirror/addon/selection/selection-pointer.js';
-import 'codemirror/mode/css/css.js';
-import 'codemirror/mode/htmlmixed/htmlmixed.js';
+const id = 'amp-sae-editor';
 
-import 'codemirror/addon/hint/show-hint.css';
-import 'codemirror/lib/codemirror.css';
+export default class Editor {
+  static render({html}, {content}) {
+    return html`
+      <div id="${id}">
+        <textarea>${content}</textarea>
+      </div>
+    `;
+  }
 
-new Editor({win: self, deps: {CodeMirror}});
+  constructor({deps}) {
+    this.cm_ = deps.CodeMirror.fromTextArea(
+      document.querySelector(`#${id} textarea`),
+      {mode: 'htmlmixed'}
+    );
+  }
+}
