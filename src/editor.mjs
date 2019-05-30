@@ -18,19 +18,25 @@ import {getNamespace} from '../lib/namespace';
 
 const {id, n} = getNamespace('editor');
 
-const Preview = ({html}) =>
-  html`
-    <div class="${n('preview-wrap')}">
-      <div class="${n('preview')}"></div>
-    </div>
+function Preview(context) {
+  const {html} = context;
+  return html`
+    <div class="${n('preview-wrap')}">${PreviewInner(context)}</div>
   `;
+}
 
-const Textarea = ({html}, {content}) =>
-  html`
-    <div class="${n('textarea-wrap')}">
-      <textarea>${content}</textarea>
-    </div>
+function PreviewInner({html, directives}, {childNodes} = {}) {
+  const {ifDefined} = directives;
+  return html`
+    <div class="${n('preview')}">${ifDefined(childNodes)}</div>
   `;
+}
+
+function Textarea({html}, {content}) {
+  return html`
+    <div class="${n('textarea-wrap')}"><textarea>${content}</textarea></div>
+  `;
+}
 
 export function renderEditor(context, {content}) {
   const {html} = context;
@@ -42,10 +48,31 @@ export function renderEditor(context, {content}) {
 }
 
 export default class Editor {
-  constructor({deps}) {
-    this.codeMirror_ = deps.CodeMirror.fromTextArea(
-      document.querySelector(`#${id} textarea`),
-      {mode: 'htmlmixed'}
-    );
+  constructor(context) {
+    this.context = context;
+    this.element = document.getElementById(id);
+
+    this.previewWrap_ = this.element.querySelector(`.${n('preview-wrap')}`);
+    this.codeMirror_ = this.initCodeMirror_();
+
+    this.attachPreview_();
+  }
+
+  initCodeMirror_() {
+    const {CodeMirror} = this.context.deps;
+    const textarea = this.element.querySelector('textarea');
+    const instance = CodeMirror.fromTextArea(textarea, {mode: 'htmlmixed'});
+    return instance;
+  }
+
+  attachPreview_() {
+    this.updatePreview_();
+    this.codeMirror_.on('change', this.updatePreview_.bind(this));
+  }
+
+  updatePreview_() {
+    const {purifyHtml, render} = this.context.deps;
+    const {childNodes} = purifyHtml(this.codeMirror_.getValue());
+    render(PreviewInner(this.context, {childNodes}), this.previewWrap_);
   }
 }
