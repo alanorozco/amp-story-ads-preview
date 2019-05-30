@@ -9,7 +9,6 @@
     "clean": "rm -Rf dist",
     "build": "node -r esm bin/build.mjs",
     "serve": "node -r esm bin/serve.mjs",
-    "start": "yarn serve",
     "watch": "node -r esm bin/watch.mjs"
   },
   "dependencies": {
