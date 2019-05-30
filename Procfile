@@ -1,1 +1,1 @@
-web: yarn serve --quiet --compression
+web: yarn serve --quiet
