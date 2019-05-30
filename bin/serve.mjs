@@ -20,11 +20,20 @@ import {route} from '../lib/route';
 import colors from 'colors/safe';
 import express from 'express';
 
-const {blue} = colors;
+const {bgWhite, black, blue} = colors;
+
+function logRequest({method, originalUrl}, unusedResponse, next) {
+  log('🏄', bgWhite(` ${black(method)} `), originalUrl);
+  next();
+}
 
 export function serve() {
   const port = process.env.PORT || argv.port || 8001;
-  return route(express()).listen(port, () => {
+  const app = express();
+
+  app.use(logRequest);
+
+  return route(app).listen(port, () => {
     log(blue(`🌎 Started on http://localhost:${port}/`));
   });
 }
