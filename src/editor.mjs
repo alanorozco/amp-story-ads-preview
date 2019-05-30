@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-import {n as globalNamespace} from './namespace';
+import {getNamespace} from './namespace';
 
-const id = globalNamespace('editor');
-
-/**
- * Prefix a component-scoped name, like an id or a class.
- * @param {string} name
- * @return {string}
- */
-const n = name => `${globalNamespace('editor')}-${name}`;
+const {id, n} = getNamespace('editor');
 
 export const renderEditor = ({html}, {content}) =>
   html`

@@ -14,9 +14,21 @@
  * limitations under the License.
  */
 
+export const globalPrefix = 'amp-sae';
+
 /**
  * Prefix a document-scoped name, like an id or a class.
  * @param {string} name
  * @return {string}
  */
-export const n = name => `amp-sae-${name}`;
+export const n = name => `${globalPrefix}-${name}`;
+
+/**
+ * Namespace a component.
+ * @param {string} name
+ * @return {!Object}
+ */
+export function getNamespace(name) {
+  const id = n(name);
+  return {id, n: name => `${id}-${name}`};
+}
