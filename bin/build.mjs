@@ -15,20 +15,17 @@
  */
 import {fatal, step} from '../lib/log';
 import {isRunningFrom} from '../lib/cli';
+import {postcssPlugins} from '../postcss.config';
 import {default as rollupModule} from 'rollup';
 import {default as terser} from 'terser';
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
-import cssnano from 'cssnano';
 import fs from 'fs-extra';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
 
 const {minify} = terser;
 const {rollup} = rollupModule;
-
-const {PROD = false} = process.env;
-const prodOnly = plugin => (PROD ? [plugin()] : []);
 
 const inputConfig = () => ({
   input: 'src/editor-bundle.mjs',
@@ -50,8 +47,6 @@ const outputBundles = [
 
 const minifyConfig = {mangle: {toplevel: true}};
 
-const postcssPlugins = () => [...prodOnly(cssnano)];
-
 const withAllBundles = cb => Promise.all(outputBundles.map(cb));
 
 const minifyBundle = async ({file}) =>
@@ -68,7 +63,7 @@ export const build = () =>
 
 async function main() {
   await build();
-  if (!PROD) {
+  if (!process.env.PROD) {
     return;
   }
   await step('👶 Minifying', () => withAllBundles(minifyBundle));

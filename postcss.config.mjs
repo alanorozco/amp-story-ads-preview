@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import component from './lib/postcss/component';
+import cssnano from 'cssnano';
+import vars from 'postcss-simple-vars';
 
-import {getNamespace} from '../lib/namespace';
+const prodOnly = plugin => (process.env.PROD ? [plugin()] : []);
 
-const {id, n} = getNamespace('editor');
-
-export const renderEditor = ({html}, {content}) =>
-  html`
-    <div id="${id}" class="${n('wrap')}">
-      <textarea>${content}</textarea>
-    </div>
-  `;
-
-export default class Editor {
-  constructor({deps}) {
-    this.codeMirror_ = deps.CodeMirror.fromTextArea(
-      document.querySelector(`#${id} textarea`),
-      {mode: 'htmlmixed'}
-    );
-  }
-}
+export const postcssPlugins = () => [vars(), component(), ...prodOnly(cssnano)];

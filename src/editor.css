@@ -1,0 +1,10 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+@component editor;
+
+.wrap {
+  display: flex;
+}

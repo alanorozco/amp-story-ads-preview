@@ -27,6 +27,7 @@ import 'codemirror/mode/css/css.js';
 import 'codemirror/mode/htmlmixed/htmlmixed.js';
 
 // These are extracted into dist/editor-bundle.css
+import './editor.css';
 import 'codemirror/addon/hint/show-hint.css';
 import 'codemirror/lib/codemirror.css';
 
