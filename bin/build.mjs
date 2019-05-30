@@ -18,21 +18,31 @@ import {isRunningFrom} from '../lib/cli';
 import babel from 'rollup-plugin-babel';
 import colors from 'colors/safe';
 import commonjs from 'rollup-plugin-commonjs';
+import cssnano from 'cssnano';
+import fs from 'fs-extra';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
 import rollup from 'rollup';
+import terser from 'terser';
 
 const {blue, magenta} = colors;
 
-const inputConfig = {
-  input: 'src/app.mjs',
-  plugins: [
-    postcss({extract: true}),
-    nodeResolve(),
-    commonjs(),
-    babel({runtimeHelpers: true}),
-  ],
-};
+const {PROD = false} = process.env;
+
+const minifyConfig = {mangle: {toplevel: true}};
+
+function inputConfig() {
+  const cssNanoOnProd = PROD ? [cssnano()] : [];
+  return {
+    input: 'src/app.mjs',
+    plugins: [
+      postcss({extract: true, plugins: [...cssNanoOnProd]}),
+      nodeResolve(),
+      commonjs(),
+      babel({runtimeHelpers: true}),
+    ],
+  };
+}
 
 const outputBundles = [
   {
@@ -44,9 +54,25 @@ const outputBundles = [
 
 export async function build() {
   log(magenta('🚧 Building...'));
-  const bundle = await rollup.rollup(inputConfig);
+  const bundle = await rollup.rollup(inputConfig());
   await Promise.all(outputBundles.map(options => bundle.write(options)));
   log(blue('✨ Built.'));
+  if (!PROD) {
+    return;
+  }
+  minify();
+}
+
+async function minify() {
+  log(magenta('👶 Minifying...'));
+  await Promise.all(
+    outputBundles.map(async ({file}) => {
+      const input = (await fs.readFile(file)).toString('utf-8');
+      const {code} = terser.minify({[file]: input}, minifyConfig);
+      return fs.outputFile(file, code);
+    })
+  );
+  log(blue('✨ Minified.'));
 }
 
 if (isRunningFrom('build.mjs')) {
