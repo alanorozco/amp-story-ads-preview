@@ -17,6 +17,7 @@ import {argv, isRunningFrom} from '../lib/cli';
 import {log} from '../lib/log';
 import {route} from '../lib/route';
 import colors from 'colors/safe';
+import compression from 'compression';
 import express from 'express';
 import uid from 'gen-uid';
 
@@ -50,6 +51,10 @@ async function serve() {
   const app = express();
 
   app.use(logRequest);
+
+  if (argv.compression) {
+    app.use(compression());
+  }
 
   return route(app).listen(port, () => {
     log(blue(`🌎 Started on http://localhost:${port}/`));
