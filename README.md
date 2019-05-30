@@ -17,10 +17,6 @@ To develop locally and watch modified files to build and serve, run:
 yarn watch
 ```
 
-### Build & serve
+### Other tasks
 
-This tasks is mainly to run from a deployed environment, e.g. [Heroku](http://heroku.com):
-
-```sh
-yarn serve
-```
+Other tasks defined in `scripts` on [`package.json`](./package.json) can be run as `yarn TASK_NAME`.
