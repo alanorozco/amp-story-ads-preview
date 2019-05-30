@@ -18,12 +18,28 @@ import {getNamespace} from '../lib/namespace';
 
 const {id, n} = getNamespace('editor');
 
-export const renderEditor = ({html}, {content}) =>
+const Preview = ({html}) =>
   html`
-    <div id="${id}" class="${n('wrap')}">
+    <div class="${n('preview-wrap')}">
+      <div class="${n('preview')}"></div>
+    </div>
+  `;
+
+const Textarea = ({html}, {content}) =>
+  html`
+    <div class="${n('textarea-wrap')}">
       <textarea>${content}</textarea>
     </div>
   `;
+
+export function renderEditor(context, {content}) {
+  const {html} = context;
+  return html`
+    <div id="${id}" class="${n('wrap')}">
+      ${[Textarea(context, {content}), Preview(context)]}
+    </div>
+  `;
+}
 
 export default class Editor {
   constructor({deps}) {
