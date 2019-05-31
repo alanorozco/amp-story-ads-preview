@@ -2,6 +2,12 @@
 
 ## Building
 
+Make sure to initialize `git` submodules:
+
+```
+git submodule update --init --recursive
+```
+
 [`yarn`](https://yarnpkg.com) is used for package management.
 [Install `yarn`](https://yarnpkg.com/en/docs/install), then run to build:
 
