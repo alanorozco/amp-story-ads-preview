@@ -18,6 +18,11 @@ import {getNamespace} from '../lib/namespace';
 
 const {id, n} = getNamespace('editor');
 
+const textNodesToStr = nodes =>
+  Array.from(nodes).map(node =>
+    node.nodeType == Node.TEXT_NODE ? node.textContent : node
+  );
+
 function Preview(context) {
   const {html} = context;
   return html`
@@ -72,7 +77,13 @@ export default class Editor {
 
   updatePreview_() {
     const {purifyHtml, render} = this.context.deps;
-    const {childNodes} = purifyHtml(this.codeMirror_.getValue());
+    const previewBody = purifyHtml(this.codeMirror_.getValue());
+
+    // `lit-html` seems to bork when trying to render `TextNodes` as first-level
+    // elements of a `NodeList` part. This maps them to strings as a workaround.
+    // Non-text `Node`s are left as-is.
+    const childNodes = textNodesToStr(previewBody.childNodes);
+
     render(PreviewInner(this.context, {childNodes}), this.previewWrap_);
   }
 }
