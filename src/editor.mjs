@@ -71,6 +71,8 @@ export default class Editor {
   }
 
   attachPreview_() {
+    this.shadowRoot = this.previewWrap_.attachShadow({mode: 'open'});
+    this.shadowRoot.appendChild(this.element.querySelector(`.${n('preview')}`));
     this.updatePreview_();
     this.codeMirror_.on('change', this.updatePreview_.bind(this));
   }
@@ -78,12 +80,10 @@ export default class Editor {
   updatePreview_() {
     const {purifyHtml, render} = this.context.deps;
     const previewBody = purifyHtml(this.codeMirror_.getValue());
-
     // `lit-html` seems to bork when trying to render `TextNodes` as first-level
     // elements of a `NodeList` part. This maps them to strings as a workaround.
     // Non-text `Node`s are left as-is.
     const childNodes = textNodesToStr(previewBody.childNodes);
-
-    render(PreviewInner(this.context, {childNodes}), this.previewWrap_);
+    render(PreviewInner(this.context, {childNodes}), this.shadowRoot);
   }
 }
