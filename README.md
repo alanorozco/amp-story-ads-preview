@@ -2,7 +2,7 @@
 
 ## Building
 
-Make sure to initialize `git` submodules:
+Make sure to initialize `git` submodules (you only need to do this once):
 
 ```
 git submodule update --init --recursive
