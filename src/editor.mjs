@@ -23,17 +23,15 @@ const textNodesToStr = nodes =>
     node.nodeType == Node.TEXT_NODE ? node.textContent : node
   );
 
-function Preview(context) {
-  const {html} = context;
+function Preview({html}) {
   return html`
-    <div class="${n('preview-wrap')}">${PreviewInner(context)}</div>
+    <div class="${n('preview-wrap')}"></div>
   `;
 }
 
-function PreviewInner({html, directives}, {childNodes} = {}) {
-  const {ifDefined} = directives;
+export function PreviewInner({html}, {childNodes}) {
   return html`
-    <div class="${n('preview')}">${ifDefined(childNodes)}</div>
+    <div class="${n('preview')}">${childNodes}</div>
   `;
 }
 
