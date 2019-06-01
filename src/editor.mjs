@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import {getNamespace} from '../lib/namespace';
 
-const {id, n} = getNamespace('editor');
+const {id, n, s} = getNamespace('editor');
 
 const textNodesToStr = nodes =>
   Array.from(nodes).map(node =>
@@ -55,7 +54,7 @@ export default class Editor {
     this.context = context;
     this.element = document.getElementById(id);
 
-    this.previewWrap_ = this.element.querySelector(`.${n('preview-wrap')}`);
+    this.previewWrap_ = this.element.querySelector(s('.preview-wrap'));
     this.codeMirror_ = this.initCodeMirror_();
 
     this.attachPreview_();
