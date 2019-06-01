@@ -84,6 +84,7 @@ export default class Editor {
     // elements of a `NodeList` part. This maps them to strings as a workaround.
     // Non-text `Node`s are left as-is.
     const childNodes = textNodesToStr(previewBody.childNodes);
+
     render(PreviewInner(this.context, {childNodes}), this.shadowRoot);
   }
 }
