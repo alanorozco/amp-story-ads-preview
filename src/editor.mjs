@@ -14,31 +14,19 @@
  * limitations under the License.
  */
 import {getNamespace} from '../lib/namespace';
+import AmpStoryAdPreview from './amp-story-ad-preview';
 
 const {id, n, s} = getNamespace('editor');
 
-const textNodesToStr = nodes =>
-  Array.from(nodes).map(node =>
-    node.nodeType == Node.TEXT_NODE ? node.textContent : node
-  );
-
 function Preview({html}) {
   return html`
-    <div class="${n('preview-wrap')}"></div>
-  `;
-}
-
-function PreviewInner({html}, {childNodes}) {
-  return html`
-    <div class="${n('preview')}">
-      ${childNodes}
-    </div>
+    <div class="${n('preview')}"></div>
   `;
 }
 
 function Textarea({html}, {content}) {
   return html`
-    <div class="${n('textarea-wrap')}">
+    <div class="${n('textarea')}">
       <textarea>${content}</textarea>
     </div>
   `;
@@ -60,35 +48,31 @@ export default class Editor {
 
     this.deps_ = deps;
 
-    this.codeMirror_ = this.initCodeMirror_();
+    this.codeMirror_ = this.initCodeMirror_(
+      this.element.querySelector('textarea')
+    );
 
-    const previewWrap = this.element.querySelector(s('.preview-wrap'));
-    this.previewShadow_ = this.attachPreview_(previewWrap);
+    this.preview_ = this.initPreview_(
+      this.element.querySelector(s('.preview'))
+    );
 
     this.updatePreview_();
   }
 
-  initCodeMirror_() {
-    const textarea = this.element.querySelector('textarea');
+  initCodeMirror_(textarea) {
     return this.deps_.CodeMirror.fromTextArea(textarea, {
       mode: 'htmlmixed',
     });
   }
 
-  attachPreview_(container) {
+  initPreview_(container) {
+    const {purifyHtml} = this.deps_;
+    const deps = {purifyHtml};
     this.codeMirror_.on('change', this.updatePreview_.bind(this));
-    return container.attachShadow({mode: 'open'});
+    return new AmpStoryAdPreview(this.context, deps, container);
   }
 
   updatePreview_() {
-    const {render} = this.context;
-    const previewBody = this.deps_.purifyHtml(this.codeMirror_.getValue());
-
-    // `lit-html` seems to bork when trying to render `TextNodes` as first-level
-    // elements of a `NodeList` part. This maps them to strings as a workaround.
-    // Non-text `Node`s are left as-is.
-    const childNodes = textNodesToStr(previewBody.childNodes);
-
-    render(PreviewInner(this.context, {childNodes}), this.previewShadow_);
+    this.preview_.update(this.codeMirror_.getValue());
   }
 }
