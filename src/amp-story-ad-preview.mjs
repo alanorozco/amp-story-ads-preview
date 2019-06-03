@@ -22,9 +22,9 @@ const textNodesToStr = nodes =>
     node.nodeType == Node.TEXT_NODE ? node.textContent : node
   );
 
-function PreviewInner({html}, {childNodes}) {
+function Wrap({html}, {childNodes}) {
   return html`
-    <div class="${n('preview')}">
+    <div class="${n('wrap')}">
       ${childNodes}
     </div>
   `;
@@ -32,16 +32,19 @@ function PreviewInner({html}, {childNodes}) {
 
 export default class AmpStoryAdPreview {
   constructor(context, deps, container) {
-    this.shadowContainer = container.attachShadow({mode: 'open'});
     this.context = context;
     this.deps_ = deps;
+    this.shadow_ = container.attachShadow({mode: 'open'});
   }
   update(dirty) {
     const {render} = this.context;
     const previewBody = this.deps_.purifyHtml(dirty);
 
+    // `lit-html` seems to bork when trying to render `TextNodes` as first-level
+    // elements of a `NodeList` part. This maps them to strings as a workaround.
+    // Non-text `Node`s are left as-is.
     const childNodes = textNodesToStr(previewBody.childNodes);
 
-    render(PreviewInner(this.context, {childNodes}), this.shadowContainer);
+    render(Wrap(this.context, {childNodes}), this.shadow_);
   }
 }

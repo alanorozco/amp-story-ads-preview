@@ -66,8 +66,10 @@ export default class Editor {
   }
 
   initPreview_(container) {
+    const {purifyHtml} = this.deps_;
+    const deps = {purifyHtml};
     this.codeMirror_.on('change', this.updatePreview_.bind(this));
-    return new AmpStoryAdPreview(this.context, this.deps_, container);
+    return new AmpStoryAdPreview(this.context, deps, container);
   }
 
   updatePreview_() {
