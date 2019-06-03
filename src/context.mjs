@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {html, nothing, render} from 'lit-html';
+import {ifDefined} from 'lit-html/directives/if-defined';
 
-/* eslint-disable import/no-commonjs */
+const directives = {ifDefined};
 
-module.exports = {
-  plugins: [
-    ['@babel/plugin-transform-async-to-generator'],
-    ['@babel/plugin-transform-runtime'],
-    ['@babel/plugin-transform-template-literals', {loose: true}],
-  ],
-  presets: [
-    // Browser support policy similar to @ampproject/amphtml's
-    ['@babel/preset-env', {targets: {browsers: 'last 2 years and > 1%'}}],
-  ],
+export default {
+  html,
+  nothing,
+  directives,
+  render,
+  win: self,
 };

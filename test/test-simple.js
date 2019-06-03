@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {expect} from 'chai';
 
-/* eslint-disable import/no-commonjs */
-
-module.exports = {
-  plugins: [
-    ['@babel/plugin-transform-async-to-generator'],
-    ['@babel/plugin-transform-runtime'],
-    ['@babel/plugin-transform-template-literals', {loose: true}],
-  ],
-  presets: [
-    // Browser support policy similar to @ampproject/amphtml's
-    ['@babel/preset-env', {targets: {browsers: 'last 2 years and > 1%'}}],
-  ],
-};
+describe('1 + 1', () => {
+  it('returns 2', () => {
+    expect(1 + 1).to.equal(2);
+  });
+});

@@ -8,7 +8,9 @@
   "scripts": {
     "clean": "rm -Rf dist",
     "build": "node -r esm bin/build.mjs",
+    "lint": "./node_modules/eslint/bin/eslint.js `node -r esm bin/glob-src.mjs`",
     "serve": "node -r esm bin/serve.mjs",
+    "test": "./node_modules/mocha/bin/mocha --require esm --recursive test/**/*.js",
     "watch": "node -r esm bin/watch.mjs"
   },
   "dependencies": {
@@ -32,6 +34,7 @@
     "@babel/plugin-transform-async-to-generator": "7.4.4",
     "@babel/plugin-transform-runtime": "7.4.4",
     "@babel/preset-env": "7.4.5",
+    "chai": "4.2.0",
     "cssnano": "4.1.10",
     "eslint": "5.16.0",
     "eslint-config-prettier": "4.3.0",
@@ -40,6 +43,8 @@
     "eslint-plugin-notice": "0.7.8",
     "eslint-plugin-prettier": "3.1.0",
     "eslint-plugin-sort-imports-es6-autofix": "0.4.0",
+    "fast-glob": "2.2.7",
+    "mocha": "6.1.4",
     "nodemon": "1.19.1",
     "postcss-simple-vars": "5.0.2",
     "prettier": "1.17.1",

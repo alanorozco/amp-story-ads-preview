@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {html, nothing, render} from 'lit-html';
-import {ifDefined} from 'lit-html/directives/if-defined';
 import {purifyHtml} from '../amphtml/src/purifier';
 import CodeMirror from 'codemirror';
+import context from './context';
 import Editor from './editor';
 
 import 'codemirror/addon/edit/closebrackets.js';
@@ -34,12 +33,4 @@ import './editor.css';
 import 'codemirror/addon/hint/show-hint.css';
 import 'codemirror/lib/codemirror.css';
 
-const directives = {ifDefined};
-
-new Editor({
-  html,
-  nothing,
-  directives,
-  win: self,
-  deps: {render, CodeMirror, purifyHtml},
-});
+new Editor(context, {CodeMirror, purifyHtml});

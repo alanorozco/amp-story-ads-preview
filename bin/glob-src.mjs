@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import glob from 'fast-glob';
 
-/* eslint-disable import/no-commonjs */
+const src = [
+  'bin/{,**/}*.mjs',
+  'lib/{,**/}*.mjs',
+  'test/{,**/}*.js', // .js extension needed because mocha sideloads modules
+  'src/{,**/}*.mjs',
+];
 
-module.exports = {
-  plugins: [
-    ['@babel/plugin-transform-async-to-generator'],
-    ['@babel/plugin-transform-runtime'],
-    ['@babel/plugin-transform-template-literals', {loose: true}],
-  ],
-  presets: [
-    // Browser support policy similar to @ampproject/amphtml's
-    ['@babel/preset-env', {targets: {browsers: 'last 2 years and > 1%'}}],
-  ],
-};
+(async () => console.log((await glob(src)).join(' ')))();

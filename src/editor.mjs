@@ -13,33 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import {getNamespace} from '../lib/namespace';
 
-const {id, n} = getNamespace('editor');
+const {id, n, s} = getNamespace('editor');
 
 const textNodesToStr = nodes =>
   Array.from(nodes).map(node =>
     node.nodeType == Node.TEXT_NODE ? node.textContent : node
   );
 
-function Preview(context) {
-  const {html} = context;
+function Preview({html}) {
   return html`
-    <div class="${n('preview-wrap')}">${PreviewInner(context)}</div>
+    <div class="${n('preview-wrap')}"></div>
   `;
 }
 
-function PreviewInner({html, directives}, {childNodes} = {}) {
-  const {ifDefined} = directives;
+function PreviewInner({html}, {childNodes}) {
   return html`
-    <div class="${n('preview')}">${ifDefined(childNodes)}</div>
+    <div class="${n('preview')}">
+      ${childNodes}
+    </div>
   `;
 }
 
 function Textarea({html}, {content}) {
   return html`
-    <div class="${n('textarea-wrap')}"><textarea>${content}</textarea></div>
+    <div class="${n('textarea-wrap')}">
+      <textarea>${content}</textarea>
+    </div>
   `;
 }
 
@@ -53,21 +54,23 @@ export function renderEditor(context, {content}) {
 }
 
 export default class Editor {
-  constructor(context) {
+  constructor(context, deps) {
     this.context = context;
     this.element = document.getElementById(id);
 
-    this.previewWrap_ = this.element.querySelector(`.${n('preview-wrap')}`);
+    this.deps_ = deps;
+
+    this.previewWrap_ = this.element.querySelector(s('.preview-wrap'));
     this.codeMirror_ = this.initCodeMirror_();
 
     this.attachPreview_();
   }
 
   initCodeMirror_() {
-    const {CodeMirror} = this.context.deps;
     const textarea = this.element.querySelector('textarea');
-    const instance = CodeMirror.fromTextArea(textarea, {mode: 'htmlmixed'});
-    return instance;
+    return this.deps_.CodeMirror.fromTextArea(textarea, {
+      mode: 'htmlmixed',
+    });
   }
 
   attachPreview_() {
@@ -78,8 +81,8 @@ export default class Editor {
   }
 
   updatePreview_() {
-    const {purifyHtml, render} = this.context.deps;
-    const previewBody = purifyHtml(this.codeMirror_.getValue());
+    const {render} = this.context;
+    const previewBody = this.deps_.purifyHtml(this.codeMirror_.getValue());
 
     // `lit-html` seems to bork when trying to render `TextNodes` as first-level
     // elements of a `NodeList` part. This maps them to strings as a workaround.
