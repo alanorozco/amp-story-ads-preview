@@ -6,6 +6,8 @@
 
 👉 [Deployed here](https://amp-story-ads-preview.herokuapp.com/).
 
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
 ## Building
 
 Make sure to initialize `git` submodules (you only need to do this once):
