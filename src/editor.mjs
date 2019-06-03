@@ -54,9 +54,11 @@ export function renderEditor(context, {content}) {
 }
 
 export default class Editor {
-  constructor(context) {
+  constructor(context, deps) {
     this.context = context;
     this.element = document.getElementById(id);
+
+    this.deps_ = deps;
 
     this.previewWrap_ = this.element.querySelector(s('.preview-wrap'));
     this.codeMirror_ = this.initCodeMirror_();
@@ -65,10 +67,10 @@ export default class Editor {
   }
 
   initCodeMirror_() {
-    const {CodeMirror} = this.context.deps;
     const textarea = this.element.querySelector('textarea');
-    const instance = CodeMirror.fromTextArea(textarea, {mode: 'htmlmixed'});
-    return instance;
+    return this.deps_.CodeMirror.fromTextArea(textarea, {
+      mode: 'htmlmixed',
+    });
   }
 
   attachPreview_() {
@@ -77,8 +79,8 @@ export default class Editor {
   }
 
   updatePreview_() {
-    const {purifyHtml, render} = this.context.deps;
-    const previewBody = purifyHtml(this.codeMirror_.getValue());
+    const {render} = this.context;
+    const previewBody = this.deps_.purifyHtml(this.codeMirror_.getValue());
 
     // `lit-html` seems to bork when trying to render `TextNodes` as first-level
     // elements of a `NodeList` part. This maps them to strings as a workaround.
