@@ -15,7 +15,7 @@
  */
 import {getNamespace} from '../lib/namespace';
 
-const {id, n, s} = getNamespace('amp-story-ad-preview');
+const {n} = getNamespace('amp-story-ad-preview');
 
 const textNodesToStr = nodes =>
   Array.from(nodes).map(node =>
