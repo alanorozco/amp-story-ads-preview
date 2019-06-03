@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {purifyHtml} from '../amphtml/src/purifier';
+import {purifyHtml} from '../../amphtml/src/purifier';
 import CodeMirror from 'codemirror';
-import context from './context';
-import Editor from './editor';
+import context from '../context';
+import Editor from '../editor';
 
 import 'codemirror/addon/edit/closebrackets.js';
 import 'codemirror/addon/edit/closetag.js';
@@ -29,7 +29,7 @@ import 'codemirror/mode/css/css.js';
 import 'codemirror/mode/htmlmixed/htmlmixed.js';
 
 // These are extracted into dist/editor-bundle.css
-import './editor.css';
+import '../editor.css';
 import 'codemirror/addon/hint/show-hint.css';
 import 'codemirror/lib/codemirror.css';
 

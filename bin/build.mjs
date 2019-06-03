@@ -28,7 +28,7 @@ const {minify} = terser;
 const {rollup} = rollupModule;
 
 const inputConfig = () => ({
-  input: 'src/editor-bundle.mjs',
+  input: 'src/bundles/app.mjs',
   plugins: [
     postcss({extract: true, plugins: postcssPlugins()}),
     nodeResolve(),
@@ -39,7 +39,7 @@ const inputConfig = () => ({
 
 const outputBundles = [
   {
-    file: 'dist/editor-bundle.js',
+    file: 'dist/app.js',
     format: 'iife',
     name: 'ampStoryAdPreview',
   },
