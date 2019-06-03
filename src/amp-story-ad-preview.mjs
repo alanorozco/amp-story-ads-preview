@@ -37,13 +37,13 @@ export default class AmpStoryAdPreview {
     this.shadow_ = container.attachShadow({mode: 'open'});
   }
   update(dirty) {
-    const {render} = this.context;
-    const previewBody = this.deps_.purifyHtml(dirty);
+    const {render, win} = this.context;
+    const body = this.deps_.purifyHtml(dirty, win.document);
 
     // `lit-html` seems to bork when trying to render `TextNodes` as first-level
     // elements of a `NodeList` part. This maps them to strings as a workaround.
     // Non-text `Node`s are left as-is.
-    const childNodes = textNodesToStr(previewBody.childNodes);
+    const childNodes = textNodesToStr(body.childNodes);
 
     render(Wrap(this.context, {childNodes}), this.shadow_);
   }
