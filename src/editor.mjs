@@ -60,10 +60,13 @@ export default class Editor {
 
     this.deps_ = deps;
 
-    this.previewWrap_ = this.element.querySelector(s('.preview-wrap'));
+    const previewWrap_ = this.element.querySelector(s('.preview-wrap'));
     this.codeMirror_ = this.initCodeMirror_();
 
-    this.attachPreview_();
+    this.previewShadow_ = this.attachPreview_(previewWrap_);
+
+    this.updatePreview_();
+    this.codeMirror_.on('change', this.updatePreview_.bind(this));
   }
 
   initCodeMirror_() {
@@ -73,11 +76,9 @@ export default class Editor {
     });
   }
 
-  attachPreview_() {
-    this.shadowRoot = this.previewWrap_.attachShadow({mode: 'open'});
-    this.shadowRoot.appendChild(this.element.querySelector(`.${n('preview')}`));
-    this.updatePreview_();
-    this.codeMirror_.on('change', this.updatePreview_.bind(this));
+  attachPreview_(container) {
+    const shadow = container.attachShadow({mode: 'open'});
+    return shadow;
   }
 
   updatePreview_() {
@@ -89,6 +90,6 @@ export default class Editor {
     // Non-text `Node`s are left as-is.
     const childNodes = textNodesToStr(previewBody.childNodes);
 
-    render(PreviewInner(this.context, {childNodes}), this.shadowRoot);
+    render(PreviewInner(this.context, {childNodes}), this.previewShadow_);
   }
 }
