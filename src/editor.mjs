@@ -28,15 +28,19 @@ function Preview({html}) {
   `;
 }
 
-export function PreviewInner({html}, {childNodes}) {
+function PreviewInner({html}, {childNodes}) {
   return html`
-    <div class="${n('preview')}">${childNodes}</div>
+    <div class="${n('preview')}">
+      ${childNodes}
+    </div>
   `;
 }
 
 function Textarea({html}, {content}) {
   return html`
-    <div class="${n('textarea-wrap')}"><textarea>${content}</textarea></div>
+    <div class="${n('textarea-wrap')}">
+      <textarea>${content}</textarea>
+    </div>
   `;
 }
 
