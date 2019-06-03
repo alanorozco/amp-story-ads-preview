@@ -19,7 +19,6 @@
 module.exports = {
   plugins: [
     ['@babel/plugin-transform-async-to-generator'],
-    ['@babel/plugin-transform-classes', {loose: true}],
     ['@babel/plugin-transform-runtime'],
     ['@babel/plugin-transform-template-literals', {loose: true}],
   ],
