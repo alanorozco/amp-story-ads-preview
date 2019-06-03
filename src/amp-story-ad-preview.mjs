@@ -36,6 +36,7 @@ export default class AmpStoryAdPreview {
     this.deps_ = deps;
     this.shadow_ = container.attachShadow({mode: 'open'});
   }
+
   update(dirty) {
     const {render, win} = this.context;
     const body = this.deps_.purifyHtml(dirty, win.document);
