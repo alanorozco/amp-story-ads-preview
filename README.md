@@ -1,6 +1,6 @@
 # ⚡ AMP Story Ads Preview Tool
 
-[![Build Status](https://travis-ci.com/alanorozco/amp-story-ads-preview.svg?token=cqG77daJoMoEWpcKUjSW&branch=master)](https://travis-ci.com/alanorozco/amp-story-ads-preview) [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+[![Build Status](https://travis-ci.com/alanorozco/amp-story-ads-preview.svg?token=cqG77daJoMoEWpcKUjSW&branch=master)](https://travis-ci.com/alanorozco/amp-story-ads-preview)
 
 ## Production Build
 
