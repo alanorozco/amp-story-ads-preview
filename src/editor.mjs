@@ -60,13 +60,12 @@ export default class Editor {
 
     this.deps_ = deps;
 
-    const previewWrap_ = this.element.querySelector(s('.preview-wrap'));
     this.codeMirror_ = this.initCodeMirror_();
 
-    this.previewShadow_ = this.attachPreview_(previewWrap_);
+    const previewWrap = this.element.querySelector(s('.preview-wrap'));
+    this.previewShadow_ = this.attachPreview_(previewWrap);
 
     this.updatePreview_();
-    this.codeMirror_.on('change', this.updatePreview_.bind(this));
   }
 
   initCodeMirror_() {
@@ -77,8 +76,8 @@ export default class Editor {
   }
 
   attachPreview_(container) {
-    const shadow = container.attachShadow({mode: 'open'});
-    return shadow;
+    this.codeMirror_.on('change', this.updatePreview_.bind(this));
+    return container.attachShadow({mode: 'open'});
   }
 
   updatePreview_() {
