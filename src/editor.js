@@ -18,6 +18,17 @@ import AmpStoryAdPreview from './amp-story-ad-preview';
 
 const {id, n, s} = getNamespace('editor');
 
+export {id as editorId};
+
+export function renderEditor(context, {content}) {
+  const {html} = context;
+  return html`
+    <div id="${id}" class="${n('wrap')}">
+      ${[Textarea(context, {content}), Preview(context)]}
+    </div>
+  `;
+}
+
 function Preview({html}) {
   return html`
     <div class="${n('preview')}"></div>
@@ -28,17 +39,6 @@ function Textarea({html}, {content}) {
   return html`
     <div class="${n('textarea')}">
       <textarea>${content}</textarea>
-    </div>
-  `;
-}
-
-export {id};
-
-export function renderEditor(context, {content}) {
-  const {html} = context;
-  return html`
-    <div id="${id}" class="${n('wrap')}">
-      ${[Textarea(context, {content}), Preview(context)]}
     </div>
   `;
 }

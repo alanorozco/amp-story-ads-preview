@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {default as Editor, id as editorId} from '../editor';
+import {default as Editor, editorId} from '../editor';
 import {purifyHtml} from '../../amphtml/src/purifier';
 import CodeMirror from 'codemirror';
 import context from '../context';
