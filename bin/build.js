@@ -20,6 +20,7 @@ import {isRunningFrom} from '../lib/cli';
 import {minify} from 'terser';
 import {postcssPlugins} from '../postcss.config';
 import {rollup} from 'rollup';
+import {withoutExtension} from '../lib/path';
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import fs from 'fs-extra';
@@ -43,7 +44,12 @@ const ignoredModules = ['fs-extra', ...builtinModules];
  *  - lib/runtime-deps/NAME.js - exported dependency
  *  - lib/runtime-deps/NAME-shaken.js - pre-shaken dependency to aid rollup
  */
-const runtimeDeps = ['codemirror', 'purify-html'];
+const runtimeDeps = async () =>
+  (await fs.readdir('lib/runtime-deps'))
+    .filter(
+      filename => filename.endsWith('.js') && !filename.endsWith('-shaken.js')
+    )
+    .map(filename => `lib/runtime-deps/${withoutExtension(filename)}`);
 
 const inputConfig = async name => ({
   plugins: [
@@ -74,12 +80,11 @@ const moduleAliases = async name => ({
 
 async function shakenRuntimeDepsAliases() {
   const aliases = {};
-  for (const name of runtimeDeps) {
-    const rootPrefix = `lib/runtime-deps/${name}`;
-    const shaken = `${rootPrefix}-shaken.js`;
+  for (const module of await runtimeDeps()) {
+    const shaken = `${module}-shaken.js`;
     if (await fs.exists(shaken)) {
       // go back once since bundle entry points are in the `src/` dir.
-      aliases[`../${rootPrefix}`] = shaken;
+      aliases[`../${module}`] = shaken;
     }
   }
   return aliases;
