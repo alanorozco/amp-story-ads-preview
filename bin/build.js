@@ -47,12 +47,12 @@ const runtimeDeps = ['codemirror', 'purify-html'];
 
 const inputConfig = async name => ({
   plugins: [
-    postcss({extract: true, plugins: postcssPlugins()}),
-    importAlias({Paths: await moduleAliases(name)}),
-    ignore(ignoredModules),
-    nodeResolve(),
-    commonjs(),
     babel({runtimeHelpers: true}),
+    commonjs(),
+    ignore(ignoredModules),
+    importAlias({Paths: await moduleAliases(name)}),
+    nodeResolve(),
+    postcss({extract: true, plugins: postcssPlugins()}),
   ],
 });
 
