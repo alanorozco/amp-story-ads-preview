@@ -31,7 +31,7 @@ yarn watch
 
 ### 🤹 Other tasks
 
-Tasks defined in `scripts` on [`package.json`](./package.json) can be run as `yarn TASK_NAME`:
+Tasks on [`pkg.scripts`](./package.json) run with `yarn TASK_NAME`:
 
 - `yarn clean` removes a previous build.
 - `yarn lint` lints the project.
