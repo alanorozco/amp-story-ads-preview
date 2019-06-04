@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {default as Editor, id as editorId} from '../editor';
 import {purifyHtml} from '../../amphtml/src/purifier';
 import CodeMirror from 'codemirror';
 import context from '../context';
-import Editor from '../editor';
 
 import 'codemirror/addon/edit/closebrackets.js';
 import 'codemirror/addon/edit/closetag.js';
@@ -33,4 +33,5 @@ import '../editor.css';
 import 'codemirror/addon/hint/show-hint.css';
 import 'codemirror/lib/codemirror.css';
 
-new Editor(context, {CodeMirror, purifyHtml});
+const editorElement = context.win.document.getElementById(editorId);
+new Editor(context, {CodeMirror, purifyHtml}, editorElement);

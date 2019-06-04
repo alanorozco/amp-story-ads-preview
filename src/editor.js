@@ -32,6 +32,8 @@ function Textarea({html}, {content}) {
   `;
 }
 
+export {id};
+
 export function renderEditor(context, {content}) {
   const {html} = context;
   return html`
@@ -42,21 +44,15 @@ export function renderEditor(context, {content}) {
 }
 
 export default class Editor {
-  constructor(context, deps) {
+  constructor(context, deps, element) {
     this.context = context;
-    this.element = document.getElementById(id);
-
     this.deps_ = deps;
 
-    this.codeMirror_ = this.initCodeMirror_(
-      this.element.querySelector('textarea')
-    );
-
-    this.preview_ = this.initPreview_(
-      this.element.querySelector(s('.preview'))
-    );
+    this.codeMirror_ = this.initCodeMirror_(element.querySelector('textarea'));
+    this.preview_ = this.initPreview_(element.querySelector(s('.preview')));
 
     this.updatePreview_();
+    this.codeMirror_.on('change', () => this.updatePreview_());
   }
 
   initCodeMirror_(textarea) {
@@ -80,7 +76,6 @@ export default class Editor {
   initPreview_(container) {
     const {purifyHtml} = this.deps_;
     const deps = {purifyHtml};
-    this.codeMirror_.on('change', this.updatePreview_.bind(this));
     return new AmpStoryAdPreview(this.context, deps, container);
   }
 

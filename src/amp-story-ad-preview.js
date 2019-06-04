@@ -31,10 +31,11 @@ function Wrap({html}, {childNodes}) {
 }
 
 export default class AmpStoryAdPreview {
-  constructor(context, deps, container) {
+  constructor(context, deps, element) {
     this.context = context;
     this.deps_ = deps;
-    this.shadow_ = container.attachShadow({mode: 'open'});
+
+    this.shadow_ = element.attachShadow({mode: 'open'});
   }
 
   update(dirty) {
