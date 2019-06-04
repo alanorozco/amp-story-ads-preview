@@ -17,20 +17,20 @@ body {
 
 .wrap {
   display: flex;
-  height: 80%;
+  height: 100%;
 }
 
 .wrap > div {
-  flex: 1 1 50%;
+  flex: 1;
 }
 
-.wrap > .button {
-  position: absolute;
-  left: 50%;
-  top: 85%;
+.wrap > .toggle {
+  flex: 0 0 100px;
 }
 
-
+[hidden] {
+  display: none;
+}
 .preview {
   background: #ddd;
 }

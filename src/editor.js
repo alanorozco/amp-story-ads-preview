@@ -36,10 +36,7 @@ export function render(context, {content}) {
   const {html} = context;
   return html`
     <div id="${id}" class="${n('wrap')}">
-      ${[Textarea(context, {content}), Preview(context)]}
-      <div class="${n('button')}">
-        <button>Switch to Desktop View</button>
-      </div>
+      ${[Textarea(context, {content}), DesktopView(context), Preview(context)]}
     </div>
   `;
 }
@@ -47,6 +44,12 @@ export function render(context, {content}) {
 function Preview({html}) {
   return html`
     <div class="${n('preview')}"></div>
+  `;
+}
+
+function DesktopView({html}) {
+  return html`
+    <div class="${n('toggle')}"></div>
   `;
 }
 
@@ -65,26 +68,10 @@ class Editor {
     const textarea = element.querySelector('textarea');
     const preview = element.querySelector(s('.preview'));
 
-    const butt = element.querySelector('button');
-    butt.addEventListener('click', function() {
-      const style = preview.style;
-      if (style.width != '100%') {
-        style.position = 'fixed';
-        style.width = '100%';
-        style.height = '80%';
-        style.left = '0';
-        style.top = '0';
-        butt.innerText = 'Revert';
-        style.zIndex = '10';
-      } else {
-        style.position = 'inherit';
-        style.width = 'inherit';
-        style.height = '100%';
-        style.left = 'inherit';
-        style.top = 'inherit';
-        butt.innerText = 'Switch to Desktop View';
-        style.zIndex = 'inherit';
-      }
+    const toggle = element.querySelector(s('.toggle'));
+    toggle.addEventListener('click', () => {
+      const textareadiv = element.querySelector(s('.textarea'));
+      this.toggleDesktop_(textareadiv);
     });
     this.codeMirror_ = codemirror.fromTextArea(textarea, {
       mode: 'text/html',
@@ -111,6 +98,14 @@ class Editor {
 
   updatePreview_() {
     this.preview_.update(this.codeMirror_.getValue());
+  }
+
+  toggleDesktop_(textarea) {
+    if (textarea.hasAttribute('hidden')) {
+      textarea.removeAttribute('hidden');
+    } else {
+      textarea.setAttribute('hidden', '');
+    }
   }
 }
 
