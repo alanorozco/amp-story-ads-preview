@@ -13,15 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as editor from '../src/editor';
-import {sendBundle, serveStatic} from './routes-helpers';
+import {ctor, id} from '@__aliased/component';
+import context from './context';
 
-export function route(app) {
-  serveStatic(app, ['dist', 'static']);
-
-  app.get('/', (unusedRequest, response) =>
-    sendBundle(response, {editor}, {css: true})
-  );
-
-  return app;
-}
+new ctor(context, context.win.document.getElementById(id));

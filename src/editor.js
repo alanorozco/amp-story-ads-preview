@@ -16,12 +16,21 @@
 import './editor.css';
 import {getNamespace} from '../lib/namespace';
 import AmpStoryAdPreview from './amp-story-ad-preview';
+import codemirror from '../lib/runtime-deps/codemirror';
+import fs from 'fs-extra';
+
+const defaultContent = 'src/editor-default.html';
 
 const {id, n, s} = getNamespace('editor');
 
-export {id as editorId};
+export {id};
 
-export function renderEditor(context, {content}) {
+export async function data() {
+  const content = (await fs.readFile(defaultContent)).toString('utf-8');
+  return {content};
+}
+
+export function render(context, {content}) {
   const {html} = context;
   return html`
     <div id="${id}" class="${n('wrap')}">
@@ -44,20 +53,14 @@ function Textarea({html}, {content}) {
   `;
 }
 
-export default class Editor {
-  constructor(context, deps, element) {
+class Editor {
+  constructor(context, element) {
     this.context = context;
-    this.deps_ = deps;
 
-    this.codeMirror_ = this.initCodeMirror_(element.querySelector('textarea'));
-    this.preview_ = this.initPreview_(element.querySelector(s('.preview')));
+    const textarea = element.querySelector('textarea');
+    const preview = element.querySelector(s('.preview'));
 
-    this.updatePreview_();
-    this.codeMirror_.on('change', () => this.updatePreview_());
-  }
-
-  initCodeMirror_(textarea) {
-    return this.deps_.codemirror.fromTextArea(textarea, {
+    this.codeMirror_ = codemirror.fromTextArea(textarea, {
       mode: 'text/html',
       selectionPointer: true,
       styleActiveLine: true,
@@ -72,15 +75,16 @@ export default class Editor {
         completeSingle: false,
       },
     });
-  }
 
-  initPreview_(container) {
-    const {purifyHtml} = this.deps_;
-    const deps = {purifyHtml};
-    return new AmpStoryAdPreview(this.context, deps, container);
+    this.preview_ = new AmpStoryAdPreview(this.context, preview);
+
+    this.updatePreview_();
+    this.codeMirror_.on('change', () => this.updatePreview_());
   }
 
   updatePreview_() {
     this.preview_.update(this.codeMirror_.getValue());
   }
 }
+
+export {Editor as ctor};

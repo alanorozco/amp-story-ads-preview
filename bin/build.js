@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {builtinModules} from 'module';
 import {fatal, step} from '../lib/log';
 import {isRunningFrom} from '../lib/cli';
 import {minify} from 'terser';
@@ -21,18 +22,27 @@ import {rollup} from 'rollup';
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import fs from 'fs-extra';
+import ignore from 'rollup-plugin-ignore';
+import importAlias from 'rollup-plugin-import-alias';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
 
-const bundles = 'src/bundles';
-const dist = filename => `dist/${filename}`;
+const bundles = ['editor'];
 
-const getBundles = async () =>
-  (await fs.readdir(bundles)).filter(name => name.endsWith('.js'));
+const src = name => `src/${name}.js`;
+const dist = name => `dist/${name}.js`;
 
-const inputConfig = () => ({
+const ignoredModules = ['fs-extra', ...builtinModules];
+
+const inputConfig = name => ({
   plugins: [
     postcss({extract: true, plugins: postcssPlugins()}),
+    importAlias({
+      Paths: {
+        '@__aliased/component': src(name),
+      },
+    }),
+    ignore(ignoredModules),
     nodeResolve(),
     commonjs(),
     babel({runtimeHelpers: true}),
@@ -47,7 +57,7 @@ const minifyConfig = {
   output: {comments: 'some'},
 };
 
-const withAllBundles = async cb => Promise.all((await getBundles()).map(cb));
+const withAllBundles = cb => Promise.all(bundles.map(cb));
 
 async function minifyBundle(filename) {
   const file = dist(filename);
@@ -56,13 +66,13 @@ async function minifyBundle(filename) {
 }
 
 export const build = () =>
-  step('🚧 Building', async () =>
-    withAllBundles(async filename => {
-      const input = `${bundles}/${filename}`;
-      const bundle = await rollup({input, ...inputConfig()});
+  step('🚧 Building', () =>
+    withAllBundles(async name => {
+      const input = src('bundle');
+      const bundle = await rollup({input, ...inputConfig(name)});
       return Promise.all(
         outputConfigs.map(outputConfig =>
-          bundle.write({file: dist(filename), ...outputConfig})
+          bundle.write({file: dist(name), ...outputConfig})
         )
       );
     })

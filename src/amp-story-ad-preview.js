@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import {getNamespace} from '../lib/namespace';
+import {purifyHtml} from '../lib/runtime-deps/purify-html';
 
 const {n} = getNamespace('amp-story-ad-preview');
 
@@ -31,16 +32,14 @@ function Wrap({html}, {childNodes}) {
 }
 
 export default class AmpStoryAdPreview {
-  constructor(context, deps, element) {
+  constructor(context, element) {
     this.context = context;
-    this.deps_ = deps;
-
     this.shadow_ = element.attachShadow({mode: 'open'});
   }
 
   update(dirty) {
     const {render, win} = this.context;
-    const body = this.deps_.purifyHtml(dirty, win.document);
+    const body = purifyHtml(dirty, win.document);
 
     // `lit-html` seems to bork when trying to render `TextNodes` as first-level
     // elements of a `NodeList` part. This maps them to strings as a workaround.

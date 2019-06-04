@@ -4548,6 +4548,16 @@ rollup-plugin-commonjs@10.0.0:
     resolve "^1.10.1"
     rollup-pluginutils "^2.7.0"
 
+rollup-plugin-ignore@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-ignore/-/rollup-plugin-ignore-1.0.5.tgz#fc16b321b29d054d728dafde808a8a52ec39f024"
+  integrity sha512-fGDl4eRMpEeSNqZ9WFR3piK47rrFgVzAIFRsJhTc9/P5t1qsScuFeEBfbXbHDnv6yh5OUth8dti+f+dswebV+Q==
+
+rollup-plugin-import-alias@1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-import-alias/-/rollup-plugin-import-alias-1.0.7.tgz#79147267328e960120f04c712cb503ea944942e6"
+  integrity sha512-NaihTcKd29UpXx4zjhSieIHzYvvhZACnV5rQoRMUM6tBr6Vt/1RgGn0aN4ryJ2Zo4D9XdxtClC6cw6RcGHe7jw==
+
 rollup-plugin-node-resolve@5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/rollup-plugin-node-resolve/-/rollup-plugin-node-resolve-5.0.0.tgz#754abf4841ed4bab2241551cba0a11d04c57f290"
