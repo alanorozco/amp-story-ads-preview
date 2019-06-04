@@ -22,6 +22,8 @@ body {
 
 .wrap > div {
   flex: 1;
+  position: relative;
+  overflow-x: auto;
 }
 
 .wrap > .toggle {
