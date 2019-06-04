@@ -1,8 +1,6 @@
 {
   "name": "amp-story-ads-preview",
   "version": "1.0.0",
-  "main": "index.js",
-  "module": "main.js",
   "author": "The AMPHTML Authors",
   "license": "Apache-2.0",
   "scripts": {
