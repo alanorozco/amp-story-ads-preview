@@ -21,11 +21,11 @@ import {minify} from 'terser';
 import {postcssPlugins} from '../postcss.config';
 import {rollup} from 'rollup';
 import {withoutExtension} from '../lib/path';
+import alias from 'rollup-plugin-alias';
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import fs from 'fs-extra';
 import ignore from 'rollup-plugin-ignore';
-import importAlias from 'rollup-plugin-import-alias';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
 
@@ -53,10 +53,10 @@ const runtimeDeps = async () =>
 
 const inputConfig = async name => ({
   plugins: [
+    alias(await moduleAliases(name)),
     babel({runtimeHelpers: true}),
     commonjs(),
     ignore(ignoredModules),
-    importAlias({Paths: await moduleAliases(name)}),
     nodeResolve(),
     postcss({extract: true, plugins: postcssPlugins()}),
   ],

@@ -4529,6 +4529,13 @@ rimraf@2.6.3, rimraf@^2.6.1:
   dependencies:
     glob "^7.1.3"
 
+rollup-plugin-alias@1.5.2:
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-alias/-/rollup-plugin-alias-1.5.2.tgz#f15a1cc8ee0debf74ab5c2bb68a944a66b568411"
+  integrity sha512-ODeZXhTxpD48sfcYLAFc1BGrsXKDj7o1CSNH3uYbdK3o0NxyMmaQPTNgW+ko+am92DLC8QSTe4kyxTuEkI5S5w==
+  dependencies:
+    slash "^3.0.0"
+
 rollup-plugin-babel@4.3.2:
   version "4.3.2"
   resolved "https://registry.yarnpkg.com/rollup-plugin-babel/-/rollup-plugin-babel-4.3.2.tgz#8c0e1bd7aa9826e90769cf76895007098ffd1413"
@@ -4552,11 +4559,6 @@ rollup-plugin-ignore@1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/rollup-plugin-ignore/-/rollup-plugin-ignore-1.0.5.tgz#fc16b321b29d054d728dafde808a8a52ec39f024"
   integrity sha512-fGDl4eRMpEeSNqZ9WFR3piK47rrFgVzAIFRsJhTc9/P5t1qsScuFeEBfbXbHDnv6yh5OUth8dti+f+dswebV+Q==
-
-rollup-plugin-import-alias@1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-import-alias/-/rollup-plugin-import-alias-1.0.7.tgz#79147267328e960120f04c712cb503ea944942e6"
-  integrity sha512-NaihTcKd29UpXx4zjhSieIHzYvvhZACnV5rQoRMUM6tBr6Vt/1RgGn0aN4ryJ2Zo4D9XdxtClC6cw6RcGHe7jw==
 
 rollup-plugin-node-resolve@5.0.0:
   version "5.0.0"
@@ -4741,6 +4743,11 @@ simple-swizzle@^0.2.2:
   integrity sha1-pNprY1/8zMoz9w0Xy5JZLeleVXo=
   dependencies:
     is-arrayish "^0.3.1"
+
+slash@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/slash/-/slash-3.0.0.tgz#6539be870c165adbd5240220dbe361f1bc4d4634"
+  integrity sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==
 
 slice-ansi@^2.1.0:
   version "2.1.0"
