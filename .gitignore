@@ -62,3 +62,6 @@ typings/
 
 # Build
 dist
+
+# VSCode user config
+.vscode
