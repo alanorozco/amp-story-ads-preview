@@ -13,10 +13,18 @@
     "x": "node -r esm"
   },
   "nodemonConfig": {
-    "execMap": {"js": "yarn x"},
+    "execMap": {
+      "js": "yarn x"
+    },
     "script": "bin/serve.js",
-    "watch": ["bin", "lib", "src"],
-    "events": {"restart": "yarn build"}
+    "watch": [
+      "bin",
+      "lib",
+      "src"
+    ],
+    "events": {
+      "restart": "yarn build"
+    }
   },
   "dependencies": {
     "@babel/runtime": "7.4.5",
@@ -50,6 +58,7 @@
     "eslint-plugin-sort-imports-es6-autofix": "0.4.0",
     "mocha": "6.1.4",
     "nodemon": "1.19.1",
+    "postcss-import": "12.0.1",
     "postcss-simple-vars": "5.0.2",
     "prettier": "1.17.1",
     "rollup": "1.12.4",

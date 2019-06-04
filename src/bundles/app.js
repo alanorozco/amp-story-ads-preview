@@ -28,10 +28,8 @@ import 'codemirror/addon/selection/selection-pointer';
 import 'codemirror/mode/css/css';
 import 'codemirror/mode/htmlmixed/htmlmixed';
 
-// These are extracted into dist/editor-bundle.css
+import '../app.css';
 import '../editor.css';
-import 'codemirror/addon/hint/show-hint.css';
-import 'codemirror/lib/codemirror.css';
 
 const editorElement = context.win.document.getElementById(editorId);
 new Editor(context, {CodeMirror, purifyHtml}, editorElement);
