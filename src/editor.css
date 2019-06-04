@@ -8,6 +8,10 @@ body {
   font-size: 14px;
 }
 
+.CodeMirror {
+  height: 100% !important;
+}
+
 @component;
 
 .wrap {
