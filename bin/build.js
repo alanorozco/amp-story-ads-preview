@@ -24,8 +24,13 @@ import fs from 'fs-extra';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
 
+const bundles = 'src/bundles';
+const dist = filename => `dist/${filename}`;
+
+const getBundles = async () =>
+  (await fs.readdir(bundles)).filter(name => name.endsWith('.js'));
+
 const inputConfig = () => ({
-  input: 'src/bundles/app.js',
   plugins: [
     postcss({extract: true, plugins: postcssPlugins()}),
     nodeResolve(),
@@ -34,29 +39,30 @@ const inputConfig = () => ({
   ],
 });
 
-const outputBundles = [
-  {
-    file: 'dist/app.js',
-    format: 'iife',
-    name: 'ampStoryAdPreview',
-  },
-];
+const outputConfigs = [{format: 'iife'}];
 
 const minifyConfig = {mangle: {toplevel: true}};
 
-const withAllBundles = cb => Promise.all(outputBundles.map(cb));
+const withAllBundles = async cb => Promise.all((await getBundles()).map(cb));
 
-const minifyBundle = async ({file}) =>
-  fs.outputFile(
-    file,
-    minify((await fs.readFile(file)).toString('utf-8'), minifyConfig).code
-  );
+async function minifyBundle(filename) {
+  const file = dist(filename);
+  const content = (await fs.readFile(file)).toString('utf-8');
+  return fs.outputFile(file, minify(content, minifyConfig).code);
+}
 
 export const build = () =>
-  step('🚧 Building', async () => {
-    const mainBundle = await rollup(inputConfig());
-    return withAllBundles(outputBundle => mainBundle.write(outputBundle));
-  });
+  step('🚧 Building', async () =>
+    withAllBundles(async filename => {
+      const input = `${bundles}/${filename}`;
+      const bundle = await rollup({input, ...inputConfig()});
+      return Promise.all(
+        outputConfigs.map(outputConfig =>
+          bundle.write({file: dist(filename), ...outputConfig})
+        )
+      );
+    })
+  );
 
 async function main() {
   await build();
