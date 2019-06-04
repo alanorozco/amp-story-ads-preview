@@ -31,12 +31,24 @@ import postcss from 'rollup-plugin-postcss';
 const src = name => `src/${name}.js`;
 const dist = name => `dist/${name}.js`;
 
+/**
+ * Modules that are problematic to import in a browser context so they are
+ * stripped out.
+ */
 const ignoredModules = ['fs-extra', ...builtinModules];
 
-const inputConfig = name => ({
+/**
+ * Dependencies that are problematic to import in a node context directly.
+ * These live in lib/runtime-deps, named by convention:
+ *  - lib/runtime-deps/NAME.js - exported dependency
+ *  - lib/runtime-deps/NAME-shaken.js - pre-shaken dependency to aid rollup
+ */
+const runtimeDeps = ['codemirror', 'purify-html'];
+
+const inputConfig = async name => ({
   plugins: [
     postcss({extract: true, plugins: postcssPlugins()}),
-    importAlias({Paths: {'[@component]': src(name)}}),
+    importAlias({Paths: await moduleAliases(name)}),
     ignore(ignoredModules),
     nodeResolve(),
     commonjs(),
@@ -52,6 +64,27 @@ const minifyConfig = {
   output: {comments: 'some'},
 };
 
+const moduleAliases = async name => ({
+  // Magic to connect generic `lib/bundle` to any component.
+  '[@component]': src(name),
+
+  // Alias indirect dependencies to shaken dependencies directly.
+  ...(await shakenRuntimeDepsAliases()),
+});
+
+async function shakenRuntimeDepsAliases() {
+  const aliases = {};
+  for (const name of runtimeDeps) {
+    const rootPrefix = `lib/runtime-deps/${name}`;
+    const shaken = `${rootPrefix}-shaken.js`;
+    if (await fs.exists(shaken)) {
+      // go back once since bundle entry points are in the `src/` dir.
+      aliases[`../${rootPrefix}`] = shaken;
+    }
+  }
+  return aliases;
+}
+
 const withAllBundles = cb => Promise.all(bundles.map(cb));
 
 async function minifyBundle(filename) {
@@ -64,7 +97,7 @@ export const build = () =>
   step('🚧 Building', () =>
     withAllBundles(async name => {
       const input = 'lib/bundle.js';
-      const bundle = await rollup({input, ...inputConfig(name)});
+      const bundle = await rollup({input, ...(await inputConfig(name))});
       return Promise.all(
         outputConfigs.map(outputConfig =>
           bundle.write({file: dist(name), ...outputConfig})
