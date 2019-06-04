@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 import '../app.css';
+import {default as Editor, editorId} from '../editor';
+import {purifyHtml} from '../../amphtml/src/purifier';
+import context from '../context';
+
+/**
+ * @license
+ * CodeMirror, copyright (c) by Marijn Haverbeke and others
+ * Distributed under an MIT license: https://codemirror.net/LICENSE
+ */
 import 'codemirror/addon/edit/closebrackets';
 import 'codemirror/addon/edit/closetag';
 import 'codemirror/addon/hint/css-hint';
@@ -23,10 +32,7 @@ import 'codemirror/addon/selection/active-line';
 import 'codemirror/addon/selection/selection-pointer';
 import 'codemirror/mode/css/css';
 import 'codemirror/mode/htmlmixed/htmlmixed';
-import {default as Editor, editorId} from '../editor';
-import {purifyHtml} from '../../amphtml/src/purifier';
 import CodeMirror from 'codemirror';
-import context from '../context';
 
 const editorElement = context.win.document.getElementById(editorId);
 new Editor(context, {CodeMirror, purifyHtml}, editorElement);

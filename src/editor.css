@@ -1,6 +1,3 @@
-@import 'codemirror/addon/hint/show-hint';
-@import 'codemirror/lib/codemirror';
-
 @component;
 
 .wrap {
