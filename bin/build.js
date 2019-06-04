@@ -15,17 +15,14 @@
  */
 import {fatal, step} from '../lib/log';
 import {isRunningFrom} from '../lib/cli';
+import {minify} from 'terser';
 import {postcssPlugins} from '../postcss.config';
 import {rollup} from 'rollup';
-import {default as terser} from 'terser';
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import fs from 'fs-extra';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
-
-const {minify} = terser;
-// const {rollup} = rollupModule;
 
 const inputConfig = () => ({
   input: 'src/bundles/app.js',
