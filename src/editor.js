@@ -61,7 +61,19 @@ export default class Editor {
 
   initCodeMirror_(textarea) {
     return this.deps_.CodeMirror.fromTextArea(textarea, {
-      mode: 'htmlmixed',
+      mode: 'text/html',
+      selectionPointer: true,
+      styleActiveLine: true,
+      lineNumbers: false,
+      showCursorWhenSelecting: true,
+      cursorBlinkRate: 300,
+      autoCloseBrackets: true,
+      autoCloseTags: true,
+      gutters: ['CodeMirror-error-markers'],
+      extraKeys: {'Ctrl-Space': 'autocomplete'},
+      hintOptions: {
+        completeSingle: false,
+      },
     });
   }
 
