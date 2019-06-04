@@ -15,22 +15,8 @@
  */
 import {build} from './build';
 import {fatal} from '../lib/log';
-import {isRunningFrom} from '../lib/cli';
 import nodemon from 'nodemon';
 
-const config = {
-  execMap: {js: 'yarn x'},
-  script: 'bin/serve.js',
-  watch: ['bin', 'lib', 'src'],
-  events: {restart: 'yarn build'},
-};
-
-async function watch() {
-  const args = process.argv.slice(2);
-  await build().catch(fatal);
-  nodemon({args, ...config}).once('quit', process.exit);
-}
-
-if (isRunningFrom('watch.js')) {
-  watch();
-}
+build().then(() => {
+  nodemon({args: process.argv.slice(2)}).once('quit', process.exit);
+}, fatal);

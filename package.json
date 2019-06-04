@@ -12,6 +12,12 @@
     "watch": "yarn x bin/watch.js",
     "x": "node -r esm"
   },
+  "nodemonConfig": {
+    "execMap": {"js": "yarn x"},
+    "script": "bin/serve.js",
+    "watch": ["bin", "lib", "src"],
+    "events": {"restart": "yarn build"}
+  },
   "dependencies": {
     "@babel/runtime": "7.4.5",
     "@popeindustries/lit-html-server": "1.2.0",
