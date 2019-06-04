@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import {builtinModules} from 'module';
+import {bundles} from '../src/bundles';
 import {fatal, step} from '../lib/log';
 import {isRunningFrom} from '../lib/cli';
 import {minify} from 'terser';
@@ -27,8 +28,6 @@ import importAlias from 'rollup-plugin-import-alias';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
 
-const bundles = ['editor'];
-
 const src = name => `src/${name}.js`;
 const dist = name => `dist/${name}.js`;
 
@@ -37,11 +36,7 @@ const ignoredModules = ['fs-extra', ...builtinModules];
 const inputConfig = name => ({
   plugins: [
     postcss({extract: true, plugins: postcssPlugins()}),
-    importAlias({
-      Paths: {
-        '@__aliased/component': src(name),
-      },
-    }),
+    importAlias({Paths: {'[@component]': src(name)}}),
     ignore(ignoredModules),
     nodeResolve(),
     commonjs(),
@@ -68,7 +63,7 @@ async function minifyBundle(filename) {
 export const build = () =>
   step('🚧 Building', () =>
     withAllBundles(async name => {
-      const input = src('bundle');
+      const input = 'lib/bundle.js';
       const bundle = await rollup({input, ...inputConfig(name)});
       return Promise.all(
         outputConfigs.map(outputConfig =>
