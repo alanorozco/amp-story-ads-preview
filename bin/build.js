@@ -41,7 +41,11 @@ const inputConfig = () => ({
 
 const outputConfigs = [{format: 'iife'}];
 
-const minifyConfig = {mangle: {toplevel: true}};
+const minifyConfig = {
+  compress: {unsafe_arrows: true},
+  mangle: {toplevel: true, properties: {regex: /_$/}},
+  output: {comments: 'some'},
+};
 
 const withAllBundles = async cb => Promise.all((await getBundles()).map(cb));
 
