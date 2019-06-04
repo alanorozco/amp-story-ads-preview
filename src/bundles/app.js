@@ -18,15 +18,15 @@ import {purifyHtml} from '../../amphtml/src/purifier';
 import CodeMirror from 'codemirror';
 import context from '../context';
 
-import 'codemirror/addon/edit/closebrackets.js';
-import 'codemirror/addon/edit/closetag.js';
-import 'codemirror/addon/hint/css-hint.js';
-import 'codemirror/addon/hint/html-hint.js';
-import 'codemirror/addon/hint/show-hint.js';
-import 'codemirror/addon/selection/active-line.js';
-import 'codemirror/addon/selection/selection-pointer.js';
-import 'codemirror/mode/css/css.js';
-import 'codemirror/mode/htmlmixed/htmlmixed.js';
+import 'codemirror/addon/edit/closebrackets';
+import 'codemirror/addon/edit/closetag';
+import 'codemirror/addon/hint/css-hint';
+import 'codemirror/addon/hint/html-hint';
+import 'codemirror/addon/hint/show-hint';
+import 'codemirror/addon/selection/active-line';
+import 'codemirror/addon/selection/selection-pointer';
+import 'codemirror/mode/css/css';
+import 'codemirror/mode/htmlmixed/htmlmixed';
 
 // These are extracted into dist/editor-bundle.css
 import '../editor.css';
