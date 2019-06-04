@@ -13,24 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {build} from './build';
-import {error} from '../lib/log';
-import {isRunningFrom} from '../lib/cli';
-import nodemon from 'nodemon';
+import glob from 'fast-glob';
 
-const config = {
-  execMap: {mjs: 'node -r esm'},
-  script: 'bin/serve.mjs',
-  watch: ['bin', 'lib', 'src'],
-  events: {restart: 'yarn build'},
-};
+const dirs = ['bin', 'lib', 'test', 'src'];
+const src = dirs.map(dir => `${dir}/{,**/}*.js`);
 
-async function watch() {
-  const args = process.argv.slice(2);
-  await build().catch(error);
-  nodemon({args, ...config}).once('quit', process.exit);
-}
-
-if (isRunningFrom('watch.mjs')) {
-  watch();
-}
+(async () => console.log((await glob(src)).join(' ')))();

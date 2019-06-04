@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import glob from 'fast-glob';
+import {html, render} from 'lit-html';
+import {ifDefined} from 'lit-html/directives/if-defined';
 
-const src = [
-  'bin/{,**/}*.mjs',
-  'lib/{,**/}*.mjs',
-  'test/{,**/}*.js', // .js extension needed because mocha sideloads modules
-  'src/{,**/}*.mjs',
-];
+const directives = {ifDefined};
 
-(async () => console.log((await glob(src)).join(' ')))();
+export default {
+  html,
+  directives,
+  render,
+  win: self,
+};

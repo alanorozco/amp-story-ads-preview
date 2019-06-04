@@ -16,7 +16,7 @@
 import {fatal, step} from '../lib/log';
 import {isRunningFrom} from '../lib/cli';
 import {postcssPlugins} from '../postcss.config';
-import {default as rollupModule} from 'rollup';
+import {rollup} from 'rollup';
 import {default as terser} from 'terser';
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
@@ -25,10 +25,10 @@ import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
 
 const {minify} = terser;
-const {rollup} = rollupModule;
+// const {rollup} = rollupModule;
 
 const inputConfig = () => ({
-  input: 'src/bundles/app.mjs',
+  input: 'src/bundles/app.js',
   plugins: [
     postcss({extract: true, plugins: postcssPlugins()}),
     nodeResolve(),
@@ -69,6 +69,6 @@ async function main() {
   await step('👶 Minifying', () => withAllBundles(minifyBundle));
 }
 
-if (isRunningFrom('build.mjs')) {
+if (isRunningFrom('build.js')) {
   main().catch(fatal);
 }

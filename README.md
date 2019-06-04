@@ -31,11 +31,12 @@ yarn watch
 
 ### 🤹 Other tasks
 
-Other tasks defined in `scripts` on [`package.json`](./package.json) can be run as `yarn TASK_NAME`:
+Tasks defined in `scripts` on [`package.json`](./package.json) can be run as `yarn TASK_NAME`:
 
 - `yarn clean` removes a previous build.
 - `yarn lint` lints the project.
 - `yarn serve` serves the build.
+- `yarn x` e\[**x**\]ecutes a `node` binary in the project's context (mainly for `esm`).
 
 ## 🔁 Continuous Integration
 

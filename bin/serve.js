@@ -61,6 +61,6 @@ async function serve() {
   });
 }
 
-if (isRunningFrom('serve.mjs')) {
+if (isRunningFrom('serve.js')) {
   serve();
 }

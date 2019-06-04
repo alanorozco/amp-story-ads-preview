@@ -7,11 +7,12 @@
   "license": "Apache-2.0",
   "scripts": {
     "clean": "rm -Rf dist",
-    "build": "node -r esm bin/build.mjs",
-    "lint": "`yarn bin`/eslint `node -r esm bin/glob-src.mjs`",
-    "serve": "node -r esm bin/serve.mjs",
+    "build": "yarn x bin/build.js",
+    "lint": "`yarn bin`/eslint `yarn x --silent bin/glob-src.js`",
+    "serve": "yarn x bin/serve.js",
     "test": "`yarn bin`/mocha --require esm --recursive test/**/*.js",
-    "watch": "node -r esm bin/watch.mjs"
+    "watch": "yarn x bin/watch.js",
+    "x": "node -r esm"
   },
   "dependencies": {
     "@babel/runtime": "7.4.5",

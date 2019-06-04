@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {html, nothing, render} from 'lit-html';
-import {ifDefined} from 'lit-html/directives/if-defined';
+import {build} from './build';
+import {error} from '../lib/log';
+import {isRunningFrom} from '../lib/cli';
+import nodemon from 'nodemon';
 
-const directives = {ifDefined};
-
-export default {
-  html,
-  nothing,
-  directives,
-  render,
-  win: self,
+const config = {
+  execMap: {js: 'yarn x'},
+  script: 'bin/serve.js',
+  watch: ['bin', 'lib', 'src'],
+  events: {restart: 'yarn build'},
 };
+
+async function watch() {
+  const args = process.argv.slice(2);
+  await build().catch(error);
+  nodemon({args, ...config}).once('quit', process.exit);
+}
+
+if (isRunningFrom('watch.js')) {
+  watch();
+}
