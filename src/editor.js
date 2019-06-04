@@ -57,7 +57,7 @@ export default class Editor {
   }
 
   initCodeMirror_(textarea) {
-    return this.deps_.CodeMirror.fromTextArea(textarea, {
+    return this.deps_.codemirror.fromTextArea(textarea, {
       mode: 'text/html',
       selectionPointer: true,
       styleActiveLine: true,
