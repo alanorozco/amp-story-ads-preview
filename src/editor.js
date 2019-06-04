@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import './editor.css';
+import './monokai.css';
 import {getNamespace} from '../lib/namespace';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
@@ -74,6 +75,7 @@ class Editor {
       hintOptions: {
         completeSingle: false,
       },
+      theme: 'monokai',
     });
 
     this.preview_ = new AmpStoryAdPreview(this.context, preview);
