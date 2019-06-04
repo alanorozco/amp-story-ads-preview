@@ -14,14 +14,22 @@ body {
 
 @component;
 
+
 .wrap {
   display: flex;
-  height: 100%;
+  height: 80%;
 }
 
 .wrap > div {
-  flex: 0 0 50%;
+  flex: 1 1 50%;
 }
+
+.wrap > .button {
+  position: absolute;
+  left: 50%;
+  top: 85%;
+}
+
 
 .preview {
   background: #ddd;

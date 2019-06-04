@@ -15,6 +15,7 @@
  */
 import './editor.css';
 import './monokai.css';
+
 import {getNamespace} from '../lib/namespace';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
@@ -36,6 +37,9 @@ export function render(context, {content}) {
   return html`
     <div id="${id}" class="${n('wrap')}">
       ${[Textarea(context, {content}), Preview(context)]}
+      <div class="${n('button')}">
+        <button>Switch to Desktop View</button>
+      </div>
     </div>
   `;
 }
@@ -61,6 +65,27 @@ class Editor {
     const textarea = element.querySelector('textarea');
     const preview = element.querySelector(s('.preview'));
 
+    const butt = element.querySelector('button');
+    butt.addEventListener('click', function() {
+      const style = preview.style;
+      if (style.width != '100%') {
+        style.position = 'fixed';
+        style.width = '100%';
+        style.height = '80%';
+        style.left = '0';
+        style.top = '0';
+        butt.innerText = 'Revert';
+        style.zIndex = '10';
+      } else {
+        style.position = 'inherit';
+        style.width = 'inherit';
+        style.height = '100%';
+        style.left = 'inherit';
+        style.top = 'inherit';
+        butt.innerText = 'Switch to Desktop View';
+        style.zIndex = 'inherit';
+      }
+    });
     this.codeMirror_ = codemirror.fromTextArea(textarea, {
       mode: 'text/html',
       selectionPointer: true,

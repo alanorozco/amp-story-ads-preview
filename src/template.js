@@ -21,7 +21,6 @@
  *  - other dependencies injected via `context` according to:
  *    https://github.com/popeindustries/lit-html-server#universal-templates
  */
-
 export const Scaffold = (
   {html},
   {head, body, title = 'AMP Story Ad Preview'}
