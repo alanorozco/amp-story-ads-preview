@@ -8,7 +8,7 @@
     "build": "yarn run --silent x bin/build.js",
     "lint": "`yarn bin`/eslint bin lib test src",
     "serve": "yarn run --silent x bin/serve.js",
-    "test": "`yarn bin`/mocha --require esm --recursive test/**/*.js",
+    "test": "`yarn bin`/mocha --require ignore-styles --require esm",
     "watch": "yarn run --silent x bin/watch.js",
     "x": "node -r ignore-styles -r esm"
   },
