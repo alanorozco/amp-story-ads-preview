@@ -7,6 +7,7 @@
     "clean": "rm -Rf dist",
     "build": "yarn run --silent x bin/build.js",
     "lint": "`yarn bin`/eslint bin lib test src",
+    "postinstall": "./bin/postinstall.sh",
     "serve": "yarn run --silent x bin/serve.js",
     "test": "`yarn bin`/mocha --require ignore-styles --require esm",
     "watch": "yarn run --silent x bin/watch.js",
