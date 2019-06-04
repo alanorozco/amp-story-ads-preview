@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {build} from './build';
-import {error} from '../lib/log';
+import {fatal} from '../lib/log';
 import {isRunningFrom} from '../lib/cli';
 import nodemon from 'nodemon';
 
@@ -27,7 +27,7 @@ const config = {
 
 async function watch() {
   const args = process.argv.slice(2);
-  await build().catch(error);
+  await build().catch(fatal);
   nodemon({args, ...config}).once('quit', process.exit);
 }
 
