@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import './editor.css';
 import {getNamespace} from '../lib/namespace';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 

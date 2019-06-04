@@ -13,11 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {default as Editor, editorId} from '../editor';
-import {purifyHtml} from '../../amphtml/src/purifier';
-import CodeMirror from 'codemirror';
-import context from '../context';
-
+import '../app.css';
 import 'codemirror/addon/edit/closebrackets';
 import 'codemirror/addon/edit/closetag';
 import 'codemirror/addon/hint/css-hint';
@@ -27,9 +23,10 @@ import 'codemirror/addon/selection/active-line';
 import 'codemirror/addon/selection/selection-pointer';
 import 'codemirror/mode/css/css';
 import 'codemirror/mode/htmlmixed/htmlmixed';
-
-import '../app.css';
-import '../editor.css';
+import {default as Editor, editorId} from '../editor';
+import {purifyHtml} from '../../amphtml/src/purifier';
+import CodeMirror from 'codemirror';
+import context from '../context';
 
 const editorElement = context.win.document.getElementById(editorId);
 new Editor(context, {CodeMirror, purifyHtml}, editorElement);
