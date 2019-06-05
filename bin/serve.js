@@ -13,54 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {argv, isRunningFrom} from '../lib/cli';
+import {argv} from '../lib/cli';
+import {createServer} from 'http';
 import {log} from '../lib/log';
-import {route} from '../lib/route';
 import colors from 'colors/safe';
-import compression from 'compression';
-import express from 'express';
-import uid from 'gen-uid';
+import finalhandler from 'finalhandler';
+import serveStatic from 'serve-static';
 
-const {bgWhite, black, blue, gray, green, red} = colors;
+const {bgWhite, black, blue} = colors;
 
-function formatStatusCode(statusCode) {
-  if (statusCode >= 200 && statusCode < 300) {
-    return green(statusCode);
-  }
-  if (statusCode < 400) {
-    return gray(statusCode);
-  }
-  return red(statusCode);
+const {port = 8001} = argv;
+
+function logRequest({method, url}) {
+  log('🏄', bgWhite(` ${black(method)} `), url);
 }
 
-function logRequest(request, response, next) {
-  const requestId = uid.token(/* short */ true);
-  const {method, originalUrl} = request;
-  log('🏄', `[${requestId}]`, bgWhite(` ${black(method)} `), originalUrl);
-  const onFinish = () => {
-    const {statusCode, statusMessage} = response;
-    log('🏄', `[${requestId}]`, formatStatusCode(statusCode), statusMessage);
-    response.removeListener('finish', onFinish);
-  };
-  response.on('finish', onFinish);
-  next();
-}
+const serveDist = serveStatic('dist');
 
-async function serve() {
-  const port = process.env.PORT || argv.port || 8001;
-  const app = express();
+log(blue(`🌎 Started on http://localhost:${port}/`));
 
-  app.use(logRequest);
-
-  if (argv.compression) {
-    app.use(compression());
-  }
-
-  return route(app).listen(port, () => {
-    log(blue(`🌎 Started on http://localhost:${port}/`));
-  });
-}
-
-if (isRunningFrom('serve.js')) {
-  serve();
-}
+createServer((request, response) => {
+  logRequest(request);
+  serveDist(request, response, finalhandler(request, response));
+}).listen(port);
