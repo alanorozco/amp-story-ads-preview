@@ -99,9 +99,9 @@ class Editor {
 
     this.preview_ = new AmpStoryAdPreview(this.context, preview);
 
-    this.hydrate_();
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
+    this.hydrate_();
   }
 
   updatePreview_() {
