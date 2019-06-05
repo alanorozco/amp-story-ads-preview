@@ -160,7 +160,7 @@ async function main() {
     await staticBundles();
     await fs.copy('static', 'dist/static');
   }
-  if (!process.env.PROD && !argv.minify) {
+  if (!process.env.PROD) {
     return;
   }
   await step('👶 Minifying', () =>
