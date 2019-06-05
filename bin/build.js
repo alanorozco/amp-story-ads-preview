@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {argv, isRunningFrom} from '../lib/cli';
 import {builtinModules} from 'module';
 import {bundles, routes} from '../src/bundles';
 import {fatal, step} from '../lib/log';
 import {minify as htmlMinify} from 'html-minifier';
+import {isRunningFrom} from '../lib/cli';
 import {minify as jsMinify} from 'terser';
 import {postcssPlugins} from '../postcss.config';
 import {render} from '../lib/context-server';
