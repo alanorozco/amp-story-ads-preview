@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {argv, isRunningFrom} from '../lib/cli';
 import {builtinModules} from 'module';
-import {bundles} from '../src/bundles';
+import {bundles, routes} from '../src/bundles';
 import {fatal, step} from '../lib/log';
-import {isRunningFrom} from '../lib/cli';
-import {minify} from 'terser';
+import {minify as htmlMinify} from 'html-minifier';
+import {minify as jsMinify} from 'terser';
 import {postcssPlugins} from '../postcss.config';
+import {render} from '../lib/context-server';
+import {renderableBundle} from '../lib/renderables';
 import {rollup} from 'rollup';
 import {withoutExtension} from '../lib/path';
 import alias from 'rollup-plugin-alias';
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import fs from 'fs-extra';
+import glob from 'fast-glob';
 import ignore from 'rollup-plugin-ignore';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
@@ -64,10 +68,17 @@ const inputConfig = async name => ({
 
 const outputConfigs = [{format: 'iife'}];
 
-const minifyConfig = {
+const jsMinifyConfig = {
   compress: {unsafe_arrows: true},
   mangle: {toplevel: true, properties: {regex: /_$/}},
   output: {comments: 'some'},
+};
+
+const htmlMinifyConfig = {
+  collapseBooleanAttributes: true,
+  collapseWhitespace: true,
+  sortClassName: true,
+  sortAttributes: true,
 };
 
 const moduleAliases = async name => ({
@@ -90,12 +101,14 @@ async function shakenRuntimeDepsAliases() {
   return aliases;
 }
 
-const withAllBundles = cb => Promise.all(bundles.map(cb));
+const withAllBundles = cb =>
+  Promise.all(Object.keys(bundles).map(name => cb(name, bundles[name])));
 
 async function minifyBundle(filename) {
   const file = dist(filename);
-  const content = (await fs.readFile(file)).toString('utf-8');
-  return fs.outputFile(file, minify(content, minifyConfig).code);
+  const unminified = (await fs.readFile(file)).toString('utf-8');
+  const {code} = jsMinify(unminified, jsMinifyConfig);
+  return fs.outputFile(file, code);
 }
 
 export const build = () =>
@@ -111,12 +124,47 @@ export const build = () =>
     })
   );
 
+export async function freezeRoute(route, bundleModule) {
+  const htmlFilename = `dist/${routeToStaticPath(route)}`;
+  const htmlContent = await render(
+    renderableBundle(bundleModule, {relToDist: '/'})
+  );
+  return fs.writeFile(htmlFilename, await htmlContent);
+}
+
+export const staticBundles = () =>
+  step('❄️ Static freezing', () =>
+    Promise.all(Object.entries(routes).map(entry => freezeRoute(...entry)))
+  );
+
+function routeToStaticPath(route) {
+  route = route.replace(/\/$/, '/index').replace(/^\//, '');
+  if (!route.endsWith('.html')) {
+    return `${route}.html`;
+  }
+  return route;
+}
+
+const minifyHtml = async () =>
+  Promise.all(
+    (await glob('dist/**/*.html')).map(async filename => {
+      const unminified = (await fs.readFile(filename)).toString('utf-8');
+      const minified = htmlMinify(unminified, htmlMinifyConfig);
+      return fs.outputFile(filename, minified);
+    })
+  );
+
 async function main() {
   await build();
+  if (argv.static) {
+    await staticBundles();
+  }
   if (!process.env.PROD) {
     return;
   }
-  await step('👶 Minifying', () => withAllBundles(minifyBundle));
+  await step('👶 Minifying', () =>
+    Promise.all([withAllBundles(minifyBundle), minifyHtml()])
+  );
 }
 
 if (isRunningFrom('build.js')) {

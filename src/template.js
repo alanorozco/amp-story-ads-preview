@@ -38,11 +38,17 @@ export const Scaffold = (
     </body>
   `;
 
-export const Style = ({html}, {css}) => html`
-  <style type="text/css">
-    ${css}
-  </style>
-`;
+export const Style = ({html}, {cssInline}) =>
+  html`
+    <style type="text/css">
+      ${cssInline}
+    </style>
+  `;
+
+export function StyleOptional(context, data) {
+  const {cssInline} = data;
+  return cssInline ? Style(context, data) : undefined;
+}
 
 export const Script = ({html}, {src}) => html`
   <script src="${src}" async></script>
