@@ -49,11 +49,9 @@ const ignoredModules = ['fs-extra', ...builtinModules];
  *  - lib/runtime-deps/NAME-shaken.js - pre-shaken dependency to aid rollup
  */
 const runtimeDeps = async () =>
-  (await fs.readdir('lib/runtime-deps'))
-    .filter(
-      filename => filename.endsWith('.js') && !filename.endsWith('-shaken.js')
-    )
-    .map(filename => `lib/runtime-deps/${withoutExtension(filename)}`);
+  (await glob(['lib/runtime-deps/**/*.js', '!**/*-shaken.js'])).map(
+    filename => `lib/runtime-deps/${withoutExtension(filename)}`
+  );
 
 const inputConfig = async name => ({
   plugins: [
