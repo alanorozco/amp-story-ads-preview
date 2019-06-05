@@ -20,8 +20,7 @@ import {fatal, step} from '../lib/log';
 import {minify as htmlMinify} from 'html-minifier';
 import {minify as jsMinify} from 'terser';
 import {postcssPlugins} from '../postcss.config';
-import {render} from '../lib/context-server';
-import {renderableBundle} from '../lib/renderables';
+import {renderableBundle, renderBundleToString} from '../lib/renderables';
 import {rollup} from 'rollup';
 import {withoutExtension} from '../lib/path';
 import alias from 'rollup-plugin-alias';
@@ -79,14 +78,31 @@ const htmlMinifyConfig = {
   sortAttributes: true,
 };
 
+/** Magic below. */
 const moduleAliases = async name => ({
-  // Magic to connect generic `lib/bundle` to any component.
+  // Connects generic `lib/bundle` to any component.
   '[@component]': src(name),
-
-  // Alias indirect dependencies to shaken dependencies directly.
+  ...(await twoWayLitHtmlAliases()),
   ...(await shakenRuntimeDepsAliases()),
 });
 
+/**
+ * Two-way aliasing hack for universal `lit-html`:
+ * `lit-html` is actually `@popeindustries/lit-html-server`.
+ * `lit-html-browser` is actually `lit-html`.
+ */
+async function twoWayLitHtmlAliases() {
+  const nodeModuleBase = `node_modules/lit-html-browser`;
+  const aliases = {'lit-html': `${nodeModuleBase}/lit-html.js`};
+  for (const directive of await glob(`${nodeModuleBase}/directives`)) {
+    aliases[
+      `lit-html/directives/${withoutExtension(directive)}`
+    ] = `${nodeModuleBase}/directives/${directive}`;
+  }
+  return aliases;
+}
+
+/** Alias indirect browser-only dependencies to shaken dependencies directly. */
 async function shakenRuntimeDepsAliases() {
   const aliases = {};
   for (const module of await runtimeDeps()) {
@@ -124,7 +140,7 @@ export const build = () =>
 
 export async function freezeRoute(route, bundleModule) {
   const htmlFilename = `dist/${routeToStaticPath(route)}`;
-  const htmlContent = await render(
+  const htmlContent = await renderBundleToString(
     renderableBundle(bundleModule, {relToDist: '/'})
   );
   return fs.writeFile(htmlFilename, await htmlContent);

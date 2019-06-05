@@ -648,11 +648,6 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@popeindustries/lit-html-server@1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@popeindustries/lit-html-server/-/lit-html-server-1.2.0.tgz#4d718b35d711aece928f6dcad824b308624f71ce"
-  integrity sha512-4rB5c2OltOqdkqJ+On9bidm055WOXOyHJkZdfORo5dKbetZ41JLKzz/GUnFlqLM2/ihese8Irw2fEHnQUdCMdA==
-
 "@types/estree@0.0.39":
   version "0.0.39"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
@@ -3093,10 +3088,15 @@ levn@^0.3.0, levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-lit-html@1.1.0:
+"lit-html-browser@npm:lit-html":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/lit-html/-/lit-html-1.1.0.tgz#6951fb717fb48fe34d915ae163448a04da321562"
   integrity sha512-ZDJHpJi09yknMpjwPI8fuSl5sUG7+pF+eE5WciFtgyX7zebvgMDBgSLq4knXa7grxM00RkQ7PBd7UZQiruA78Q==
+
+"lit-html@npm:@popeindustries/lit-html-server":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@popeindustries/lit-html-server/-/lit-html-server-1.2.0.tgz#4d718b35d711aece928f6dcad824b308624f71ce"
+  integrity sha512-4rB5c2OltOqdkqJ+On9bidm055WOXOyHJkZdfORo5dKbetZ41JLKzz/GUnFlqLM2/ihese8Irw2fEHnQUdCMdA==
 
 load-json-file@^2.0.0:
   version "2.0.0"

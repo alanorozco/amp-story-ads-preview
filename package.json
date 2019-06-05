@@ -29,7 +29,6 @@
   },
   "dependencies": {
     "@babel/runtime": "7.4.5",
-    "@popeindustries/lit-html-server": "1.2.0",
     "codemirror": "5.47.0",
     "colors": "1.3.3",
     "compression": "1.7.4",
@@ -41,7 +40,8 @@
     "fs-extra": "8.0.1",
     "gen-uid": "0.0.2",
     "ignore-styles": "5.0.1",
-    "lit-html": "1.1.0",
+    "lit-html": "npm:@popeindustries/lit-html-server",
+    "lit-html-browser": "npm:lit-html",
     "minimist": "1.2.0"
   },
   "devDependencies": {

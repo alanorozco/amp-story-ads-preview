@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {html} from 'lit-html';
 
 /**
  * @fileoverview
@@ -22,10 +23,7 @@
  *    https://github.com/popeindustries/lit-html-server#universal-templates
  */
 
-export const Scaffold = (
-  {html},
-  {head, body, title = 'AMP Story Ad Preview'}
-) =>
+export const Scaffold = ({head, body, title = 'AMP Story Ad Preview'}) =>
   html`
     <head>
       <meta charset="utf-8" />
@@ -38,18 +36,15 @@ export const Scaffold = (
     </body>
   `;
 
-export const Style = ({html}, {cssInline}) =>
+export const Style = ({cssInline}) =>
   html`
     <style type="text/css">
       ${cssInline}
     </style>
   `;
 
-export function StyleOptional(context, data) {
-  const {cssInline} = data;
-  return cssInline ? Style(context, data) : undefined;
-}
+export const StyleOptional = data => (data.cssInline ? Style(data) : undefined);
 
-export const Script = ({html}, {src}) => html`
+export const Script = ({src}) => html`
   <script src="${src}" async></script>
 `;
