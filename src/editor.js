@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import './editor.css';
+import './global.css';
 import './monokai.css';
 import {getNamespace} from '../lib/namespace';
 import AmpStoryAdPreview from './amp-story-ad-preview';
