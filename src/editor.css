@@ -12,7 +12,15 @@ body {
   height: 100% !important;
 }
 
+[hidden] {
+  display: none;
+}
+
 @component;
+
+#toggle {
+  flex: 0 0 50px;
+}
 
 .wrap {
   display: flex;
@@ -20,7 +28,7 @@ body {
 }
 
 .wrap > div {
-  flex: 0 0 50%;
+  flex: 1;
 }
 
 .preview {

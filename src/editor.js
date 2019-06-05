@@ -20,6 +20,8 @@ import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
 
+const NOOP = () => {};
+
 const defaultContent = 'src/editor-default.html';
 
 const {id, n, s} = getNamespace('editor');
@@ -31,11 +33,18 @@ export async function data() {
   return {content};
 }
 
-export function render(context, {content}) {
+export function render(
+  context,
+  {content, isHidden = false, handleToggle = NOOP}
+) {
   const {html} = context;
   return html`
     <div id="${id}" class="${n('wrap')}">
-      ${[Textarea(context, {content}), Preview(context)]}
+      ${[
+        Textarea(context, {content, isHidden}),
+        Toggle(context, {handleToggle}),
+        Preview(context),
+      ]}
     </div>
   `;
 }
@@ -46,10 +55,18 @@ function Preview({html}) {
   `;
 }
 
-function Textarea({html}, {content}) {
+function Textarea({html}, {content, isHidden}) {
   return html`
-    <div class="${n('textarea')}">
+    <div class="${n('textarea')}" ?hidden=${isHidden}>
       <textarea>${content}</textarea>
+    </div>
+  `;
+}
+
+function Toggle({html}, {handleToggle}) {
+  return html`
+    <div id="${n('toggle')}" @click=${handleToggle}>
+      X
     </div>
   `;
 }
@@ -57,6 +74,8 @@ function Textarea({html}, {content}) {
 class Editor {
   constructor(context, element) {
     this.context = context;
+    this.isFullPreview_ = false;
+    this.generateTemplate = render;
 
     const textarea = element.querySelector('textarea');
     const preview = element.querySelector(s('.preview'));
@@ -80,12 +99,26 @@ class Editor {
 
     this.preview_ = new AmpStoryAdPreview(this.context, preview);
 
+    this.hydrate_();
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
   }
 
   updatePreview_() {
     this.preview_.update(this.codeMirror_.getValue());
+  }
+
+  hydrate_() {
+    const template = this.generateTemplate(this.context, {
+      isHidden: this.isFullPreview_,
+      handleToggle: this.handleToggle_.bind(this),
+    });
+    this.context.render(template, this.context.win.document.body);
+  }
+
+  handleToggle_() {
+    this.isFullPreview_ = !this.isFullPreview_;
+    this.hydrate_();
   }
 }
 
