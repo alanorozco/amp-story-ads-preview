@@ -113,7 +113,6 @@ export async function build() {
   await step('📋 Copying static assets', () =>
     fs.copy('static', 'dist/static')
   );
-  await step('❄️ Freezing static html', freezeStaticHtml);
   await step('🚧 Building js', () =>
     withAllBundles(async name => {
       const input = 'lib/bundle.js';
@@ -125,6 +124,7 @@ export async function build() {
       );
     })
   );
+  await step('❄️ Freezing static html', freezeStaticHtml);
 }
 
 const freezeStaticHtml = () =>
