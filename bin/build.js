@@ -78,13 +78,21 @@ const htmlMinifyConfig = {
   sortAttributes: true,
 };
 
-/** Magic below. */
+/**
+ * Magic below.
+ * Aliases browser bundles to:
+ * - map generic lib/bundle.js executable to any component module.
+ * - allow universal lit-html.
+ * - allow including browser-only dependencies from node.
+ */
 const moduleAliases = async name => ({
-  // Connects generic `lib/bundle` to any component.
-  '[@component]': src(name),
+  ...genericExecBundleAlias(name),
   ...(await twoWayLitHtmlAliases()),
   ...(await shakenRuntimeDepsAliases()),
 });
+
+/** Connects generic executable `lib/bundle` to any component module.  */
+const genericExecBundleAlias = name => ({'[@component]': src(name)});
 
 /**
  * Two-way aliasing hack for universal `lit-html`:
@@ -102,7 +110,27 @@ async function twoWayLitHtmlAliases() {
   return aliases;
 }
 
-/** Alias indirect browser-only dependencies to shaken dependencies directly. */
+/**
+ * Alias indirect browser-only dependencies to shaken dependencies.
+ *
+ * Browser only dependencies are included indirecly (two-levels deep). With a
+ * module `browser-only` that conditionally imports `browser-only-shaken` like:
+ *
+ * ```
+ *   module.exports = 'window' in this ? require('./browser-only-shaken') : {};
+ * ```
+ *
+ * `browser-only-shaken` imports what we need via esm syntax (for better
+ * rollup tree-shaking):
+ *
+ * ```
+ *   import {whatINeed} from 'browser-only-dependency';
+ *   export {whatIneed};
+ * ```
+ *
+ * So this aliases `browser-only` to `browser-only-shaken` to prevent the
+ * conditional code from leaking.
+ */
 async function shakenRuntimeDepsAliases() {
   const aliases = {};
   for (const module of await runtimeDeps()) {
