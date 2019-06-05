@@ -14,7 +14,6 @@ body {
 
 @component;
 
-
 .wrap {
   display: flex;
   height: 100%;
@@ -22,7 +21,6 @@ body {
 
 .wrap > div {
   flex: 1;
-  position: relative;
   overflow-x: auto;
 }
 
@@ -33,6 +31,7 @@ body {
 [hidden] {
   display: none;
 }
+
 .preview {
   background: #ddd;
 }

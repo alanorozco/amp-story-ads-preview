@@ -15,7 +15,6 @@
  */
 import './editor.css';
 import './monokai.css';
-
 import {getNamespace} from '../lib/namespace';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
@@ -36,7 +35,11 @@ export function render(context, {content}) {
   const {html} = context;
   return html`
     <div id="${id}" class="${n('wrap')}">
-      ${[Textarea(context, {content}), DesktopView(context), Preview(context)]}
+      ${[
+        Textarea(context, {content}),
+        FullPreviewToggle(context),
+        Preview(context),
+      ]}
     </div>
   `;
 }
@@ -47,7 +50,7 @@ function Preview({html}) {
   `;
 }
 
-function DesktopView({html}) {
+function FullPreviewToggle({html}) {
   return html`
     <div class="${n('toggle')}"></div>
   `;
@@ -70,8 +73,8 @@ class Editor {
 
     const toggle = element.querySelector(s('.toggle'));
     toggle.addEventListener('click', () => {
-      const textareadiv = element.querySelector(s('.textarea'));
-      this.toggleDesktop_(textareadiv);
+      const editorContent = element.querySelector(s('.textarea'));
+      this.fullPreview_(editorContent);
     });
     this.codeMirror_ = codemirror.fromTextArea(textarea, {
       mode: 'text/html',
@@ -100,7 +103,7 @@ class Editor {
     this.preview_.update(this.codeMirror_.getValue());
   }
 
-  toggleDesktop_(textarea) {
+  fullPreview_(textarea) {
     if (textarea.hasAttribute('hidden')) {
       textarea.removeAttribute('hidden');
     } else {
