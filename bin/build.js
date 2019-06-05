@@ -158,6 +158,7 @@ async function main() {
   await build();
   if (argv.static) {
     await staticBundles();
+    await fs.copy('static', 'dist/static');
   }
   if (!process.env.PROD) {
     return;
