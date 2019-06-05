@@ -17,7 +17,7 @@ import {builtinModules} from 'module';
 import {bundles, routes} from '../src/bundles';
 import {fatal, step} from '../lib/log';
 import {minify as htmlMinify} from 'html-minifier';
-import {isRunningFrom} from '../lib/cli';
+import {isRunningFrom, argv} from '../lib/cli';
 import {minify as jsMinify} from 'terser';
 import {postcssPlugins} from '../postcss.config';
 import {render} from '../lib/context-server';
@@ -159,7 +159,7 @@ const minifyHtml = async () =>
 
 async function main() {
   await build();
-  if (!process.env.PROD) {
+  if (!argv.minify) {
     return;
   }
   await step('👶 Minifying', () =>
