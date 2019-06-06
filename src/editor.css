@@ -11,7 +11,7 @@
 
 .wrap > div {
   flex: 1;
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .wrap > .toggle {
