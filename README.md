@@ -4,7 +4,7 @@
 
 ## 🌎 Production Build
 
-👉 [Deployed here](https://amp-story-ads-preview.herokuapp.com/).
+👉 [Deployed here](https://amp-story-ads-preview.netlify.com/).
 
 ## 🚧 Building
 

@@ -153,8 +153,11 @@ async function minifyBundle(filename) {
   return fs.outputFile(file, code);
 }
 
-export const build = () =>
-  step('🚧 Building', () =>
+export async function build() {
+  await step('📋 Copying static assets', () =>
+    fs.copy('static', 'dist/static')
+  );
+  await step('🚧 Building js', () =>
     withAllBundles(async name => {
       const input = 'lib/bundle.js';
       const bundle = await rollup({input, ...(await inputConfig(name))});
@@ -165,19 +168,21 @@ export const build = () =>
       );
     })
   );
+  await step('❄️ Freezing static html', freezeStaticHtml);
+}
 
-export async function freezeRoute(route, bundleModule) {
+const freezeStaticHtml = () =>
+  Promise.all(
+    Object.entries(routes).map(entry => freezeStaticHtmlRoute(...entry))
+  );
+
+async function freezeStaticHtmlRoute(route, bundleModule) {
   const htmlFilename = `dist/${routeToStaticPath(route)}`;
   const htmlContent = await renderBundleToString(
     renderableBundle(bundleModule, {relToDist: '/'})
   );
-  return fs.writeFile(htmlFilename, await htmlContent);
+  return fs.writeFile(htmlFilename, htmlContent);
 }
-
-export const staticBundles = () =>
-  step('❄️ Static freezing', () =>
-    Promise.all(Object.entries(routes).map(entry => freezeRoute(...entry)))
-  );
 
 function routeToStaticPath(route) {
   route = route.replace(/\/$/, '/index').replace(/^\//, '');
@@ -198,11 +203,7 @@ const minifyHtml = async () =>
 
 async function main() {
   await build();
-  if (argv.static) {
-    await staticBundles();
-    await fs.copy('static', 'dist/static');
-  }
-  if (!process.env.PROD) {
+  if (!argv.minify) {
     return;
   }
   await step('👶 Minifying', () =>
