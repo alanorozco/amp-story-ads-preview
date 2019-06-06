@@ -16,6 +16,7 @@
 import './editor.css';
 import './monokai.css';
 import {getNamespace} from '../lib/namespace';
+import {html} from 'lit-html';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
@@ -31,22 +32,21 @@ export async function data() {
   return {content};
 }
 
-export function render(context, {content}) {
-  const {html} = context;
+export function renderComponent({content}) {
   return html`
     <div id="${id}" class="${n('wrap')}">
-      ${[Textarea(context, {content}), Preview(context)]}
+      ${[Textarea({content}), Preview()]}
     </div>
   `;
 }
 
-function Preview({html}) {
+function Preview() {
   return html`
     <div class="${n('preview')}"></div>
   `;
 }
 
-function Textarea({html}, {content}) {
+function Textarea({content}) {
   return html`
     <div class="${n('textarea')}">
       <textarea>${content}</textarea>
@@ -55,9 +55,7 @@ function Textarea({html}, {content}) {
 }
 
 class Editor {
-  constructor(context, element) {
-    this.context = context;
-
+  constructor(win, element) {
     const textarea = element.querySelector('textarea');
     const preview = element.querySelector(s('.preview'));
 
@@ -78,7 +76,7 @@ class Editor {
       theme: 'monokai',
     });
 
-    this.preview_ = new AmpStoryAdPreview(this.context, preview);
+    this.preview_ = new AmpStoryAdPreview(win, preview);
 
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());

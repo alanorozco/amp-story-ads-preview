@@ -31,7 +31,8 @@
     "@babel/runtime": "7.4.5",
     "codemirror": "5.47.0",
     "dompurify": "1.0.10",
-    "lit-html": "1.1.0"
+    "lit-html": "npm:@popeindustries/lit-html-server",
+    "lit-html-browser": "npm:lit-html"
   },
   "devDependencies": {
     "@babel/core": "7.4.5",

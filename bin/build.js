@@ -20,8 +20,7 @@ import {fatal, step} from '../lib/log';
 import {minify as htmlMinify} from 'html-minifier';
 import {minify as jsMinify} from 'terser';
 import {postcssPlugins} from '../postcss.config';
-import {render} from '../lib/context-server';
-import {renderableBundle} from '../lib/renderables';
+import {renderableBundle, renderBundleToString} from '../lib/renderables';
 import {rollup} from 'rollup';
 import {withoutExtension} from '../lib/path';
 import alias from 'rollup-plugin-alias';
@@ -79,14 +78,59 @@ const htmlMinifyConfig = {
   sortAttributes: true,
 };
 
+/**
+ * Magic below.
+ * Aliases browser bundles to:
+ * - map generic lib/bundle.js executable to any component module.
+ * - allow universal lit-html.
+ * - allow including browser-only dependencies from node.
+ */
 const moduleAliases = async name => ({
-  // Magic to connect generic `lib/bundle` to any component.
-  '[@component]': src(name),
-
-  // Alias indirect dependencies to shaken dependencies directly.
+  ...genericExecBundleAlias(name),
+  ...(await twoWayLitHtmlAliases()),
   ...(await shakenRuntimeDepsAliases()),
 });
 
+/** Connects generic executable `lib/bundle` to any component module.  */
+const genericExecBundleAlias = name => ({'[@component]': src(name)});
+
+/**
+ * Two-way aliasing hack for universal `lit-html`:
+ * `lit-html` is actually `@popeindustries/lit-html-server`.
+ * `lit-html-browser` is actually `lit-html`.
+ */
+async function twoWayLitHtmlAliases() {
+  const nodeModuleBase = `node_modules/lit-html-browser`;
+  const aliases = {'lit-html': `${nodeModuleBase}/lit-html.js`};
+  for (const directive of await glob(`${nodeModuleBase}/directives`)) {
+    aliases[
+      `lit-html/directives/${withoutExtension(directive)}`
+    ] = `${nodeModuleBase}/directives/${directive}`;
+  }
+  return aliases;
+}
+
+/**
+ * Alias indirect browser-only dependencies to shaken dependencies.
+ *
+ * Browser only dependencies are included indirecly (two-levels deep). With a
+ * module `browser-only` that conditionally imports `browser-only-shaken` like:
+ *
+ * ```
+ *   module.exports = 'window' in this ? require('./browser-only-shaken') : {};
+ * ```
+ *
+ * `browser-only-shaken` imports what we need via esm syntax (for better
+ * rollup tree-shaking):
+ *
+ * ```
+ *   import {whatINeed} from 'browser-only-dependency';
+ *   export {whatIneed};
+ * ```
+ *
+ * So this aliases `browser-only` to `browser-only-shaken` to prevent the
+ * conditional code from leaking.
+ */
 async function shakenRuntimeDepsAliases() {
   const aliases = {};
   for (const module of await runtimeDeps()) {
@@ -134,7 +178,7 @@ const freezeStaticHtml = () =>
 
 async function freezeStaticHtmlRoute(route, bundleModule) {
   const htmlFilename = `dist/${routeToStaticPath(route)}`;
-  const htmlContent = await render(
+  const htmlContent = await renderBundleToString(
     renderableBundle(bundleModule, {relToDist: '/'})
   );
   return fs.writeFile(htmlFilename, htmlContent);
