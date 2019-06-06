@@ -15,14 +15,6 @@
  */
 import {html} from 'lit-html';
 
-/**
- * @fileoverview
- * These are universal templates:
- *  - `html` conforms to `Polymer/lit-html`
- *  - other dependencies injected via `context` according to:
- *    https://github.com/popeindustries/lit-html-server#universal-templates
- */
-
 export const Scaffold = ({head, body, title = 'AMP Story Ad Preview'}) =>
   html`
     <head>
