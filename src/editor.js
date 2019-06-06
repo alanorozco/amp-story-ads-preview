@@ -18,7 +18,7 @@ import './global.css';
 import './monokai.css';
 import {getNamespace} from '../lib/namespace';
 import AmpStoryAdPreview from './amp-story-ad-preview';
-import EditorContent from './editor-content';
+import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
 
 const defaultContent = 'src/editor-default.html';
@@ -69,26 +69,47 @@ class Editor {
   constructor(context, element) {
     this.context = context;
 
-    this.editor_ = new EditorContent(
-      this.context,
-      element.querySelector(s('.textarea'))
-    );
-    this.preview_ = new AmpStoryAdPreview(
-      this.context,
-      element.querySelector(s('.preview'))
-    );
+    const textarea = element.querySelector('textarea');
+    const preview = element.querySelector(s('.preview'));
 
-    this.toggle = element.querySelector(s('.toggle'));
-    this.toggle.addEventListener('click', () => {
-      this.editor_.fullPreview_(this.editor_.element);
+    const toggle = element.querySelector(s('.toggle'));
+    toggle.addEventListener('click', () => {
+      const editorContent = element.querySelector(s('.textarea'));
+      this.fullPreview_(editorContent);
+    });
+    this.codeMirror_ = codemirror.fromTextArea(textarea, {
+      mode: 'text/html',
+      selectionPointer: true,
+      styleActiveLine: true,
+      lineNumbers: false,
+      showCursorWhenSelecting: true,
+      cursorBlinkRate: 300,
+      autoCloseBrackets: true,
+      autoCloseTags: true,
+      gutters: ['CodeMirror-error-markers'],
+      extraKeys: {'Ctrl-Space': 'autocomplete'},
+      hintOptions: {
+        completeSingle: false,
+      },
+      theme: 'monokai',
     });
 
+    this.preview_ = new AmpStoryAdPreview(this.context, preview);
+
     this.updatePreview_();
-    this.editor_.codeMirror_.on('change', () => this.updatePreview_());
+    this.codeMirror_.on('change', () => this.updatePreview_());
   }
 
   updatePreview_() {
-    this.preview_.update(this.editor_.codeMirror_.getValue());
+    this.preview_.update(this.codeMirror_.getValue());
+  }
+
+  fullPreview_(textarea) {
+    if (textarea.hasAttribute('hidden')) {
+      textarea.removeAttribute('hidden');
+    } else {
+      textarea.setAttribute('hidden', '');
+    }
   }
 }
 
