@@ -23,7 +23,6 @@ import {postcssPlugins} from '../postcss.config';
 import {renderableBundle, renderBundleToString} from '../lib/renderables';
 import {rollup} from 'rollup';
 import {withoutExtension} from '../lib/path';
-import alias from 'rollup-plugin-alias';
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import fs from 'fs-extra';
@@ -51,6 +50,10 @@ const runtimeDeps = async () =>
   (await glob(['lib/runtime-deps/**/*.js', '!**/*-shaken.js'])).map(
     filename => `lib/runtime-deps/${withoutExtension(filename)}`
   );
+
+const alias = aliases => ({
+  resolveId: (importee, _) => (importee in aliases ? aliases[importee] : null),
+});
 
 const inputConfig = async name => ({
   plugins: [
@@ -100,12 +103,10 @@ const genericExecBundleAlias = name => ({'[@component]': src(name)});
  * `lit-html-browser` is actually `lit-html`.
  */
 async function twoWayLitHtmlAliases() {
-  const nodeModuleBase = `node_modules/lit-html-browser`;
+  const nodeModuleBase = 'node_modules/lit-html-browser';
   const aliases = {'lit-html': `${nodeModuleBase}/lit-html.js`};
-  for (const directive of await glob(`${nodeModuleBase}/directives`)) {
-    aliases[
-      `lit-html/directives/${withoutExtension(directive)}`
-    ] = `${nodeModuleBase}/directives/${directive}`;
+  for (const directive of await glob(`${nodeModuleBase}/directives/*.js`)) {
+    aliases[`lit-html/directives/${withoutExtension(directive)}`] = directive;
   }
   return aliases;
 }
