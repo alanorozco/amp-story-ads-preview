@@ -13,17 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {htmlMinifyConfig} from './bin/build';
 
-/* eslint-disable import/no-commonjs */
+const local = plugin => `./lib/babel/babel-plugin-${plugin}`;
 
-module.exports = {
+const htmlMinifier = {
+  ...htmlMinifyConfig,
+  // for element props:
+  caseSensitive: true,
+  // override since they should not be used with lit-html:
+  collapseBooleanAttributes: false,
+  sortClassName: false,
+  sortAttributes: false,
+};
+
+export default {
   plugins: [
-    ['@babel/plugin-transform-async-to-generator'],
-    ['@babel/plugin-transform-runtime'],
-    ['@babel/plugin-transform-template-literals', {loose: true}],
+    '@babel/plugin-transform-async-to-generator',
+    '@babel/plugin-transform-runtime',
+    ['template-html-minifier', {htmlMinifier, modules: {'lit-html': ['html']}}],
+    local('normalize-licenses'),
   ],
   presets: [
-    // Browser support policy similar to @ampproject/amphtml's
-    ['@babel/preset-env', {targets: {browsers: 'last 2 years and > 1%'}}],
+    [
+      '@babel/preset-env',
+      {
+        exclude: ['@babel/plugin-transform-template-literals'],
+        // Browser support policy similar to @ampproject/amphtml's
+        targets: {browsers: 'last 2 years and > 1%'},
+      },
+    ],
   ],
 };

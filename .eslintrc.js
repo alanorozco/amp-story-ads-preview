@@ -9,12 +9,17 @@ module.exports = {
     node: true,
   },
   extends: ['plugin:prettier/recommended'],
-  plugins: ['disable', 'import', 'notice', 'sort-imports-es6-autofix'],
+  plugins: ['disable', 'import', 'lit', 'notice', 'sort-imports-es6-autofix'],
   rules: {
     'import/first': 'error',
     'import/newline-after-import': 'error',
     'import/no-commonjs': 'error',
     'import/no-duplicates': 'error',
+    'lit/attribute-value-entities': 'error',
+    'lit/binding-positions': 'error',
+    'lit/no-legacy-template-syntax': 'error',
+    'lit/no-template-arrow': 'error',
+    'lit/no-template-bind': 'error',
     'notice/notice': [
       'error',
       {
@@ -35,9 +40,6 @@ module.exports = {
         ignoreRestSiblings: false,
       },
     ],
-    'sort-imports-es6-autofix/sort-imports-es6': [
-      'error',
-      { ignoreCase: true },
-    ],
+    'sort-imports-es6-autofix/sort-imports-es6': ['error', {ignoreCase: true}],
   },
 };

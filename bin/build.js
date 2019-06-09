@@ -74,7 +74,7 @@ const jsMinifyConfig = {
   output: {comments: 'some'},
 };
 
-const htmlMinifyConfig = {
+export const htmlMinifyConfig = {
   collapseBooleanAttributes: true,
   collapseWhitespace: true,
   sortClassName: true,

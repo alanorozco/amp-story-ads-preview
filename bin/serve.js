@@ -15,7 +15,7 @@
  */
 import {argv} from '../lib/cli';
 import {createServer} from 'http';
-import {log} from '../lib/log';
+import {error, log} from '../lib/log';
 import colors from 'colors/safe';
 import finalhandler from 'finalhandler';
 import serveStatic from 'serve-static';
@@ -30,9 +30,10 @@ function logRequest({method, url}) {
 
 const serveDist = serveStatic('dist');
 
-log(blue(`🌎 Started on http://localhost:${port}/`));
-
 createServer((request, response) => {
-  logRequest(request);
   serveDist(request, response, finalhandler(request, response));
-}).listen(port);
+})
+  .on('error', error)
+  .on('request', logRequest)
+  .on('listening', () => log(blue(`🌎 Started on http://localhost:${port}/`)))
+  .listen(port);
