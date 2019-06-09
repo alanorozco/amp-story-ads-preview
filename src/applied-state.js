@@ -16,6 +16,13 @@
 
 export const appliedState = (applier, state) =>
   new Proxy(state, {
+    deleteProperty(target, prop) {
+      if (!(prop in target)) {
+        return;
+      }
+      delete target[prop];
+      applier(state);
+    },
     set() {
       const isSet = Reflect.set(...arguments);
       if (isSet) {
