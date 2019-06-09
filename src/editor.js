@@ -54,10 +54,6 @@ export const renderComponent = ({
   </div>
 `;
 
-const Preview = () => html`
-  <div class=${n('preview')}></div>
-`;
-
 const ContentToggleButton = ({toggleContent, isContentHidden}) => html`
   <div @click=${toggleContent} class=${n('content-toggle')}>
     ${isContentHidden ? '>' : '<'}
@@ -72,6 +68,10 @@ const Content = ({defaultContent, codemirrorElement, isContentHidden}) => html`
 
 const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
+`;
+
+const Preview = () => html`
+  <div class=${n('preview')}></div>
 `;
 
 class Editor {
