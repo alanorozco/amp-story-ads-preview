@@ -99,84 +99,21 @@ export const appliedState = (applier, state) =>
   });
 
 /**
- * Same as `appliedState`, except:
- *
- * - batches subsequent `renderer` calls into a single `renderer(finalState)`
- * - schedules an intial call to `renderer(initialState)`
- *
- * This is useful for component root rehydration. A component calling from its
- * constructor:
- *
- * ```
- *  this.state_ = renderState(win, state => this.render_(state), {
- *    foo: 'bar',
- *  });
- * ```
- *
- * ...would result in an automatic call to `this.render_({foo: 'bar'})`.
- *
- * Since this batches `renderer` calls until the next available microtask, its
- * safe to modify the state several times within the same frame and assume that
- * `renderer` will only be called once:
- *
- * ```
- *  const state = renderState(win, renderer, {foo: 'bar'});
- *
- *  state_.foo = 'baz';
- *  // now {foo: 'baz'}
- *
- *  state_.myObj = {a: 'one', b: 'two'};
- *  // now {foo: 'baz', {a: 'one', b: 'two'}}
- *
- *  delete state_.myObj.a;
- *  // now {foo: 'baz', {b: 'two'}}
- *
- *  // would transparently result in a single call to:
- *  // rendererer({foo: 'baz', {b: 'two'}})
- * ```
- * If a state property is resolved asynchronously, two calls to `renderer`
- * should be assumed, before and after resolution.
- *
- * ⚠️ Warning ⚠️
- *
- * This is not applied recursively. For deep trees, the following would not
- * result in an updated call to `renderer(state)`:
- *
- * ```
- * const state = renderState(win, renderer, {
- *   foo: {
- *     bar: 'myObsoleteValue',
- *   },
- * });
- *
- * // renderer({foo: {bar: 'myObsoleteValue'}}) is scheduled for call.
- *
- * state.foo.bar = 'myNewValue'; // this does nothing!
- *
- * // renderer(obsoleteState) is called as microtask.
- * ```
- *
- * If `renderer` needs to be called when modifying a deep value, set its
- * modifyable objects explicitly.
- *
- * See notes on recursion in {@see appliedState} for examples.
+ * Creates an applier for `appliedState` that subsequent `applier` calls into a
+ * single `applier(finalState)`.
  *
  * @param {!Window} win
- * @param {function(Object)} renderer
- * @param {!Object} initialState
+ * @param {function(Object)} applier
  */
-export function renderState(win, renderer, initialState) {
-  renderer.__microTask = renderer.__microTask || null;
-  const applyRender = state => {
-    if (renderer.__microTask) {
-      win.clearTimeout(renderer.__microTask);
+export function batchedApplier(win, applier) {
+  applier.__applyMicroTask = applier.__applyMicroTask || null;
+  return state => {
+    if (applier.__applyMicroTask) {
+      win.clearTimeout(applier.__applyMicroTask);
     }
-    renderer.__microTask = win.setTimeout(() => {
-      renderer(state);
-      delete renderer.__microTask; // GC
+    applier.__applyMicroTask = win.setTimeout(() => {
+      applier(state);
+      delete applier.__applyMicroTask; // GC
     }, 0);
   };
-  const state = appliedState(applyRender, initialState);
-  applyRender(state);
-  return state;
 }
