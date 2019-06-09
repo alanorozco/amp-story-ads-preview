@@ -17,6 +17,7 @@
     "execMap": {
       "js": "yarn x"
     },
+    "ext": "css js html",
     "script": "bin/serve.js",
     "watch": [
       "bin",
@@ -24,7 +25,7 @@
       "src"
     ],
     "events": {
-      "restart": "yarn build"
+      "restart": "yarn run --silent build"
     }
   },
   "dependencies": {
