@@ -15,10 +15,11 @@
  */
 import './editor.css';
 import './monokai.css';
-import {appliedState} from './applied-state';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
+import {expectAppendMutate} from './expect-append-mutate';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
+import {renderState} from './applied-state';
 import {until} from 'lit-html/directives/until';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
@@ -49,8 +50,8 @@ export const renderComponent = ({
 `;
 
 const ContentToggleButton = ({toggleContent, isContentHidden}) => html`
-  <div @click=${toggleContent} class=${n('content-toggle')}>
-    ${isContentHidden ? '>' : '<'}
+  <div class=${n('content-toggle')} @click=${toggleContent}>
+    <div>${isContentHidden ? '>' : '<'}</div>
   </div>
 `;
 
@@ -82,17 +83,7 @@ class Editor {
       resolve: codemirrorElementResolve,
     } = new Deferred();
 
-    this.state_ = appliedState(() => this.render_(), {
-      defaultContent,
-      isContentHidden: false,
-      elements: {
-        preview,
-        codemirror: codemirrorElementPromise,
-      },
-      toggleContent: () => {
-        this.state_.isContentHidden = !this.state_.isContentHidden;
-      },
-    });
+    this.codemirrorElementPromise_ = codemirrorElementPromise;
 
     this.codemirror_ = new codemirror(codemirrorElementResolve, {
       value: defaultContent,
@@ -114,22 +105,36 @@ class Editor {
 
     this.preview_ = new AmpStoryAdPreview(win, preview);
 
-    this.render_();
-    this.updatePreview_();
-
-    codemirrorElementPromise.then(() => {
-      delete this.state_.defaultContent; // no longer needed
-      this.codemirror_.refresh();
-      this.codemirror_.on('change', () => this.updatePreview_());
+    this.state_ = renderState(win, state => this.render_(state), {
+      elements: {
+        preview,
+        codemirror: codemirrorElementPromise,
+      },
+      defaultContent,
+      isContentHidden: false,
+      toggleContent: () => {
+        this.state_.isContentHidden = !this.state_.isContentHidden;
+      },
     });
+
+    this.updatePreview_();
+    this.setupCodeMirror_();
+  }
+
+  async setupCodeMirror_() {
+    const element = await this.codemirrorElementPromise_;
+    delete this.state_.defaultContent; // no longer needed
+    await expectAppendMutate(this.parent_, element);
+    this.codemirror_.refresh();
+    this.codemirror_.on('change', () => this.updatePreview_());
   }
 
   updatePreview_() {
     this.preview_.update(this.codemirror_.getValue());
   }
 
-  render_() {
-    render(renderComponent(this.state_), this.parent_);
+  render_(state) {
+    render(renderComponent(state), this.parent_);
   }
 }
 
