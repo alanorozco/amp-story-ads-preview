@@ -85,7 +85,10 @@ class Editor {
     this.state_ = appliedState(() => this.render_(), {
       defaultContent,
       isContentHidden: false,
-      elements: {codemirror: codemirrorElementPromise, preview},
+      elements: {
+        preview,
+        codemirror: codemirrorElementPromise,
+      },
       toggleContent: () => {
         this.state_.isContentHidden = !this.state_.isContentHidden;
       },
