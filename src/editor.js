@@ -15,8 +15,11 @@
  */
 import './editor.css';
 import './monokai.css';
+import {appliedState} from './applied-state';
+import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
-import {html} from 'lit-html';
+import {html, render} from 'lit-html';
+import {until} from 'lit-html/directives/until';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
@@ -27,39 +30,95 @@ const {id, n, s} = getNamespace('editor');
 
 export {id};
 
-export async function data() {
-  const content = (await fs.readFile(defaultContent)).toString('utf-8');
-  return {content};
-}
+const attachedOnRuntime = new Promise(() => {});
 
-export function renderComponent({content}) {
-  return html`
-    <div id="${id}" class="${n('wrap')}">
-      ${[Textarea({content}), Preview()]}
-    </div>
-  `;
-}
+export const data = async () => ({
+  isContentHidden: false,
+  defaultContent: (await fs.readFile(defaultContent)).toString('utf-8'),
+  codemirrorElement: attachedOnRuntime,
+  previewElement: attachedOnRuntime,
+  toggleContent: null, // event handler
+});
 
-function Preview() {
-  return html`
-    <div class="${n('preview')}"></div>
-  `;
-}
+export const renderComponent = ({
+  defaultContent,
+  isContentHidden,
+  codemirrorElement,
+  previewElement,
+  toggleContent,
+}) => html`
+  <div id=${id} class=${n('wrap')}>
+    ${Content({defaultContent, codemirrorElement, isContentHidden})}
+    ${ContentToggleButton({toggleContent, isContentHidden})}
+    ${until(previewElement, Preview())}
+  </div>
+`;
 
-function Textarea({content}) {
-  return html`
-    <div class="${n('textarea')}">
-      <textarea>${content}</textarea>
-    </div>
+const Preview = () => html`
+  <div class=${n('preview')}></div>
+`;
+
+const ContentToggleButton = ({toggleContent, isContentHidden}) => html`
+  <div @click=${toggleContent} class=${n('content-toggle')}>
+    ${isContentHidden ? '>' : '<'}
+  </div>
+`;
+
+const Content = ({defaultContent, codemirrorElement, isContentHidden}) => html`
+  <div class=${n('content')} ?hidden=${isContentHidden}>
+    ${until(codemirrorElement, Textarea({content: defaultContent}))}
+  </div>
+`;
+
+const Textarea = ({content}) =>
+  html`
+    <textarea>${content}</textarea>
   `;
-}
 
 class Editor {
   constructor(win, element) {
-    const textarea = element.querySelector('textarea');
-    const preview = element.querySelector(s('.preview'));
+    this.win = win;
 
-    this.codeMirror_ = codemirror.fromTextArea(textarea, {
+    this.parent_ = element.parentElement;
+
+    const previewElement = element.querySelector(s('.preview'));
+    const defaultContent = element.querySelector('textarea').value;
+
+    const {
+      promise: codemirrorElement,
+      resolve: codemirrorElementResolve,
+    } = new Deferred();
+
+    this.state_ = appliedState(() => this.render_(), {
+      defaultContent,
+      previewElement,
+      codemirrorElement,
+      isContentHidden: false,
+      toggleContent: () => {
+        this.state_.isContentHidden = !this.state_.isContentHidden;
+      },
+    });
+
+    this.codemirror_ = this.initCodeMirror_(
+      codemirrorElementResolve,
+      defaultContent
+    );
+
+    this.preview_ = new AmpStoryAdPreview(win, previewElement);
+
+    this.render_();
+
+    codemirrorElement.then(() => {
+      this.updatePreview_();
+      this.codemirror_.refresh();
+      this.codemirror_.on('change', () => this.updatePreview_());
+      this.state_.defaultContent = null; // we don't need this anymore.
+    });
+  }
+
+  initCodeMirror_(elementResolve, value) {
+    return new codemirror(elementResolve, {
+      value,
       mode: 'text/html',
       selectionPointer: true,
       styleActiveLine: true,
@@ -75,15 +134,14 @@ class Editor {
       },
       theme: 'monokai',
     });
-
-    this.preview_ = new AmpStoryAdPreview(win, preview);
-
-    this.updatePreview_();
-    this.codeMirror_.on('change', () => this.updatePreview_());
   }
 
   updatePreview_() {
-    this.preview_.update(this.codeMirror_.getValue());
+    this.preview_.update(this.codemirror_.getValue());
+  }
+
+  render_() {
+    render(renderComponent(this.state_), this.parent_);
   }
 }
 
