@@ -24,7 +24,7 @@ import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
 
-const defaultContent = 'src/editor-default.html';
+const defaultContentPath = 'src/editor-default.html';
 
 const {id, n, s} = getNamespace('editor');
 
@@ -34,7 +34,7 @@ const attachedOnRuntime = new Promise(() => {});
 
 export const data = async () => ({
   isContentHidden: false,
-  defaultContent: (await fs.readFile(defaultContent)).toString('utf-8'),
+  defaultContent: (await fs.readFile(defaultContentPath)).toString('utf-8'),
   codemirrorElement: attachedOnRuntime,
   previewElement: attachedOnRuntime,
   toggleContent: null, // event handler
@@ -99,26 +99,8 @@ class Editor {
       },
     });
 
-    this.codemirror_ = this.initCodeMirror_(
-      codemirrorElementResolve,
-      defaultContent
-    );
-
-    this.preview_ = new AmpStoryAdPreview(win, previewElement);
-
-    this.render_();
-
-    codemirrorElement.then(() => {
-      this.updatePreview_();
-      this.codemirror_.refresh();
-      this.codemirror_.on('change', () => this.updatePreview_());
-      this.state_.defaultContent = null; // we don't need this anymore.
-    });
-  }
-
-  initCodeMirror_(elementResolve, value) {
-    return new codemirror(elementResolve, {
-      value,
+    this.codemirror_ = new codemirror(codemirrorElementResolve, {
+      value: defaultContent,
       mode: 'text/html',
       selectionPointer: true,
       styleActiveLine: true,
@@ -133,6 +115,17 @@ class Editor {
         completeSingle: false,
       },
       theme: 'monokai',
+    });
+
+    this.preview_ = new AmpStoryAdPreview(win, previewElement);
+
+    this.render_();
+
+    codemirrorElement.then(() => {
+      delete this.state_.defaultContent; // no longer needed
+      this.updatePreview_();
+      this.codemirror_.refresh();
+      this.codemirror_.on('change', () => this.updatePreview_());
     });
   }
 
