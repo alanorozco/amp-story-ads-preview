@@ -70,10 +70,9 @@ const Content = ({defaultContent, codemirrorElement, isContentHidden}) => html`
   </div>
 `;
 
-const Textarea = ({content}) =>
-  html`
-    <textarea>${content}</textarea>
-  `;
+const Textarea = ({content}) => html`
+  <textarea>${content}</textarea>
+`;
 
 class Editor {
   constructor(win, element) {
