@@ -30,27 +30,21 @@ const {id, n, s} = getNamespace('editor');
 
 export {id};
 
-const attachedOnRuntime = new Promise(() => {});
-
 export const data = async () => ({
   isContentHidden: false,
   defaultContent: (await fs.readFile(defaultContentPath)).toString('utf-8'),
-  codemirrorElement: attachedOnRuntime,
-  previewElement: attachedOnRuntime,
-  toggleContent: null, // event handler
 });
 
 export const renderComponent = ({
   defaultContent,
   isContentHidden,
-  codemirrorElement,
-  previewElement,
-  toggleContent,
+  toggleContent = null,
+  elements: {preview, codemirror},
 }) => html`
   <div id=${id} class=${n('wrap')}>
-    ${Content({defaultContent, codemirrorElement, isContentHidden})}
+    ${Content({defaultContent, isContentHidden, codemirror})}
     ${ContentToggleButton({toggleContent, isContentHidden})}
-    ${until(previewElement, Preview())}
+    ${until(preview, Preview())}
   </div>
 `;
 
@@ -60,14 +54,14 @@ const ContentToggleButton = ({toggleContent, isContentHidden}) => html`
   </div>
 `;
 
-const Content = ({defaultContent, codemirrorElement, isContentHidden}) => html`
+const Content = ({defaultContent, codemirror, isContentHidden}) => html`
   <div class=${n('content')} ?hidden=${isContentHidden}>
-    ${until(codemirrorElement, Textarea({content: defaultContent}))}
+    ${until(codemirror, DefaultContent({defaultContent}))}
   </div>
 `;
 
-const Textarea = ({content}) => html`
-  <textarea>${content}</textarea>
+const DefaultContent = ({defaultContent}) => html`
+  <textarea class=${n('default-content')}>${defaultContent}</textarea>
 `;
 
 const Preview = () => html`
@@ -80,19 +74,18 @@ class Editor {
 
     this.parent_ = element.parentElement;
 
-    const previewElement = element.querySelector(s('.preview'));
-    const defaultContent = element.querySelector('textarea').value;
+    const defaultContent = element.querySelector(s('.default-content')).value;
+    const preview = element.querySelector(s('.preview'));
 
     const {
-      promise: codemirrorElement,
+      promise: codemirrorElementPromise,
       resolve: codemirrorElementResolve,
     } = new Deferred();
 
     this.state_ = appliedState(() => this.render_(), {
       defaultContent,
-      previewElement,
-      codemirrorElement,
       isContentHidden: false,
+      elements: {codemirror: codemirrorElementPromise, preview},
       toggleContent: () => {
         this.state_.isContentHidden = !this.state_.isContentHidden;
       },
@@ -116,13 +109,13 @@ class Editor {
       theme: 'monokai',
     });
 
-    this.preview_ = new AmpStoryAdPreview(win, previewElement);
+    this.preview_ = new AmpStoryAdPreview(win, preview);
 
     this.render_();
+    this.updatePreview_();
 
-    codemirrorElement.then(() => {
+    codemirrorElementPromise.then(() => {
       delete this.state_.defaultContent; // no longer needed
-      this.updatePreview_();
       this.codemirror_.refresh();
       this.codemirror_.on('change', () => this.updatePreview_());
     });
