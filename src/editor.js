@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import './amp-story-ad-preview.css';
 import './editor.css';
 import './monokai.css';
 import {getNamespace} from '../lib/namespace';
