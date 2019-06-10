@@ -79,7 +79,6 @@ export const renderEditor = ({
     <div class=${n('content')} ?hidden=${isFullPreview}>
       ${until(codemirrorElement || DefaultContent({defaultContent}))}
     </div>
-    ${renderEditor({codemirrorElement, defaultContent, hidden: isFullPreview})}
     <div class="-flex-center ${n('preview-wrap')}">
       ${PreviewToolbar({
         toggleFullPreview,
