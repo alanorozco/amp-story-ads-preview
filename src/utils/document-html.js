@@ -24,7 +24,11 @@ const emptyAttrRe = /\s[a-z_:][-a-z0-9_:.]+(\s|>$)/gim;
  *   Tag containing its inner html but NOT its closing tag.
  *   Like (no closing </div>):
  *   ```
- *   <div class="my-div">myHtml<span>mySpan</span>
+ *   <div class="my-div">
+ *     myHtml
+ *     <span>
+ *       mySpan
+ *     </span>
  *   ```
  * @param {Element} element element where the attributes are set
  * @return {string} innerHtml/textContent as parsed
@@ -71,7 +75,8 @@ function parseSetAttributes(tagWithInnerHtml, element) {
  *   ```
  *   This can take textContent for inline scripts, (again, no closing </script>)
  *   ```
- *   <script type="application/json">{"myObj": {"foo": "bar"}}
+ *   <script type="application/json">
+ *     {"myObj": {"foo": "bar"}}
  *   ```
  *   ...would then return the equivalent result of:
  *   ```
