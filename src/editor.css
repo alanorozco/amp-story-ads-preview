@@ -19,6 +19,13 @@ body {
   flex: 1;
 }
 
+iframe {
+  /* TODO: move */
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 @component;
 
 .wrap {
@@ -28,6 +35,7 @@ body {
 
 .wrap > div {
   flex: 1;
+  overflow: hidden;
 }
 
 .content-toggle {

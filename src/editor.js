@@ -27,11 +27,12 @@ import {
   viewportIdFull,
   ViewportSelector,
 } from './viewport';
+import {wrapEventHandler} from './utils/wrap-event-handler';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
 
-const defaultContentPath = 'src/editor-default.html';
+const defaultContentPath = 'static/stories/pets/index.html';
 
 const {id, n, s} = getNamespace('editor');
 
@@ -197,13 +198,12 @@ class Editor {
       codemirrorElement,
       viewportId: viewportIdDefault,
       isFullPreview: false,
-      toggleFullPreview: this.wrapEventHandler_(this.toggleFullPreview_),
-      selectViewport: this.wrapEventHandler_(this.selectViewport_),
+      toggleFullPreview: wrapEventHandler(e => this.toggleFullPreview_(e)),
+      selectViewport: wrapEventHandler(e => this.selectViewport_(e)),
     });
 
-    batchedRender(this.state_);
+    batchedRender();
 
-    this.updatePreview_();
     this.refreshCodeMirror_();
 
     this.codemirror_.on('change', () => this.updatePreview_());
@@ -219,27 +219,7 @@ class Editor {
     // attached in order to refresh and attach events.
     await untilAttached(this.parent_, this.state_.codemirrorElement);
     this.codemirror_.refresh();
-  }
-
-  /**
-   * @param {function(Event)} handler
-   * @param {Object=} opts - (optional)
-   * @param {boolean=} opts.capture - (optional)
-   * @param {boolean=} opts.passive - (optional)
-   * @param {boolean=} opts.once - (optional)
-   * @return {!EventHandler}
-   *    EventHandler that executes `handler` bound to this class's context
-   *    according to `opts`.
-   * @private
-   */
-  wrapEventHandler_(handler, opts = {}) {
-    const bound = handler.bind(this);
-    return {
-      ...opts,
-      handleEvent(e) {
-        return bound(e);
-      },
-    };
+    this.updatePreview_();
   }
 
   updatePreview_() {
