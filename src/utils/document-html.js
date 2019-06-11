@@ -158,7 +158,7 @@ export function setDocumentHtml(doc, html) {
 /**
  * Reloads an iframe and updates its contents with an HTML document string
  * afterwards.
- * This is useful to reset an empty iframe document with new contents.
+ * This is useful to reset an iframe with new contents taken from a string.
  * @param {HTMLIFrameElement} iframe
  * @param {string} html
  * @return {!Promise<Document>}
