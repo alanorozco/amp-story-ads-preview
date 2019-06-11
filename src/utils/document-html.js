@@ -139,6 +139,8 @@ export function setDocumentHtml(doc, html) {
  * This is useful to reset an empty iframe document with new contents.
  * @param {HTMLIFrameElement} iframe
  * @param {string} html
+ * @return {!Promise<Document>}
+ *    Resolves with the iframe's document once updated.
  */
 export function restartIframeWithDocument(iframe, html) {
   const {promise, resolve} = new Deferred();
