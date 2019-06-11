@@ -77,6 +77,13 @@ export const renderEditor = ({
 }) => html`
   <div id=${id} class=${n('wrap')}>
     <div class=${n('content')} ?hidden=${isFullPreview}>
+      <!--
+        Default Content to load on the server and then populate codemirror on
+        the client.
+        codemirrorElement is a promise resolved by codemirror(), hence the
+        call to the until directive. Once resolved, defaultContent can be empty
+        since already populated.
+      -->
       ${until(codemirrorElement || DefaultContent({defaultContent}))}
     </div>
     <div class="-flex-center ${n('preview-wrap')}">
@@ -86,7 +93,11 @@ export const renderEditor = ({
         selectViewport,
         viewportId,
       })}
-      ${Viewport({viewportId, previewElement: previewElement || Preview()})}
+      ${Viewport({
+        viewportId,
+        // Empty preview for SSR and inserted as data on the client.
+        previewElement: previewElement || EmptyPreview(),
+      })}
     </div>
   </div>
 `;
@@ -130,7 +141,7 @@ const FullPreviewToggleButton = ({isFullPreview, toggleFullPreview}) => html`
  * This is then managed independently by AmpStoryAdPreview after hydration.
  * @return {lit-html/TemplateResult}
  */
-const Preview = () => html`
+const EmptyPreview = () => html`
   <div class=${n('preview')}></div>
 `;
 
