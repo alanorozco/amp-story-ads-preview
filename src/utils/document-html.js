@@ -61,9 +61,26 @@ function parseSetAttributes(tagWithInnerHtml, element) {
  *   ```
  *   <script src="foo.js">
  *   ```
+ *   ...would then return the equivalent result of:
+ *   ```
+ *   {
+ *     const script = doc.createElement('script');
+ *     script.setAttribute('src', 'foo.js');
+ *     return script;
+ *   }
+ *   ```
  *   This can take textContent for inline scripts, (again, no closing </script>)
  *   ```
  *   <script type="application/json">{"myObj": {"foo": "bar"}}
+ *   ```
+ *   ...would then return the equivalent result of:
+ *   ```
+ *   {
+ *     const script = doc.createElement('script');
+ *     script.setAttribute('application/json', '');
+ *     script.textContent = '{"myObj": {"foo": "bar"}}';
+ *     return script;
+ *   }
  *   ```
  * @return {Element} a script element
  */
