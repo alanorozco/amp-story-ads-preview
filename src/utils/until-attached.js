@@ -15,27 +15,44 @@
  */
 import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
 
-export async function untilAttached(expectedParent, elementPromise) {
-  const expected = await elementPromise;
+function insideTree(parent, expected) {
+  if (typeof expected == 'string') {
+    return parent.querySelector(expected);
+  }
 
-  // If already in the tree, don't initiate a MutationObserver.
   let {parentElement} = expected;
   while (parentElement) {
-    if (parentElement == expectedParent) {
+    if (parentElement == parent) {
       return expected;
     }
     parentElement = parentElement.parentElement;
   }
+}
+
+const isExpected = (candidate, expected) =>
+  typeof expected == 'string'
+    ? candidate.matches(expected)
+    : candidate == expected;
+
+export async function untilAttached(expectedParent, elementPromiseOrSelector) {
+  const expected = await elementPromiseOrSelector;
+
+  // If already in the tree, don't initiate a MutationObserver.
+  const foundInTree = insideTree(expectedParent, expected);
+  if (foundInTree) {
+    return Promise.resolve(foundInTree);
+  }
 
   // Otherwise wait for attachment.
   const {resolve, promise} = new Deferred();
+
   let observer = new MutationObserver(mutations => {
     for (const {addedNodes} of mutations) {
       for (const node of addedNodes) {
         if (node.nodeType != Node.ELEMENT_NODE) {
           continue;
         }
-        if (node != expected) {
+        if (!isExpected(node, expected)) {
           continue;
         }
         observer.disconnect();
@@ -45,6 +62,8 @@ export async function untilAttached(expectedParent, elementPromise) {
       }
     }
   });
+
   observer.observe(expectedParent, {childList: true, subtree: true});
+
   return promise;
 }
