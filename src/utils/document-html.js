@@ -24,7 +24,15 @@ const emptyAttrRe = /\s[a-z_:][-a-z0-9_:.]+(\s|>$)/gim;
  *   Tag containing its inner html but NOT its closing tag.
  *   Like (no closing </div>):
  *   ```
+<<<<<<< HEAD
  *   <div class="my-div">myHtml<span>mySpan</span>
+=======
+ *   <div class="my-div">
+ *     myHtml
+ *     <span>
+ *       mySpan
+ *     </span>
+>>>>>>> iframe
  *   ```
  * @param {Element} element element where the attributes are set
  * @return {string} innerHtml/textContent as parsed
@@ -61,9 +69,27 @@ function parseSetAttributes(tagWithInnerHtml, element) {
  *   ```
  *   <script src="foo.js">
  *   ```
+ *   ...would then return the equivalent result of:
+ *   ```
+ *   {
+ *     const script = doc.createElement('script');
+ *     script.setAttribute('src', 'foo.js');
+ *     return script;
+ *   }
+ *   ```
  *   This can take textContent for inline scripts, (again, no closing </script>)
  *   ```
- *   <script type="application/json">{"myObj": {"foo": "bar"}}
+ *   <script type="application/json">
+ *     {"myObj": {"foo": "bar"}}
+ *   ```
+ *   ...would then return the equivalent result of:
+ *   ```
+ *   {
+ *     const script = doc.createElement('script');
+ *     script.setAttribute('application/json', '');
+ *     script.textContent = '{"myObj": {"foo": "bar"}}';
+ *     return script;
+ *   }
  *   ```
  * @return {Element} a script element
  */
@@ -136,7 +162,7 @@ export function setDocumentHtml(doc, html) {
 /**
  * Reloads an iframe and updates its contents with an HTML document string
  * afterwards.
- * This is useful to reset an empty iframe document with new contents.
+ * This is useful to reset an iframe with new contents taken from a string.
  * @param {HTMLIFrameElement} iframe
  * @param {string} html
  * @return {!Promise<Document>}
