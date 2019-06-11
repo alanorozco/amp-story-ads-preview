@@ -31,7 +31,11 @@ const defaultIframeSandbox = [
   'allow-top-navigation',
 ].join(' ');
 
-function Wrap() {
+/**
+ * Renders a wrapped iframe that loads an empty document.
+ * @return {lit-html/TemplateResult}
+ */
+function WrappedIframe() {
   return html`
     <div class="${n('wrap')}">
       <iframe
@@ -56,9 +60,15 @@ export default class AmpStoryAdPreview {
 
     this.iframePromise_ = untilAttached(this.element, 'iframe');
 
-    render(Wrap(), this.element);
+    render(WrappedIframe(), this.element);
   }
 
+  /**
+   * Updates the current preview with full document HTML.
+   * @param {string} dirty Dirty document HTML.
+   * @return {!Promise<Document>}
+   *    Resolves with the preview iframe's document once updated.
+   */
   async update(dirty) {
     // TODO: purifyHtml() from ampproject/src/purifier
     return restartIframeWithDocument(await this.iframePromise_, dirty);

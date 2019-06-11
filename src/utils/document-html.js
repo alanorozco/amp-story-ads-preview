@@ -18,6 +18,17 @@ import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
 const valueAttrRe = /[a-z_:][-a-z0-9_:.]+=("|')?[^"'\s]+("|')?/gim;
 const emptyAttrRe = /\s[a-z_:][-a-z0-9_:.]+(\s|>$)/gim;
 
+/**
+ * Parses attributes from an HTML string, and sets them into an element.
+ * @param {string} tagWithInnerHtml
+ *   Tag containing its inner html but NOT its closing tag.
+ *   Like (no closing </div>):
+ *   ```
+ *   <div class="my-div">myHtml<span>mySpan</span>
+ *   ```
+ * @param {Element} element element where the attributes are set
+ * @return {string} innerHtml/textContent as parsed
+ */
 function parseSetAttributes(tagWithInnerHtml, element) {
   const startTagEnd = Math.max(0, tagWithInnerHtml.indexOf('>'));
   const startTag = tagWithInnerHtml.substring(0, startTagEnd);
@@ -41,7 +52,22 @@ function parseSetAttributes(tagWithInnerHtml, element) {
   return innerHtml;
 }
 
-function scriptElementFromStartTag(doc, tagWithTextContent) {
+/**
+ *
+ * @param {Document} doc
+ * @param {string} tagWithTextContent
+ *   Tag containing its inner html but NOT its closing tag.
+ *   Like (no closing </script>):
+ *   ```
+ *   <script src="foo.js">
+ *   ```
+ *   This can take textContent for inline scripts, (again, no closing </script>)
+ *   ```
+ *   <script type="application/json">{"myObj": {"foo": "bar"}}
+ *   ```
+ * @return {Element} a script element
+ */
+function scriptElementFromTag(doc, tagWithTextContent) {
   const script = doc.createElement('script');
   script.textContent = parseSetAttributes(tagWithTextContent, script);
   return script;
@@ -62,7 +88,7 @@ function setElementHtml(doc, element, startTagWithInnerHtml) {
     /<script[^>]+src[^>]+>[\s\S]*<\/script>/gim,
     scriptTags => {
       for (const startTagWithTextContent of scriptTags.split('</script>')) {
-        const element = scriptElementFromStartTag(doc, startTagWithTextContent);
+        const element = scriptElementFromTag(doc, startTagWithTextContent);
         scriptsFragment = scriptsFragment || doc.createDocumentFragment();
         scriptsFragment.appendChild(element);
       }
@@ -75,6 +101,14 @@ function setElementHtml(doc, element, startTagWithInnerHtml) {
   }
 }
 
+/**
+ *
+ * @param {string} html
+ * @return {Array<string>}
+ *  - First element is the `<head>` and its innerHTML (no closing tag).
+ *  - Second element is the `<body>` and its innerHTML (no closing tag).
+ * (tip: useful for destructuring) `const [head, body] = splitHeadBody(html)`
+ */
 function splitHeadBody(html) {
   const [headWithLeadingNoise, bodyWithTrailingNoise] = html.split('</head>');
   const head = headWithLeadingNoise.replace(/^[\s\S]*<head/im, '<head');
@@ -82,12 +116,30 @@ function splitHeadBody(html) {
   return [head, body];
 }
 
+/**
+ * Sets a document's content from a full HTML string.
+ *
+ * This works as expected with <script> tags, whereas just setting innerHTML
+ * would break.
+ *
+ * This also splits head and body content from the HTML string so that they
+ * can be written properly.
+ * @param {Document} doc
+ * @param {string} html
+ */
 export function setDocumentHtml(doc, html) {
   const [head, body] = splitHeadBody(html);
   setElementHtml(doc, doc.head, head);
   setElementHtml(doc, doc.body, body);
 }
 
+/**
+ * Reloads an iframe and updates its contents with an HTML document string
+ * afterwards.
+ * This is useful to reset an empty iframe document with new contents.
+ * @param {HTMLIFrameElement} iframe
+ * @param {string} html
+ */
 export function restartIframeWithDocument(iframe, html) {
   const {promise, resolve} = new Deferred();
   const setContent = () => {
