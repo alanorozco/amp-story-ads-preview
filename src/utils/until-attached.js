@@ -25,12 +25,8 @@ function insideTree(parent, elementOrSelector) {
     return parent.querySelector(elementOrSelector);
   }
 
-  let {parentElement} = elementOrSelector;
-  while (parentElement) {
-    if (parentElement == parent) {
-      return elementOrSelector;
-    }
-    parentElement = parentElement.parentElement;
+  if (parent.contains(elementOrSelector)) {
+    return elementOrSelector;
   }
 
   return null;
