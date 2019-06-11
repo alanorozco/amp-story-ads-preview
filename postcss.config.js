@@ -15,15 +15,15 @@
  */
 import {argv} from './lib/cli';
 import atImport from 'postcss-import';
-import component from './lib/postcss/component';
 import cssnano from 'cssnano';
+import internalNamespace from './lib/postcss/internal-namespace';
 import vars from 'postcss-simple-vars';
 
 const whenMinified = plugin => (argv.minify ? [plugin()] : []);
 
 export const postcssPlugins = () => [
   atImport({from: 'src'}),
-  component(),
+  internalNamespace(),
   vars(),
   ...whenMinified(cssnano),
 ];
