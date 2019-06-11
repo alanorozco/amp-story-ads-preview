@@ -101,7 +101,6 @@ class Editor {
     const previewElement = element.querySelector(s('.preview'));
 
     this.win = win;
-    this.element = element;
 
     this.parent_ = element.parentElement;
 
