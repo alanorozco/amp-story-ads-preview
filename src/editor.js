@@ -15,51 +15,103 @@
  */
 import './editor.css';
 import './monokai.css';
+import {appliedState, batchedApplier} from './utils/applied-state';
+import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
-import {html} from 'lit-html';
+import {html, render} from 'lit-html';
+import {until} from 'lit-html/directives/until';
+import {untilAttached} from './utils/until-attached';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
 
 const defaultContent = 'src/editor-default.html';
 
-const {id, n, s} = getNamespace('editor');
+const {id, g, n, s} = getNamespace('editor');
 
-export {id};
+/** @return {Promise<{content: string}>} */
+const staticServerData = async () => ({
+  content: (await fs.readFile(defaultContent)).toString('utf-8'),
+});
 
-export async function data() {
-  const content = (await fs.readFile(defaultContent)).toString('utf-8');
-  return {content};
-}
-
-export function renderComponent({content}) {
-  return html`
-    <div id="${id}" class="${n('wrap')}">
-      ${[Textarea({content}), Preview()]}
+/**
+ * Renders Live Editor.
+ * @param {Object} data
+ *    All properties optional, see each one for defaults and exclusion effects.
+ * @param {Promise<Element>=} data.codeMirrorElement
+ *    Promise to include editor content element once rendered by codemirror.
+ *    Defaults to `Textarea({content})` for server-side rendering,
+ *    which is a single-use element to populate codemirror.
+ * @param {string=} data.content = ''
+ *    Passed on for server-side rendering.
+ *    Omitting this before populating will simply result in codemirror not
+ *    having any content.
+ *    If already populated, omitting this has no effect for codemirror.
+ * @param {Element=} data.previewElement
+ *    Preview element to include inside the viewport.
+ *    Defaults to an `EmptyPreview()` element, for server-side rendering.
+ *    (The server side-rendered element is taken on runtime to manipulate
+ *    independently, its bookkeeping prevents overriding it on hydration.
+ * @return {lit-html/TemplateResult}
+ */
+const renderEditor = ({
+  codeMirrorElement,
+  content = '',
+  previewElement,
+}) => html`
+  <div id=${id} class=${n('wrap')}>
+    <div class=${n('content')}>
+      <!--
+        Default Content to load on the server and then populate codemirror on
+        the client.
+        codeMirrorElement is a promise resolved by codemirror(), hence the
+        the until directive. Once resolved, content can be empty.
+      -->
+      ${until(codeMirrorElement || Textarea({content}))}
     </div>
-  `;
-}
-
-function Preview() {
-  return html`
-    <div class="${n('preview')}"></div>
-  `;
-}
-
-function Textarea({content}) {
-  return html`
-    <div class="${n('textarea')}">
-      <textarea>${content}</textarea>
+    <div class="${g('flex-center')} ${n('preview-wrap')}">
+      <!-- Empty preview for SSR and inserted as data on the client. -->
+      ${previewElement || EmptyPreview()}
     </div>
-  `;
-}
+  </div>
+`;
+
+/**
+ * Renders preview element.
+ * This is then managed independently by AmpStoryAdPreview after hydration.
+ * @return {lit-html/TemplateResult}
+ */
+const EmptyPreview = () => html`
+  <div class=${n('preview')}></div>
+`;
+
+/**
+ * Renders default editor content to hydrate on runtime.
+ * @param {Object} data
+ * @param {string=} data.content
+ * @return {lit-html/TemplateResult}
+ */
+const Textarea = ({content}) => html`
+  <textarea>${content}</textarea>
+`;
 
 class Editor {
   constructor(win, element) {
-    const textarea = element.querySelector('textarea');
-    const preview = element.querySelector(s('.preview'));
+    const {value} = element.querySelector('textarea');
+    const previewElement = element.querySelector(s('.preview'));
 
-    this.codeMirror_ = codemirror.fromTextArea(textarea, {
+    this.win = win;
+    this.element = element;
+
+    this.parent_ = element.parentElement;
+
+    const {
+      promise: codeMirrorElement,
+      resolve: codeMirrorElementResolve,
+    } = new Deferred();
+
+    this.codeMirror_ = new codemirror(codeMirrorElementResolve, {
+      value,
       mode: 'text/html',
       selectionPointer: true,
       styleActiveLine: true,
@@ -76,10 +128,32 @@ class Editor {
       theme: 'monokai',
     });
 
-    this.preview_ = new AmpStoryAdPreview(win, preview);
+    this.preview_ = new AmpStoryAdPreview(win, previewElement);
 
+    const batchedRender = batchedApplier(win, () => this.render_());
+
+    this.state_ = appliedState(batchedRender, {
+      // No need to bookkeep `content` since we've populated codemirror with it.
+      previewElement,
+      codeMirrorElement,
+    });
+
+    batchedRender();
+
+    this.refreshCodeMirror_();
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
+  }
+
+  render_() {
+    render(renderEditor(this.state_), this.parent_, {eventContext: this});
+  }
+
+  /** @private */
+  async refreshCodeMirror_() {
+    // Render is async: we wait for the element to be attached to refresh.
+    await untilAttached(this.parent_, this.state_.codeMirrorElement);
+    this.codeMirror_.refresh();
   }
 
   updatePreview_() {
@@ -87,4 +161,10 @@ class Editor {
   }
 }
 
-export {Editor as ctor};
+// Standard executable-renderable bundle interface, see lib/bundle.js
+export {
+  id,
+  Editor as ctor,
+  renderEditor as renderComponent,
+  staticServerData as data,
+};
