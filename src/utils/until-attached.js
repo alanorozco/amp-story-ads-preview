@@ -75,7 +75,7 @@ export async function untilAttached(parent, elementPromiseOrSelector) {
         }
         observer.disconnect();
         observer = null; // GC
-        resolve(elementOrSelector);
+        resolve(node);
         return;
       }
     }
