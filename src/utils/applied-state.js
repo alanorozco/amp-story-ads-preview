@@ -89,10 +89,10 @@ export const appliedState = (applier, state) =>
       applier(target);
       return true;
     },
-    set(obj) {
+    set(target) {
       const isSet = Reflect.set(...arguments);
       if (isSet) {
-        applier(obj);
+        applier(target);
       }
       return isSet;
     },
