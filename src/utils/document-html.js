@@ -112,7 +112,7 @@ function setElementHtml(doc, element, startTagWithInnerHtml) {
 function splitHeadBody(html) {
   const [headWithLeadingNoise, bodyWithTrailingNoise] = html.split('</head>');
   const head = headWithLeadingNoise.replace(/^[\s\S]*<head/im, '<head');
-  const body = bodyWithTrailingNoise.replace(/\/body>[\s\S]*$/im, '');
+  const body = bodyWithTrailingNoise.replace(/<\/body>[\s\S]*$/im, '');
   return [head, body];
 }
 
