@@ -16,8 +16,6 @@
 
 .preview-wrap {
   flex-direction: column;
-  flex: 1;
-  box-sizing: border-box;
   background: #ddd;
 }
 
