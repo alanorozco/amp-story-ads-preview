@@ -25,36 +25,36 @@ import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
 
-const defaultContentPath = 'src/editor-default.html';
+const defaultContent = 'src/editor-default.html';
 
 const {id, g, n, s} = getNamespace('editor');
 
-/** @return {Promise<{defaultContent: string}>} Data for static server build. */
-export const data = async () => ({
-  content: (await fs.readFile(defaultContentPath)).toString('utf-8'),
+/** @return {Promise<{content: string}>} */
+const staticServerData = async () => ({
+  content: (await fs.readFile(defaultContent)).toString('utf-8'),
 });
 
 /**
  * Renders Live Editor.
- * @param {Object} data
+ * @param {Object} staticServerData
  *    All properties optional, see each one for defaults and exclusion effects.
- * @param {Promise<Element>=} data.codeMirrorElement
+ * @param {Promise<Element>=} staticServerData.codeMirrorElement
  *    Promise to include editor content element once rendered by codemirror.
  *    Defaults to `Textarea({content})` for server-side rendering,
  *    which is a single-use element to populate codemirror.
- * @param {string=} data.content = ''
+ * @param {string=} staticServerData.content = ''
  *    Passed on for server-side rendering.
  *    Omitting this before populating will simply result in codemirror not
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
- * @param {Element=} data.previewElement
+ * @param {Element=} staticServerData.previewElement
  *    Preview element to include inside the viewport.
  *    Defaults to an `EmptyPreview()` element, for server-side rendering.
  *    (The server side-rendered element is taken on runtime to manipulate
  *    independently, its bookkeeping prevents overriding it on hydration.
- * @param {boolean=} data.isFullPreview
+ * @param {boolean=} staticServerData.isFullPreview
  *    Sets hidden attribute for Textarea
- *  @param {EventHandler=} data.toggleFullPreview
+ *  @param {EventHandler=} staticServerData.toggleFullPreview
  *    Switches isFullPreview from true to false or vice versa
  * @return {lit-html/TemplateResult}
  */
@@ -81,13 +81,13 @@ const renderEditor = ({
 
 /**
  * Renders toolbar for toggle and viewport selector.
- * @param {Object} data
- * @param {boolean=} data.isFullPreview
- * @param {EventHandler=} data.toggleFullPreview
+ * @param {Object} staticServerData
+ * @param {boolean=} staticServerData.isFullPreview
+ * @param {EventHandler=} staticServerData.toggleFullPreview
  * @return {lit-html/TemplateResult}
  */
 const PreviewToolbar = ({isFullPreview, toggleFullPreview = null}) => html`
-    <div class="-flex-center ${n('preview-toolbar')}">
+    <div class="${g('flex-center')} ${n('preview-toolbar')}">
       ${FullPreviewToggleButton({toggleFullPreview, isFullPreview})}
     </div>
   </div>
@@ -95,25 +95,18 @@ const PreviewToolbar = ({isFullPreview, toggleFullPreview = null}) => html`
 
 /**
  * Renders full preview toggle button.
- * @param {Object} data
- * @param {boolean=} data.isFullPreview
- * @param {EventHandler=} data.toggleFullPreview
+ * @param {Object} staticServerData
+ * @param {boolean=} staticServerData.isFullPreview
+ * @param {EventHandler=} staticServerData.toggleFullPreview
  * @return {lit-html/TemplateResult}
  */
 const FullPreviewToggleButton = ({isFullPreview, toggleFullPreview}) => html`
-  <div class="-flex-center ${n('content-toggle')}" @click=${toggleFullPreview}>
+  <div
+    class="${g('flex-center')} ${n('content-toggle')}"
+    @click=${toggleFullPreview}
+  >
     <div>${isFullPreview ? '>' : '<'}</div>
   </div>
-`;
-
-/**
- * Renders default editor content to hydrate on runtime.
- * @param {Object} data
- * @param {string=} data.content
- * @return {lit-html/TemplateResult}
- */
-const Textarea = ({content}) => html`
-  <textarea>${content}</textarea>
 `;
 
 /**
@@ -125,13 +118,31 @@ const EmptyPreview = () => html`
   <div class="${n('preview')}"></div>
 `;
 
+/**
+ * Renders default editor content to hydrate on runtime.
+ * @param {Object} staticServerData
+ * @param {string=} staticServerData.content
+ * @return {lit-html/TemplateResult}
+ */
+const Textarea = ({content}) => html`
+  <textarea>${content}</textarea>
+`;
+
+export const wrapEventHandler = (handler, opts = {}) => ({
+  ...opts,
+  handleEvent(e) {
+    return handler(e);
+  },
+});
+
 class Editor {
   constructor(win, element) {
-    this.win = win;
-    this.parent_ = element.parentElement;
-
-    const previewElement = element.querySelector(s('.preview'));
     const {value} = element.querySelector('textarea');
+    const previewElement = element.querySelector(s('.preview'));
+
+    this.win = win;
+
+    this.parent_ = element.parentElement;
 
     const {
       promise: codemirrorElement,
@@ -166,10 +177,10 @@ class Editor {
       codemirrorElement,
       previewElement,
       isFullPreview: false,
-      toggleFullPreview: this.wrapEventHandler_(this.toggleFullPreview_),
+      toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
     });
 
-    batchedRender(this.state_);
+    batchedRender();
 
     this.refreshCodeMirror_();
     this.updatePreview_();
@@ -187,23 +198,18 @@ class Editor {
     this.codeMirror_.refresh();
   }
 
-  wrapEventHandler_(handler, opts = {}) {
-    const bound = handler.bind(this);
-    return {
-      ...opts,
-      handleEvent(e) {
-        return bound(e);
-      },
-    };
-  }
-
   updatePreview_() {
     this.preview_.update(this.codeMirror_.getValue());
   }
 
-  toggleFullPreview_(unused) {
+  toggleFullPreview_() {
     this.state_.isFullPreview = !this.state_.isFullPreview;
   }
 }
 
-export {id, Editor as ctor, renderEditor as renderComponent};
+export {
+  id,
+  Editor as ctor,
+  renderEditor as renderComponent,
+  staticServerData as data,
+};

@@ -2,13 +2,6 @@
   height: 100% !important;
 }
 
-.-flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-}
-
 @component;
 
 .wrap {
@@ -41,8 +34,6 @@
 
 .preview-wrap {
   flex-direction: column;
-  flex: 1;
-  box-sizing: border-box;
   background: #ddd;
 }
 
