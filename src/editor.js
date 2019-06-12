@@ -19,12 +19,14 @@ import {appliedState, batchedApplier} from './utils/applied-state';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
+import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
 import {Viewport, viewportIdDefault} from './viewport';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
+import htmlMinifier from 'html-minifier';
 
 const {id, g, n, s} = getNamespace('editor');
 
@@ -34,7 +36,12 @@ const readFixtureHtml = async name =>
 /** @return {Promise<{content: string}>} */
 const staticServerData = async () => ({
   content: await readFixtureHtml('ad'),
-  storyDocTemplate: await readFixtureHtml('story'),
+  // Since this is a template that is never user-edited, let's minify it to
+  // keep the bundle small.
+  storyDocTemplate: htmlMinifier.minify(
+    await readFixtureHtml('story'),
+    htmlMinifyConfig
+  ),
 });
 
 /**

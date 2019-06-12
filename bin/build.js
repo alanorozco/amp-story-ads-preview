@@ -18,6 +18,7 @@ import {builtinModules} from 'module';
 import {bundles, routes} from '../src/bundles';
 import {fatal, step} from '../lib/log';
 import {minify as htmlMinify} from 'html-minifier';
+import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {minify as jsMinify} from 'terser';
 import {postcssPlugins} from '../postcss.config';
 import {renderableBundle, renderBundleToString} from '../lib/renderables';
@@ -38,7 +39,7 @@ const dist = name => `dist/${name}.js`;
  * Modules that are problematic to import in a browser context so they are
  * stripped out.
  */
-const ignoredModules = ['fs-extra', ...builtinModules];
+const ignoredModules = ['fs-extra', 'html-minifier', ...builtinModules];
 
 /**
  * Dependencies that are problematic to import in a node context directly.
@@ -72,13 +73,6 @@ const jsMinifyConfig = {
   compress: {unsafe_arrows: true},
   mangle: {toplevel: true, properties: {regex: /_$/}},
   output: {comments: 'some'},
-};
-
-export const htmlMinifyConfig = {
-  collapseBooleanAttributes: true,
-  collapseWhitespace: true,
-  sortClassName: true,
-  sortAttributes: true,
 };
 
 /**

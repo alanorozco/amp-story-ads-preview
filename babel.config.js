@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {htmlMinifyConfig} from './bin/build';
+import {htmlMinifyConfig} from './lib/html-minify-config';
 
 const local = plugin => `./lib/babel/babel-plugin-${plugin}`;
 
