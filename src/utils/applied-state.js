@@ -89,10 +89,10 @@ export const appliedState = (applier, state) =>
       applier(target);
       return true;
     },
-    set(obj) {
+    set(target) {
       const isSet = Reflect.set(...arguments);
       if (isSet) {
-        applier(obj);
+        applier(target);
       }
       return isSet;
     },
@@ -105,15 +105,12 @@ export const appliedState = (applier, state) =>
  * @param {!Window} win
  * @param {function(Object)} applier
  */
-export function batchedApplier(win, applier) {
-  applier.__applyMicroTask = applier.__applyMicroTask || null;
-  return state => {
-    if (applier.__applyMicroTask) {
-      win.clearTimeout(applier.__applyMicroTask);
-    }
-    applier.__applyMicroTask = win.setTimeout(() => {
-      applier(state);
-      delete applier.__applyMicroTask; // GC
-    }, 0);
-  };
-}
+export const batchedApplier = (win, applier) => state => {
+  if (applier.__applyMicroTask) {
+    win.clearTimeout(applier.__applyMicroTask);
+  }
+  applier.__applyMicroTask = win.setTimeout(() => {
+    applier(state);
+    delete applier.__applyMicroTask; // GC
+  }, 0);
+};

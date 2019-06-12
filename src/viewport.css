@@ -1,13 +1,8 @@
 @component;
 
-.select {
-  justify-self: center;
-}
-
 .wrap {
   width: 100%;
   padding: 20px;
-  box-sizing: border-box;
 }
 
 .wrap-full {

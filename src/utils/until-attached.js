@@ -15,36 +15,69 @@
  */
 import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
 
-export async function untilAttached(expectedParent, elementPromise) {
-  const expected = await elementPromise;
+/**
+ * @param {Element} parent
+ * @param {Element|string} elementOrSelector
+ * @return {?Element}
+ */
+function insideTree(parent, elementOrSelector) {
+  if (typeof elementOrSelector == 'string') {
+    return parent.querySelector(elementOrSelector);
+  }
+
+  if (parent.contains(elementOrSelector)) {
+    return elementOrSelector;
+  }
+
+  return null;
+}
+
+/**
+ * @param {Element} candidate
+ * @param {Element|string} elementOrSelector
+ * @return {boolean}
+ */
+const isExpected = (candidate, elementOrSelector) =>
+  typeof elementOrSelector == 'string'
+    ? candidate.matches(elementOrSelector)
+    : candidate == elementOrSelector;
+
+/**
+ * Resolves once `elementPromiseOrSelector` has been attached to `parent`.
+ * @param {Element} parent
+ * @param {Promise<Element>|Element|string} elementPromiseOrSelector
+ * @return {Promise<Element>}
+ */
+export async function untilAttached(parent, elementPromiseOrSelector) {
+  const elementOrSelector = await elementPromiseOrSelector;
 
   // If already in the tree, don't initiate a MutationObserver.
-  let {parentElement} = expected;
-  while (parentElement) {
-    if (parentElement == expectedParent) {
-      return expected;
-    }
-    parentElement = parentElement.parentElement;
+  const foundInTree = insideTree(parent, elementOrSelector);
+  if (foundInTree) {
+    return Promise.resolve(foundInTree);
   }
 
   // Otherwise wait for attachment.
   const {resolve, promise} = new Deferred();
+
   let observer = new MutationObserver(mutations => {
     for (const {addedNodes} of mutations) {
       for (const node of addedNodes) {
         if (node.nodeType != Node.ELEMENT_NODE) {
           continue;
         }
-        if (node != expected) {
+        if (!isExpected(node, elementOrSelector)) {
           continue;
         }
         observer.disconnect();
         observer = null; // GC
-        resolve(expected);
+        resolve(node);
         return;
       }
     }
   });
-  observer.observe(expectedParent, {childList: true, subtree: true});
+
+  observer.observe(parent, {childList: true, subtree: true});
+
   return promise;
 }

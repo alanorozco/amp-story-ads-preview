@@ -1,22 +1,5 @@
-body {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
-  font-size: 14px;
-}
-
 .CodeMirror {
   height: 100% !important;
-}
-
-.-flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
 }
 
 @component;
@@ -28,45 +11,16 @@ body {
 
 .wrap > div {
   flex: 1;
-}
-
-.content-toggle {
-  flex: 0 0 44px;
-  height: 44px;
-  justify-self: start;
-  cursor: pointer;
-
-  /* Using <, > symbols in place of svgs: */
-  text-align: center;
-  font-weight: 500;
-  font-size: 16px;
-  color: #888;
-}
-
-.content-toggle > div {
-  /* Make the <, > symbols look roughly equilateral and vertically center. */
-  transform: scaleY(1.5) translateY(-0.1em);
+  overflow: hidden;
 }
 
 .preview-wrap {
   flex-direction: column;
-  flex: 1;
-  box-sizing: border-box;
   background: #ddd;
-}
-
-.preview-toolbar {
-  background: white;
-  flex-direction: row;
-  justify-self: start;
-  flex: 0 0 44px;
-  width: 100%;
-  border-bottom: 1px solid #ccc;
 }
 
 .preview {
   width: 100%;
   height: 100%;
-  overflow: hidden;
   contain: strict;
 }

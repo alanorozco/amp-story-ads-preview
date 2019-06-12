@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 import './viewport.css';
-import {classMap} from 'lit-html/directives/class-map';
 import {getNamespace} from '../lib/namespace';
 import {html} from 'lit-html';
 import {styleMap} from 'lit-html/directives/style-map';
 
-const {n} = getNamespace('viewport');
+const {n, g} = getNamespace('viewport');
 
 const viewports = {
   full: {name: '(Full)', size: {width: '100%', height: '100%'}},
@@ -29,38 +28,12 @@ const viewports = {
 export const viewportIdFull = 'full';
 export const viewportIdDefault = 'iphone-x';
 
-const viewportIds = Object.keys(viewports);
-
-export const ViewportSelector = ({selectViewport, viewportId}) => html`
-  <div class="-flex-center ${n('select')}">
-    <select @change=${selectViewport} .value=${viewportId}>
-      ${viewportIds.map(id =>
-        Option({
-          value: id,
-          selected: viewportId == id,
-          text: viewports[id].name,
-        })
-      )}
-    </select>
-  </div>
-`;
-
-const Option = ({value, selected = false, text}) => html`
-  <option value=${value} ?selected=${selected}>
-    ${text}
-  </option>
-`;
-
-export const Viewport = ({viewportId, previewElement, defaultPreview}) => html`
+export const Viewport = ({viewportId, previewElement}) => html`
   <div
-    class=${classMap({
-      '-flex-center': true,
-      [n('wrap')]: true,
-      [n(`wrap-${viewportId}`)]: true,
-    })}
+    class=${[g('flex-center'), n('wrap'), n(`wrap-${viewportId}`)].join(' ')}
   >
     <div class=${n('inner')} style=${styleMap(viewports[viewportId].size)}>
-      ${previewElement || defaultPreview()}
+      ${previewElement}
     </div>
   </div>
 `;
