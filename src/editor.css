@@ -10,9 +10,17 @@
 }
 
 .wrap > div {
-  flex: 0 0 50%;
+  flex: 1;
+  overflow: hidden;
+}
+
+.preview-wrap {
+  flex-direction: column;
+  background: #ddd;
 }
 
 .preview {
-  background: #ddd;
+  width: 100%;
+  height: 100%;
+  contain: strict;
 }
