@@ -59,7 +59,7 @@ const staticServerData = async () => ({
  * @return {lit-html/TemplateResult}
  */
 const renderEditor = ({
-  codemirrorElement,
+  codeMirrorElement,
   content = '',
   isFullPreview = false,
   toggleFullPreview,
@@ -73,7 +73,7 @@ const renderEditor = ({
         codeMirrorElement is a promise resolved by codemirror(), hence the
         the until directive. Once resolved, content can be empty.
       -->
-      ${until(codemirrorElement || Textarea({content}))}
+      ${until(codeMirrorElement || Textarea({content}))}
     </div>
     <div class="${g('flex-center')} ${n('preview-wrap')}">
       <!-- Toolbar for full preview toggle and viewport selector. -->
@@ -152,11 +152,11 @@ class Editor {
     this.parent_ = element.parentElement;
 
     const {
-      promise: codemirrorElement,
-      resolve: codemirrorElementResolve,
+      promise: codeMirrorElement,
+      resolve: codeMirrorElementResolve,
     } = new Deferred();
 
-    this.codeMirror_ = new codemirror(codemirrorElementResolve, {
+    this.codeMirror_ = new codemirror(codeMirrorElementResolve, {
       value,
       mode: 'text/html',
       selectionPointer: true,
@@ -181,7 +181,7 @@ class Editor {
     this.state_ = appliedState(batchedRender, {
       // No need to bookkeep `defaultContent` since it's only needed for
       // populating codemirror.
-      codemirrorElement,
+      codeMirrorElement,
       previewElement,
       isFullPreview: false,
       toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
@@ -214,6 +214,7 @@ class Editor {
   }
 }
 
+// Standard executable-renderable bundle interface, see lib/bundle.js
 export {
   id,
   Editor as ctor,
