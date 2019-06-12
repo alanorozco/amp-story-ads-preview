@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {argv} from '../lib/cli';
+import {argv, isRunningFrom} from '../lib/cli';
 import {createServer} from 'http';
 import {error, log} from '../lib/log';
 import colors from 'colors/safe';
@@ -30,10 +30,16 @@ function logRequest({method, url}) {
 
 const serveDist = serveStatic('dist');
 
-createServer((request, response) => {
-  serveDist(request, response, finalhandler(request, response));
-})
-  .on('error', error)
-  .on('request', logRequest)
-  .on('listening', () => log(blue(`🌎 Started on http://localhost:${port}/`)))
-  .listen(port);
+export function serve() {
+  createServer((request, response) => {
+    serveDist(request, response, finalhandler(request, response));
+  })
+    .on('error', error)
+    .on('request', logRequest)
+    .on('listening', () => log(blue(`🌎 Started on http://localhost:${port}/`)))
+    .listen(port);
+}
+
+if (isRunningFrom('serve.js')) {
+  serve();
+}

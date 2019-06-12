@@ -19,6 +19,7 @@ import {appliedState, batchedApplier} from './utils/applied-state';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
+
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
 import AmpStoryAdPreview from './amp-story-ad-preview';

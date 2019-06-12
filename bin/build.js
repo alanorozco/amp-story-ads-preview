@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {argv, isRunningFrom} from '../lib/cli';
+import {argv, isRunningFrom, whenMinified} from '../lib/cli';
+import {blue, cyan, magenta, yellow} from 'colors/safe';
 import {builtinModules} from 'module';
 import {bundles, routes} from '../src/bundles';
-import {fatal, step} from '../lib/log';
+import {englishEnumeration} from '../lib/english-enumeration';
+import {error, fatal, log, step} from '../lib/log';
 import {minify as htmlMinify} from 'html-minifier';
 import {minify as jsMinify} from 'terser';
 import {postcssPlugins} from '../postcss.config';
 import {renderableBundle, renderBundleToString} from '../lib/renderables';
-import {rollup} from 'rollup';
+import {rollup, watch as rollupWatch} from 'rollup';
+import {serve} from './serve';
 import {withoutExtension} from '../lib/path';
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
@@ -30,6 +33,8 @@ import glob from 'fast-glob';
 import ignore from 'rollup-plugin-ignore';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
+import replace from 'rollup-plugin-replace';
+import ws from 'ws';
 
 const src = name => `src/${name}.js`;
 const dist = name => `dist/${name}.js`;
@@ -56,13 +61,23 @@ const alias = aliases => ({
 });
 
 const inputConfig = async name => ({
+  // TODO(alanorozco): Revert back generic executable model (it was nice.)
+  // With incremental builds, the entry point gets excluded from watching since
+  // the import is aliased.
+  input: 'src/editor-exec.js',
   plugins: [
     alias(await moduleAliases(name)),
-    babel({runtimeHelpers: true}),
+    babel({runtimeHelpers: true, exclude: 'node_modules/**'}),
     commonjs(),
     ignore(ignoredModules),
     nodeResolve(),
     postcss({extract: true, plugins: postcssPlugins()}),
+    ...whenMinified(() =>
+      replace({
+        include: 'lib/is-dev.js',
+        'IS_DEV = true': 'IS_DEV = false',
+      })
+    ),
   ],
 });
 
@@ -145,7 +160,7 @@ async function shakenRuntimeDepsAliases() {
 }
 
 const withAllBundles = cb =>
-  Promise.all(Object.keys(bundles).map(name => cb(name, bundles[name])));
+  Promise.all(Object.entries(bundles).map(([...args]) => cb(...args)));
 
 async function minifyBundle(filename) {
   const file = dist(filename);
@@ -155,13 +170,10 @@ async function minifyBundle(filename) {
 }
 
 export async function build() {
-  await step('📋 Copying static assets', () =>
-    fs.copy('static', 'dist/static')
-  );
+  await copyStaticAssets();
   await step('🚧 Building js', () =>
     withAllBundles(async name => {
-      const input = 'lib/bundle.js';
-      const bundle = await rollup({input, ...(await inputConfig(name))});
+      const bundle = await rollup(await inputConfig(name));
       return Promise.all(
         outputConfigs.map(outputConfig =>
           bundle.write({file: dist(name), ...outputConfig})
@@ -169,19 +181,27 @@ export async function build() {
       );
     })
   );
-  await step('❄️ Freezing static html', freezeStaticHtml);
+  await freezeStaticHtml();
 }
 
-const freezeStaticHtml = () =>
-  Promise.all(
-    Object.entries(routes).map(entry => freezeStaticHtmlRoute(...entry))
+const copyStaticAssets = () =>
+  step('📋 Copying static assets', () => fs.copy('static', 'dist/static'));
+
+const freezeStaticHtml = (opts = {}) =>
+  step('❄️ Freezing static html', () =>
+    Promise.all(
+      Object.entries(routes).map(entry => freezeStaticHtmlRoute(...entry, opts))
+    )
   );
 
-async function freezeStaticHtmlRoute(route, bundleModule) {
+async function freezeStaticHtmlRoute(route, bundleModule, {reloadPort}) {
   const htmlFilename = `dist/${routeToStaticPath(route)}`;
-  const htmlContent = await renderBundleToString(
+  const htmlContentRaw = await renderBundleToString(
     renderableBundle(bundleModule, {relToDist: '/'})
   );
+  const htmlContent = reloadPort
+    ? htmlContentRaw.replace(/<body/, `<body data-reload-port="${reloadPort}" `)
+    : htmlContentRaw;
   return fs.writeFile(htmlFilename, htmlContent);
 }
 
@@ -202,7 +222,83 @@ const minifyHtml = async () =>
     })
   );
 
+function broadcast(wss, data) {
+  const serialized = JSON.stringify(data);
+  for (const client of wss.clients) {
+    if (client.readyState != ws.OPEN) {
+      return;
+    }
+    client.send(serialized);
+  }
+}
+
+async function incrementalBuild() {
+  const cwd = process.cwd();
+
+  const {reloadPort = 8080} = argv;
+
+  const removeAbsoluteAndDist = f => f.replace(`${cwd}/dist/`, '');
+  const formatOutput = items =>
+    blue(englishEnumeration(items.map(removeAbsoluteAndDist)));
+
+  let serving = false;
+
+  let clientNotificationWss;
+
+  const eventHandlers = {
+    FATAL: fatal,
+    ERROR: () => {
+      error(...arguments);
+      broadcast(clientNotificationWss, {error: true});
+    },
+    START: async () => {
+      await copyStaticAssets();
+      log(yellow('🚧 Starting incremental build...'));
+    },
+    BUNDLE_START: ({output}) => {
+      log(magenta(`👷 Building ${formatOutput(output)}...`));
+    },
+    BUNDLE_END: ({output}) => {
+      log(cyan(`✨ Done building ${formatOutput(output)}.`));
+    },
+    END: async () => {
+      await freezeStaticHtml({reloadPort});
+      clientNotificationWss =
+        clientNotificationWss || new ws.Server({port: reloadPort});
+      broadcast(clientNotificationWss, {built: true});
+      if (serving) {
+        return;
+      }
+      serve();
+      serving = true;
+    },
+  };
+
+  rollupWatch(
+    await withAllBundles(async name => ({
+      ...(await inputConfig(name)),
+      output: outputConfigs.map(outputConfig => ({
+        file: dist(name),
+        ...outputConfig,
+      })),
+      watch: {
+        chokidar: true,
+        exclude: ['node_modules/**'],
+        include: ['lib/**', 'src/**'],
+      },
+    }))
+  ).on('event', async function(event) {
+    const {code} = event;
+    if (code in eventHandlers) {
+      eventHandlers[code](event);
+    }
+  });
+}
+
 async function main() {
+  if (argv.watch) {
+    return incrementalBuild();
+  }
   await build();
   if (!argv.minify) {
     return;

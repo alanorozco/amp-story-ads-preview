@@ -10,7 +10,8 @@
     "postinstall": "./bin/postinstall.sh",
     "serve": "yarn run --silent x bin/serve.js",
     "test": "`yarn bin`/mocha --require ignore-styles --require esm",
-    "watch": "yarn run --silent x bin/watch.js",
+    "watch": "yarn run --silent x bin/build.js --watch",
+    "watch-slow": "yarn run --silent x bin/watch.js",
     "x": "node -r ignore-styles -r esm"
   },
   "nodemonConfig": {
@@ -42,6 +43,7 @@
     "@babel/preset-env": "7.4.5",
     "babel-plugin-template-html-minifier": "3.0.1",
     "chai": "4.2.0",
+    "chokidar": "3.0.1",
     "colors": "1.3.3",
     "cssnano": "4.1.10",
     "eslint": "5.16.0",
@@ -72,7 +74,9 @@
     "rollup-plugin-ignore": "1.0.5",
     "rollup-plugin-node-resolve": "5.0.0",
     "rollup-plugin-postcss": "2.0.3",
+    "rollup-plugin-replace": "2.2.0",
     "serve-static": "1.14.1",
-    "terser": "4.0.0"
+    "terser": "4.0.0",
+    "ws": "7.0.0"
   }
 }
