@@ -25,13 +25,13 @@ import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
 
-const defaultContent = 'src/editor-default.html';
+const defaultContentPath = 'src/editor-default.html';
 
 const {id, g, n, s} = getNamespace('editor');
 
-/** @return {Promise<{content: string}>} */
-const staticServerData = async () => ({
-  content: (await fs.readFile(defaultContent)).toString('utf-8'),
+/** @return {Promise<{defaultContent: string}>} Data for static server build. */
+export const data = async () => ({
+  content: (await fs.readFile(defaultContentPath)).toString('utf-8'),
 });
 
 /**
@@ -52,37 +52,58 @@ const staticServerData = async () => ({
  *    Defaults to an `EmptyPreview()` element, for server-side rendering.
  *    (The server side-rendered element is taken on runtime to manipulate
  *    independently, its bookkeeping prevents overriding it on hydration.
+ * @param {boolean=} data.isFullPreview
+ *    Sets hidden attribute for Textarea
+ *  @param {EventHandler=} data.toggleFullPreview
+ *    Switches isFullPreview from true to false or vice versa
  * @return {lit-html/TemplateResult}
  */
 const renderEditor = ({
-  codeMirrorElement,
+  codemirrorElement,
   content = '',
+  isFullPreview = false,
+  toggleFullPreview,
   previewElement,
 }) => html`
   <div id=${id} class=${n('wrap')}>
-    <div class=${n('content')}>
-      <!--
-        Default Content to load on the server and then populate codemirror on
-        the client.
-        codeMirrorElement is a promise resolved by codemirror(), hence the
-        the until directive. Once resolved, content can be empty.
-      -->
-      ${until(codeMirrorElement || Textarea({content}))}
+    <div class=${n('content')} ?hidden=${isFullPreview}>
+      ${until(codemirrorElement || Textarea({content}))}
     </div>
     <div class="${g('flex-center')} ${n('preview-wrap')}">
-      <!-- Empty preview for SSR and inserted as data on the client. -->
+      ${PreviewToolbar({
+        isFullPreview,
+        toggleFullPreview,
+      })}
       ${previewElement || EmptyPreview()}
     </div>
   </div>
 `;
 
 /**
- * Renders preview element.
- * This is then managed independently by AmpStoryAdPreview after hydration.
+ * Renders toolbar for toggle and viewport selector.
+ * @param {Object} data
+ * @param {boolean=} data.isFullPreview
+ * @param {EventHandler=} data.toggleFullPreview
  * @return {lit-html/TemplateResult}
  */
-const EmptyPreview = () => html`
-  <div class=${n('preview')}></div>
+const PreviewToolbar = ({isFullPreview, toggleFullPreview = null}) => html`
+    <div class="-flex-center ${n('preview-toolbar')}">
+      ${FullPreviewToggleButton({toggleFullPreview, isFullPreview})}
+    </div>
+  </div>
+`;
+
+/**
+ * Renders full preview toggle button.
+ * @param {Object} data
+ * @param {boolean=} data.isFullPreview
+ * @param {EventHandler=} data.toggleFullPreview
+ * @return {lit-html/TemplateResult}
+ */
+const FullPreviewToggleButton = ({isFullPreview, toggleFullPreview}) => html`
+  <div class="-flex-center ${n('content-toggle')}" @click=${toggleFullPreview}>
+    <div>${isFullPreview ? '>' : '<'}</div>
+  </div>
 `;
 
 /**
@@ -95,21 +116,29 @@ const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
 
+/**
+ * Renders preview element.
+ * This is then managed independently by AmpStoryAdPreview after hydration.
+ * @return {lit-html/TemplateResult}
+ */
+const EmptyPreview = () => html`
+  <div class="${n('preview')}"></div>
+`;
+
 class Editor {
   constructor(win, element) {
-    const {value} = element.querySelector('textarea');
-    const previewElement = element.querySelector(s('.preview'));
-
     this.win = win;
-
     this.parent_ = element.parentElement;
 
+    const previewElement = element.querySelector(s('.preview'));
+    const {value} = element.querySelector('textarea');
+
     const {
-      promise: codeMirrorElement,
-      resolve: codeMirrorElementResolve,
+      promise: codemirrorElement,
+      resolve: codemirrorElementResolve,
     } = new Deferred();
 
-    this.codeMirror_ = new codemirror(codeMirrorElementResolve, {
+    this.codeMirror_ = new codemirror(codemirrorElementResolve, {
       value,
       mode: 'text/html',
       selectionPointer: true,
@@ -132,14 +161,18 @@ class Editor {
     const batchedRender = batchedApplier(win, () => this.render_());
 
     this.state_ = appliedState(batchedRender, {
-      // No need to bookkeep `content` since we've populated codemirror with it.
+      // No need to bookkeep `defaultContent` since it's only needed for
+      // populating codemirror.
+      codemirrorElement,
       previewElement,
-      codeMirrorElement,
+      isFullPreview: false,
+      toggleFullPreview: this.wrapEventHandler_(this.toggleFullPreview_),
     });
 
-    batchedRender();
+    batchedRender(this.state_);
 
     this.refreshCodeMirror_();
+    this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
   }
 
@@ -152,18 +185,25 @@ class Editor {
     // Render is async: we wait for the element to be attached to refresh.
     await untilAttached(this.parent_, this.state_.codeMirrorElement);
     this.codeMirror_.refresh();
-    this.updatePreview_();
+  }
+
+  wrapEventHandler_(handler, opts = {}) {
+    const bound = handler.bind(this);
+    return {
+      ...opts,
+      handleEvent(e) {
+        return bound(e);
+      },
+    };
   }
 
   updatePreview_() {
     this.preview_.update(this.codeMirror_.getValue());
   }
+
+  toggleFullPreview_(unused) {
+    this.state_.isFullPreview = !this.state_.isFullPreview;
+  }
 }
 
-// Standard executable-renderable bundle interface, see lib/bundle.js
-export {
-  id,
-  Editor as ctor,
-  renderEditor as renderComponent,
-  staticServerData as data,
-};
+export {id, Editor as ctor, renderEditor as renderComponent};
