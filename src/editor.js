@@ -140,7 +140,6 @@ class Editor {
     batchedRender();
 
     this.refreshCodeMirror_();
-    this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
   }
 
@@ -153,6 +152,7 @@ class Editor {
     // Render is async: we wait for the element to be attached to refresh.
     await untilAttached(this.parent_, this.state_.codeMirrorElement);
     this.codeMirror_.refresh();
+    this.updatePreview_();
   }
 
   updatePreview_() {
