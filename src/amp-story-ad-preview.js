@@ -7,7 +7,6 @@
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS-IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -41,7 +40,7 @@ function WrappedIframe() {
       <iframe
         allowpaymentrequest
         allowfullscreen
-        class=${`${n('iframe')} elevation-4dp` /* still not sure why lol */}
+        class=${n('iframe')}
         sandbox=${defaultIframeSandbox}
         title="AMP Story Ad Preview"
         src="/static/empty.html"
@@ -62,6 +61,8 @@ export default class AmpStoryAdPreview {
 
     this.iframePromise_ = untilAttached(this.element, s('.iframe'));
 
+    // We're already keeping this value, so let's just remove the attribute to
+    // clear memory.
     element.removeAttribute('data-template');
 
     render(WrappedIframe(), this.element);
