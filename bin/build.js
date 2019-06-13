@@ -20,6 +20,7 @@ import {bundles, routes} from '../src/bundles';
 import {englishEnumeration} from '../lib/english-enumeration';
 import {error, fatal, log, step} from '../lib/log';
 import {minify as htmlMinify} from 'html-minifier';
+import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {minify as jsMinify} from 'terser';
 import {localBabelPlugin} from '../babel.config';
 import {postcssPlugins} from '../postcss.config';
@@ -44,7 +45,7 @@ const dist = name => `dist/${name}.js`;
  * Modules that are problematic to import in a browser context so they are
  * stripped out.
  */
-const ignoredModules = ['fs-extra', ...builtinModules];
+const ignoredModules = ['fs-extra', 'html-minifier', ...builtinModules];
 
 /**
  * Dependencies that are problematic to import in a node context directly.
@@ -60,16 +61,6 @@ const runtimeDeps = async () =>
 const alias = aliases => ({
   resolveId: (importee, _) => (importee in aliases ? aliases[importee] : null),
 });
-
-export const htmlMinifyConfig = {
-  collapseBooleanAttributes: true,
-  collapseWhitespace: true,
-  minifyCSS: true,
-  removeAttributeQuotes: true,
-  removeComments: true,
-  sortClassName: true,
-  sortAttributes: true,
-};
 
 const litHtmlMinifierBabelPlugin = [
   'template-html-minifier',

@@ -19,20 +19,30 @@ import {appliedState, batchedApplier} from './utils/applied-state';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
+import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
+import {Viewport, viewportIdDefault, viewportIdFull} from './viewport';
 import {wrapEventHandler} from './utils/wrap-event-handler';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
-
-const defaultContent = 'src/editor-default.html';
+import htmlMinifier from 'html-minifier';
 
 const {id, g, n, s} = getNamespace('editor');
 
+const readFixtureHtml = async name =>
+  (await fs.readFile(`src/fixtures/${name}.html`)).toString('utf-8');
+
 /** @return {Promise<{content: string}>} */
 const staticServerData = async () => ({
-  content: (await fs.readFile(defaultContent)).toString('utf-8'),
+  content: await readFixtureHtml('ad'),
+  // Since this is a template that is never user-edited, let's minify it to
+  // keep the bundle small.
+  storyDocTemplate: htmlMinifier.minify(
+    await readFixtureHtml('story'),
+    htmlMinifyConfig
+  ),
 });
 
 /**
@@ -48,23 +58,29 @@ const staticServerData = async () => ({
  *    Omitting this before populating will simply result in codemirror not
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
+ * @param {boolean=} data.isFullPreview = false
+ * @param {EventHandler=} data.toggleFullPreview
  * @param {Element=} data.previewElement
  *    Preview element to include inside the viewport.
- *    Defaults to an `EmptyPreview()` element, for server-side rendering.
- *    (The server side-rendered element is taken on runtime to manipulate
- *    independently, its bookkeeping prevents overriding it on hydration.
- * @param {boolean=} data.isFullPreview
- *    Sets hidden attribute for Textarea
- *  @param {EventHandler=} data.toggleFullPreview
- *    Switches isFullPreview from true to false or vice versa
+ *    Defaults to an `EmptyPreview({storyDocTemplate})` element, for
+ *    server-side rendering.
+ *    (The SSR'd element is taken on runtime to manipulate independently, we
+ *    bookkeep it so that it won't be overriden by the client-side rerender.)
+ * @param {string=} data.viewportId = viewportIdDefault
+ *    Viewport id as defined by the `viewports` object in `./viewport.js`.
+ *    Defaults to exported `./viewport.viewportIdDefault`.
  * @return {lit-html/TemplateResult}
  */
 const renderEditor = ({
+  // Keep alphabetically sorted.
+  // Or don't. I'm a sign, not a cop. https://git.io/fj2tc
   codeMirrorElement,
   content = '',
   isFullPreview = false,
-  toggleFullPreview,
   previewElement,
+  storyDocTemplate = '',
+  toggleFullPreview,
+  viewportId = viewportIdDefault,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     <div class=${n('content')} ?hidden=${isFullPreview}>
@@ -82,8 +98,11 @@ const renderEditor = ({
         isFullPreview,
         toggleFullPreview,
       })}
-      <!-- Empty preview for SSR and inserted as data on the client. -->
-      ${previewElement || EmptyPreview()}
+      ${Viewport({
+        viewportId,
+        // Empty preview for SSR and inserted as data on the client.
+        previewElement: previewElement || EmptyPreview({storyDocTemplate}),
+      })}
     </div>
   </div>
 `;
@@ -120,10 +139,12 @@ const FullPreviewToggleButton = ({isFullPreview, toggleFullPreview}) => html`
 /**
  * Renders preview element.
  * This is then managed independently by AmpStoryAdPreview after hydration.
+ * @param {Object} data
+ * @param {string} data.storyDocTemplate
  * @return {lit-html/TemplateResult}
  */
-const EmptyPreview = () => html`
-  <div class="${n('preview')}"></div>
+const EmptyPreview = ({storyDocTemplate}) => html`
+  <div class=${n('preview')} data-template=${storyDocTemplate}></div>
 `;
 
 /**
@@ -204,6 +225,10 @@ class Editor {
 
   toggleFullPreview_() {
     this.state_.isFullPreview = !this.state_.isFullPreview;
+
+    this.state_.viewportId = this.state_.isFullPreview
+      ? viewportIdFull
+      : viewportIdDefault;
   }
 }
 
