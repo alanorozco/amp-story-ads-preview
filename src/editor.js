@@ -218,9 +218,7 @@ class Editor {
       previewElement,
       isFullPreview: false,
       toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
-      selectViewport: wrapEventHandler(({target: {value}}) =>
-        this.viewportChange_(value)
-      ),
+      selectViewport: wrapEventHandler(e => this.viewportChange_(e)),
     });
 
     batchedRender();
@@ -230,7 +228,8 @@ class Editor {
     this.codeMirror_.on('change', () => this.updatePreview_());
   }
 
-  viewportChange_(value) {
+  viewportChange_({target}) {
+    const {value} = target;
     if (validViewportId(value) == 'full') {
       this.toggleFullPreview_();
     }

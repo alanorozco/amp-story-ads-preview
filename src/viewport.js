@@ -28,14 +28,6 @@ const viewports = {
     name: '(Full)',
     size: {width: '100%', height: '100%'},
   },
-  'iphone-x': {
-    name: 'iPhone X/XS',
-    size: {width: '375px', height: '812px'},
-  },
-  'custom': {
-    name: 'Custom',
-    size: {width: '320px', height: '80px'},
-  },
   'galaxy-s5': {
     name: 'Galaxy S5',
     size: {width: '360px', height: '640px'},
@@ -51,6 +43,10 @@ const viewports = {
   'iphone-678-plus': {
     name: 'iPhone 6/7/8 Plus',
     size: {width: '414px', height: '736px'},
+  },
+  'iphone-x': {
+    name: 'iPhone X/XS',
+    size: {width: '375px', height: '812px'},
   },
   'iphone-xs-max': {
     name: 'iPhone Xs Max',
