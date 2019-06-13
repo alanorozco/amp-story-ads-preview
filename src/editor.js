@@ -23,6 +23,7 @@ import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
 import {Viewport, viewportIdDefault} from './viewport';
+import {wrapEventHandler} from './utils/wrap-event-handler';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
@@ -156,13 +157,6 @@ const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
 
-export const wrapEventHandler = (handler, opts = {}) => ({
-  ...opts,
-  handleEvent(e) {
-    return handler(e);
-  },
-});
-
 class Editor {
   constructor(win, element) {
     const {value} = element.querySelector('textarea');
@@ -200,8 +194,7 @@ class Editor {
     const batchedRender = batchedApplier(win, () => this.render_());
 
     this.state_ = appliedState(batchedRender, {
-      // No need to bookkeep `defaultContent` since it's only needed for
-      // populating codemirror.
+      // No need to bookkeep `content` since we've populated codemirror with it.
       codeMirrorElement,
       previewElement,
       isFullPreview: false,

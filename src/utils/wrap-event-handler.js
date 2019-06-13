@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-export const localBabelPlugin = plugin => `./lib/babel/babel-plugin-${plugin}`;
-
-export default {
-  plugins: [
-    '@babel/plugin-transform-async-to-generator',
-    '@babel/plugin-transform-runtime',
-  ],
-  presets: [
-    [
-      '@babel/preset-env',
-      {
-        exclude: ['@babel/plugin-transform-template-literals'],
-        // Browser support policy similar to @ampproject/amphtml's
-        targets: {browsers: 'last 2 years and > 1%'},
-      },
-    ],
-  ],
-};
+/**
+ * Wraps a generic event handler into a lit-html EventHandlerWithOptions.
+ * @param {function(Event|undefined):T} handler
+ * @param {Object=} opts (optional)
+ * @param {boolean=} opts.capture (optional)
+ * @param {boolean=} opts.once (optional)
+ * @param {boolean=} opts.passive (optional)
+ * @return {{
+ *  handleEvent: (function(Event):T),
+ *  capture: (boolean|undefined),
+ *  passive: (boolean|undefined),
+ *  once: (boolean|undefined),
+ * }}
+ */
+export const wrapEventHandler = (handler, opts = {}) => ({
+  ...opts,
+  handleEvent(e) {
+    return handler(e);
+  },
+});
