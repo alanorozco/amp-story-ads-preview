@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-export const localBabelPlugin = plugin => `./lib/babel/babel-plugin-${plugin}`;
+// Mirror of lib/bundle.js, with hardcoded component.
+// This is needed since with incremental builds, the entry point gets excluded from watching since
+// the import is aliased.
+// TODO(alanorozco): Revert back generic executable model (it was nice.)
+import './global.css';
+import {ctor, id} from './editor';
+import {IS_DEV} from '../lib/is-dev';
+import {liveReload} from './reload-notifications';
 
-export default {
-  plugins: [
-    '@babel/plugin-transform-async-to-generator',
-    '@babel/plugin-transform-runtime',
-  ],
-  presets: [
-    [
-      '@babel/preset-env',
-      {
-        exclude: ['@babel/plugin-transform-template-literals'],
-        // Browser support policy similar to @ampproject/amphtml's
-        targets: {browsers: 'last 2 years and > 1%'},
-      },
-    ],
-  ],
-};
+new ctor(self, document.getElementById(id));
+
+if (IS_DEV) {
+  liveReload(self);
+}
