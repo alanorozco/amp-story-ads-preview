@@ -231,6 +231,9 @@ class Editor {
   }
 
   viewportChange_(value) {
+    if (validViewportId(value) == 'full') {
+      this.toggleFullPreview_();
+    }
     this.state_.viewportId = validViewportId(value);
   }
 
