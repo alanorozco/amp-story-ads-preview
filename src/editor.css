@@ -9,12 +9,14 @@
   height: 100%;
 }
 
-.wrap > div {
+.content{
   flex: 1;
   overflow: hidden;
 }
 
 .preview-wrap {
+  flex: 1;
+  overflow: hidden;
   flex-direction: column;
   background: #ddd;
 }
@@ -23,4 +25,28 @@
   width: 100%;
   height: 100%;
   contain: strict;
+}
+
+.files-panel{
+  flex: 0 0 110px;
+  border-right: 3px solid #5998a6;
+}
+
+.upload-button-container{
+  margin:5px;
+  height:35px;
+  background: #ddd;
+
+}
+
+.upload-button{
+  position: absolute;
+  text-align: center;
+  cursor:pointer;
+  padding: 10px 10px;
+}
+
+.upload-button-container :hover{
+  background:#272822;
+  color:white;
 }

@@ -16,9 +16,11 @@
 import './editor.css';
 import './monokai.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
+import {attachBlobUrl, fileSortCompare} from './file-upload';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
+import {repeat} from 'lit-html/directives/repeat';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
 import AmpStoryAdPreview from './amp-story-ad-preview';
@@ -54,25 +56,23 @@ const staticServerData = async () => ({
  *    independently, its bookkeeping prevents overriding it on hydration.
  * @return {lit-html/TemplateResult}
  */
+const fileRepeatKey = ({url}) => url;
 
 const renderEditor = ({
   codeMirrorElement,
   content = '',
-  handleFiles,
+  uploadFiles,
   files = [],
   previewElement,
   isFilesPanelDisplayed = false,
 }) => html`
   <div id=${id} class=${n('wrap')}>
-    <div
-      style="flex: 0 0 110px; border-right: 3px solid #5998a6"
-      ?hidden=${!isFilesPanelDisplayed}
-    >
-      ${files.map(fileList_item)}
+    <div class="${'files-panel'}" ?hidden=${!isFilesPanelDisplayed}>
+      ${repeat(files, fileRepeatKey, FileListItem)}
     </div>
     <div class=${n('content')}>
       <div class=${n('content-toolbar')}>
-        ${UploadFile(handleFiles)}
+        ${FileUploadButton(uploadFiles)}
       </div>
       <!--
         Default Content to load on the server and then populate codemirror on
@@ -88,10 +88,11 @@ const renderEditor = ({
     </div>
   </div>
 `;
-const fileList_item = ({file_name}) =>
+
+const FileListItem = ({name}) =>
   html`
-    <div style="padding-top: 15px; padding-bottom:15px; text-align:center;">
-      ${file_name}
+    <div class="${n('fileList-item')}">
+      ${name}
     </div>
   `;
 
@@ -113,28 +114,21 @@ const EmptyPreview = () => html`
 const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
-const casscadeInputClick = {
+const cascadeInputClick = {
   handleEvent(e) {
     const input = e.target.parentElement.querySelector('input');
     input.click();
   },
 };
-function UploadFile(handleFiles = null) {
-  const FileInput = html`
-    <div style="margin: 10px 20px">
-      <div style="position: absolute" @click="${casscadeInputClick}">
-        Add files
-      </div>
-      <input
-        type="file"
-        style=" opacity: 0"
-        multiple
-        @change="${handleFiles}"
-      />
+
+const FileUploadButton = uploadFiles => html`
+  <div class="${n('upload-button-container')}">
+    <div class="${n('upload-button')}" @click="${cascadeInputClick}">
+      Add files
     </div>
-  `;
-  return FileInput;
-}
+    <input type="file" style=" opacity: 0" multiple @change="${uploadFiles}" />
+  </div>
+`;
 
 class Editor {
   constructor(win, element) {
@@ -144,7 +138,6 @@ class Editor {
     this.win = win;
 
     this.parent_ = element.parentElement;
-    const files = [];
 
     const {
       promise: codeMirrorElement,
@@ -173,14 +166,14 @@ class Editor {
 
     const batchedRender = batchedApplier(win, () => this.render_());
 
-    const handleFiles = e => this.handleFiles(e);
+    const uploadFiles_ = e => this.uploadFiles_(e);
     this.state_ = appliedState(batchedRender, {
       previewElement,
       codeMirrorElement,
-      files,
-      handleFiles: {
+      files: [],
+      uploadFiles: {
         handleEvent(event) {
-          handleFiles(event);
+          uploadFiles_(event);
         },
       },
     });
@@ -192,17 +185,14 @@ class Editor {
     this.codeMirror_.on('change', () => this.updatePreview_());
   }
 
-  handleFiles(event) {
-    const URL = this.win.URL || this.win.webkitURL;
-
-    var fileList = event.currentTarget.files;
-    for (let i = 0; i < fileList.length; i++) {
-      var img_src = URL.createObjectURL(fileList[i]);
-      var image = {file_name: fileList[i].name, file_source: img_src};
-      this.state_.files = [...this.state_.files, image];
-    }
-
+  uploadFiles_({currentTarget: {files}}) {
     this.state_.isFilesPanelDisplayed = true;
+
+    this.state_.files = this.state_.files.concat(
+      Array.from(files)
+        .map(f => attachBlobUrl(this.win, f))
+        .sort(fileSortCompare)
+    );
   }
 
   render_() {
