@@ -52,15 +52,21 @@ const staticServerData = async () => ({
  *    Defaults to an `EmptyPreview()` element, for server-side rendering.
  *    (The server side-rendered element is taken on runtime to manipulate
  *    independently, its bookkeeping prevents overriding it on hydration.
+ * @param {boolean=} data.isFullPreview
+ *    Sets hidden attribute for Textarea
+ *  @param {EventHandler=} data.toggleFullPreview
+ *    Switches isFullPreview from true to false or vice versa
  * @return {lit-html/TemplateResult}
  */
 const renderEditor = ({
   codeMirrorElement,
   content = '',
+  isFullPreview = false,
+  toggleFullPreview,
   previewElement,
 }) => html`
   <div id=${id} class=${n('wrap')}>
-    <div class=${n('content')}>
+    <div class=${n('content')} ?hidden=${isFullPreview}>
       <!--
         Default Content to load on the server and then populate codemirror on
         the client.
@@ -70,9 +76,43 @@ const renderEditor = ({
       ${until(codeMirrorElement || Textarea({content}))}
     </div>
     <div class="${g('flex-center')} ${n('preview-wrap')}">
+      <!-- Toolbar for full preview toggle and viewport selector. -->
+      ${PreviewToolbar({
+        isFullPreview,
+        toggleFullPreview,
+      })}
       <!-- Empty preview for SSR and inserted as data on the client. -->
       ${previewElement || EmptyPreview()}
     </div>
+  </div>
+`;
+
+/**
+ * Renders toolbar for toggle and viewport selector.
+ * @param {Object} data
+ * @param {boolean=} data.isFullPreview
+ * @param {EventHandler=} data.toggleFullPreview
+ * @return {lit-html/TemplateResult}
+ */
+const PreviewToolbar = ({isFullPreview, toggleFullPreview}) => html`
+  <div class="${g('flex-center')} ${n('preview-toolbar')}">
+    ${FullPreviewToggleButton({toggleFullPreview, isFullPreview})}
+  </div>
+`;
+
+/**
+ * Renders full preview toggle button.
+ * @param {Object} data
+ * @param {boolean=} data.isFullPreview
+ * @param {EventHandler=} data.toggleFullPreview
+ * @return {lit-html/TemplateResult}
+ */
+const FullPreviewToggleButton = ({isFullPreview, toggleFullPreview}) => html`
+  <div
+    class="${g('flex-center')} ${n('content-toggle')}"
+    @click=${toggleFullPreview}
+  >
+    <div>${isFullPreview ? '>' : '<'}</div>
   </div>
 `;
 
@@ -82,7 +122,7 @@ const renderEditor = ({
  * @return {lit-html/TemplateResult}
  */
 const EmptyPreview = () => html`
-  <div class=${n('preview')}></div>
+  <div class="${n('preview')}"></div>
 `;
 
 /**
@@ -94,6 +134,13 @@ const EmptyPreview = () => html`
 const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
+
+export const wrapEventHandler = (handler, opts = {}) => ({
+  ...opts,
+  handleEvent(e) {
+    return handler(e);
+  },
+});
 
 class Editor {
   constructor(win, element) {
@@ -132,9 +179,12 @@ class Editor {
     const batchedRender = batchedApplier(win, () => this.render_());
 
     this.state_ = appliedState(batchedRender, {
-      // No need to bookkeep `content` since we've populated codemirror with it.
-      previewElement,
+      // No need to bookkeep `defaultContent` since it's only needed for
+      // populating codemirror.
       codeMirrorElement,
+      previewElement,
+      isFullPreview: false,
+      toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
     });
 
     batchedRender();
@@ -157,6 +207,10 @@ class Editor {
 
   updatePreview_() {
     this.preview_.update(this.codeMirror_.getValue());
+  }
+
+  toggleFullPreview_() {
+    this.state_.isFullPreview = !this.state_.isFullPreview;
   }
 }
 
