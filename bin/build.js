@@ -62,16 +62,6 @@ const alias = aliases => ({
   resolveId: (importee, _) => (importee in aliases ? aliases[importee] : null),
 });
 
-export const htmlMinifyConfig = {
-  collapseBooleanAttributes: true,
-  collapseWhitespace: true,
-  minifyCSS: true,
-  removeAttributeQuotes: true,
-  removeComments: true,
-  sortClassName: true,
-  sortAttributes: true,
-};
-
 const litHtmlMinifierBabelPlugin = [
   'template-html-minifier',
   {
