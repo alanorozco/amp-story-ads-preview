@@ -34,21 +34,19 @@ const defaultIframeSandbox = [
  * Renders a wrapped iframe that loads an empty document.
  * @return {lit-html/TemplateResult}
  */
-function WrappedIframe() {
-  return html`
-    <div class="${n('wrap')}">
-      <iframe
-        allowpaymentrequest
-        allowfullscreen
-        class=${n('iframe')}
-        sandbox=${defaultIframeSandbox}
-        title="AMP Story Ad Preview"
-        src="/static/empty.html"
-      >
-      </iframe>
-    </div>
-  `;
-}
+const WrappedIframe = () => html`
+  <div class="${n('wrap')}">
+    <iframe
+      allowpaymentrequest
+      allowfullscreen
+      class=${n('iframe')}
+      sandbox=${defaultIframeSandbox}
+      title="AMP Story Ad Preview"
+      src="/static/empty.html"
+    >
+    </iframe>
+  </div>
+`;
 
 export default class AmpStoryAdPreview {
   constructor(win, element) {
