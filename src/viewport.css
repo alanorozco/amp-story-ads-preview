@@ -26,4 +26,5 @@
   */
   transition: width .28s cubic-bezier(.4, 0, .2, 1),
     height .28s cubic-bezier(.4, 0, .2, 1);
+  /* transition: 0.3s ease width, 0.3s ease height; */
 }
