@@ -64,6 +64,9 @@ const alias = aliases => ({
 export const htmlMinifyConfig = {
   collapseBooleanAttributes: true,
   collapseWhitespace: true,
+  minifyCSS: true,
+  removeAttributeQuotes: true,
+  removeComments: true,
   sortClassName: true,
   sortAttributes: true,
 };
