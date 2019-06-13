@@ -179,8 +179,7 @@ class Editor {
     const batchedRender = batchedApplier(win, () => this.render_());
 
     this.state_ = appliedState(batchedRender, {
-      // No need to bookkeep `defaultContent` since it's only needed for
-      // populating codemirror.
+      // No need to bookkeep `content` since we've populated codemirror with it.
       codeMirrorElement,
       previewElement,
       isFullPreview: false,
