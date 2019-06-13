@@ -71,7 +71,7 @@ export const htmlMinifyConfig = {
   sortAttributes: true,
 };
 
-const litHtmlMinifierBabelPll = [
+const litHtmlMinifierBabelPlugin = [
   'template-html-minifier',
   {
     htmlMinifier: {
@@ -98,7 +98,7 @@ const inputConfig = async name => ({
       runtimeHelpers: true,
       exclude: 'node_modules/**',
       plugins: [
-        ...whenMinified(() => litHtmlMinifierBabelPll),
+        ...whenMinified(() => litHtmlMinifierBabelPlugin),
         ...whenMinified(() => localBabelPlugin('normalize-licenses')),
       ],
     }),
