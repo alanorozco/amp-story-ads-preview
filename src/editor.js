@@ -68,9 +68,6 @@ const staticServerData = async () => ({
  * @param {string=} data.viewportId = viewportIdDefault
  *    Viewport id as defined by the `viewports` object in `./viewport.js`.
  *    Defaults to exported `./viewport.viewportIdDefault`.
- *    Defaults to an `EmptyPreview()` element, for server-side rendering.
- *    (The server side-rendered element is taken on runtime to manipulate
- *    independently, its bookkeeping prevents overriding it on hydration.
  * @return {lit-html/TemplateResult}
  */
 const renderEditor = ({
