@@ -22,7 +22,7 @@ import {html, render} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
-import {Viewport, viewportIdDefault} from './viewport';
+import {Viewport, viewportIdDefault, viewportIdFull} from './viewport';
 import {wrapEventHandler} from './utils/wrap-event-handler';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
@@ -225,6 +225,10 @@ class Editor {
 
   toggleFullPreview_() {
     this.state_.isFullPreview = !this.state_.isFullPreview;
+
+    this.state_.viewportId = this.state_.isFullPreview
+      ? viewportIdFull
+      : viewportIdDefault;
   }
 }
 
