@@ -21,6 +21,7 @@ import {englishEnumeration} from '../lib/english-enumeration';
 import {error, fatal, log, step} from '../lib/log';
 import {minify as htmlMinify} from 'html-minifier';
 import {minify as jsMinify} from 'terser';
+import {localBabelPlugin} from '../babel.config';
 import {postcssPlugins} from '../postcss.config';
 import {renderableBundle, renderBundleToString} from '../lib/renderables';
 import {rollup, watch as rollupWatch} from 'rollup';
@@ -60,6 +61,29 @@ const alias = aliases => ({
   resolveId: (importee, _) => (importee in aliases ? aliases[importee] : null),
 });
 
+export const htmlMinifyConfig = {
+  collapseBooleanAttributes: true,
+  collapseWhitespace: true,
+  sortClassName: true,
+  sortAttributes: true,
+};
+
+const litHtmlMinifierBabelPll = [
+  'template-html-minifier',
+  {
+    htmlMinifier: {
+      ...htmlMinifyConfig,
+      // for element props:
+      caseSensitive: true,
+      // override since they should not be used with lit-html:
+      collapseBooleanAttributes: false,
+      sortClassName: false,
+      sortAttributes: false,
+    },
+    modules: {'lit-html': ['html']},
+  },
+];
+
 const inputConfig = async name => ({
   // TODO(alanorozco): Revert back generic executable model (it was nice.)
   // With incremental builds, the entry point gets excluded from watching since
@@ -67,7 +91,14 @@ const inputConfig = async name => ({
   input: 'src/editor-exec.js',
   plugins: [
     alias(await moduleAliases(name)),
-    babel({runtimeHelpers: true, exclude: 'node_modules/**'}),
+    babel({
+      runtimeHelpers: true,
+      exclude: 'node_modules/**',
+      plugins: [
+        ...whenMinified(() => litHtmlMinifierBabelPll),
+        ...whenMinified(() => localBabelPlugin('normalize-licenses')),
+      ],
+    }),
     commonjs(),
     ignore(ignoredModules),
     nodeResolve(),
@@ -87,13 +118,6 @@ const jsMinifyConfig = {
   compress: {unsafe_arrows: true},
   mangle: {toplevel: true, properties: {regex: /_$/}},
   output: {comments: 'some'},
-};
-
-export const htmlMinifyConfig = {
-  collapseBooleanAttributes: true,
-  collapseWhitespace: true,
-  sortClassName: true,
-  sortAttributes: true,
 };
 
 /**
