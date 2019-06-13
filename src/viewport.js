@@ -21,8 +21,14 @@ import {styleMap} from 'lit-html/directives/style-map';
 const {n, g} = getNamespace('viewport');
 
 const viewports = {
-  full: {name: '(Full)', size: {width: '100%', height: '100%'}},
-  'iphone-x': {name: 'iPhone X', size: {width: '375px', height: '812px'}},
+  full: {
+    name: '(Full)',
+    size: {width: '100%', height: '100%'},
+  },
+  'iphone-x': {
+    name: 'iPhone X/XS',
+    size: {width: '375px', height: '812px'},
+  },
 };
 
 export const viewportIdFull = 'full';
