@@ -61,8 +61,8 @@ const staticServerData = async () => ({
  *    Preview element to include inside the viewport.
  *    Defaults to an `EmptyPreview({storyDocTemplate})` element, for
  *    server-side rendering.
- *    (The SSR'd element is taken on runtime to manipulate independently, its
- *    bookkeeping prevents overriding it on hydration.)
+ *    (The SSR'd element is taken on runtime to manipulate independently, we
+ *    bookkeep it so that it won't be overriden by the client-side rerender.)
  * @param {string=} data.viewportId = viewportIdDefault
  *    Viewport id as defined by the `viewports` object in `./viewport.js`.
  *    Defaults to exported `./viewport.viewportIdDefault`.
