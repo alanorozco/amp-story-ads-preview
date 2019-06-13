@@ -57,7 +57,6 @@ function parseSetAttributes(tagWithInnerHtml, element) {
 }
 
 /**
- *
  * @param {Document} doc
  * @param {string} tagWithTextContent
  *   Tag containing its inner html but NOT its closing tag.
@@ -124,7 +123,6 @@ function setElementHtml(doc, element, startTagWithInnerHtml) {
 }
 
 /**
- *
  * @param {string} html
  * @return {Array<string>}
  *  - First element is the `<head>` and its innerHTML (no closing tag).

@@ -58,7 +58,7 @@ const staticServerData = async () => ({
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
  * @param {boolean=} data.isFullPreview = false
- *  @param {EventHandler=} data.toggleFullPreview
+ * @param {EventHandler=} data.toggleFullPreview
  * @param {Element=} data.previewElement
  *    Preview element to include inside the viewport.
  *    Defaults to an `EmptyPreview({storyDocTemplate})` element, for
