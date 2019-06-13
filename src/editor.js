@@ -57,6 +57,8 @@ const staticServerData = async () => ({
  *    Omitting this before populating will simply result in codemirror not
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
+ * @param {boolean=} data.isFullPreview = false
+ *  @param {EventHandler=} data.toggleFullPreview
  * @param {Element=} data.previewElement
  *    Preview element to include inside the viewport.
  *    Defaults to an `EmptyPreview({storyDocTemplate})` element, for
@@ -66,17 +68,24 @@ const staticServerData = async () => ({
  * @param {string=} data.viewportId = viewportIdDefault
  *    Viewport id as defined by the `viewports` object in `./viewport.js`.
  *    Defaults to exported `./viewport.viewportIdDefault`.
+ *    Defaults to an `EmptyPreview()` element, for server-side rendering.
+ *    (The server side-rendered element is taken on runtime to manipulate
+ *    independently, its bookkeeping prevents overriding it on hydration.
  * @return {lit-html/TemplateResult}
  */
 const renderEditor = ({
+  // Keep alphabetically sorted.
+  // Or don't. I'm a sign, not a cop. https://git.io/fj2tc
   codeMirrorElement,
   content = '',
+  isFullPreview = false,
   previewElement,
   storyDocTemplate = '',
+  toggleFullPreview,
   viewportId = viewportIdDefault,
 }) => html`
   <div id=${id} class=${n('wrap')}>
-    <div class=${n('content')}>
+    <div class=${n('content')} ?hidden=${isFullPreview}>
       <!--
         Default Content to load on the server and then populate codemirror on
         the client.
@@ -86,12 +95,46 @@ const renderEditor = ({
       ${until(codeMirrorElement || Textarea({content}))}
     </div>
     <div class="${g('flex-center')} ${n('preview-wrap')}">
+      <!-- Toolbar for full preview toggle and viewport selector. -->
+      ${PreviewToolbar({
+        isFullPreview,
+        toggleFullPreview,
+      })}
       ${Viewport({
         viewportId,
         // Empty preview for SSR and inserted as data on the client.
         previewElement: previewElement || EmptyPreview({storyDocTemplate}),
       })}
     </div>
+  </div>
+`;
+
+/**
+ * Renders toolbar for toggle and viewport selector.
+ * @param {Object} data
+ * @param {boolean=} data.isFullPreview
+ * @param {EventHandler=} data.toggleFullPreview
+ * @return {lit-html/TemplateResult}
+ */
+const PreviewToolbar = ({isFullPreview, toggleFullPreview}) => html`
+  <div class="${g('flex-center')} ${n('preview-toolbar')}">
+    ${FullPreviewToggleButton({toggleFullPreview, isFullPreview})}
+  </div>
+`;
+
+/**
+ * Renders full preview toggle button.
+ * @param {Object} data
+ * @param {boolean=} data.isFullPreview
+ * @param {EventHandler=} data.toggleFullPreview
+ * @return {lit-html/TemplateResult}
+ */
+const FullPreviewToggleButton = ({isFullPreview, toggleFullPreview}) => html`
+  <div
+    class="${g('flex-center')} ${n('content-toggle')}"
+    @click=${toggleFullPreview}
+  >
+    <div>${isFullPreview ? '>' : '<'}</div>
   </div>
 `;
 
@@ -115,6 +158,13 @@ const EmptyPreview = ({storyDocTemplate}) => html`
 const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
+
+export const wrapEventHandler = (handler, opts = {}) => ({
+  ...opts,
+  handleEvent(e) {
+    return handler(e);
+  },
+});
 
 class Editor {
   constructor(win, element) {
@@ -153,9 +203,12 @@ class Editor {
     const batchedRender = batchedApplier(win, () => this.render_());
 
     this.state_ = appliedState(batchedRender, {
-      // No need to bookkeep `content` since we've populated codemirror with it.
-      previewElement,
+      // No need to bookkeep `defaultContent` since it's only needed for
+      // populating codemirror.
       codeMirrorElement,
+      previewElement,
+      isFullPreview: false,
+      toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
     });
 
     batchedRender();
@@ -178,6 +231,10 @@ class Editor {
 
   updatePreview_() {
     this.preview_.update(this.codeMirror_.getValue());
+  }
+
+  toggleFullPreview_() {
+    this.state_.isFullPreview = !this.state_.isFullPreview;
   }
 }
 
