@@ -97,7 +97,7 @@ const renderEditor = ({
         Default Content to load on the server and then populate codemirror on
         the client.
         codeMirrorElement is a promise resolved by codemirror(), hence the
-        the until directive. Once resolved, content can be empty.
+        until directive. Once resolved, content can be empty.
       -->
       ${until(codeMirrorElement || Textarea({content}))}
     </div>
@@ -230,9 +230,10 @@ class Editor {
 
   viewportChange_({target}) {
     const {value} = target;
-    if (validViewportId(value) == 'full') {
-      this.toggleFullPreview_();
-    }
+
+    // If viewport is changed to 'full', the view will display an error message
+    // instead of the preview.
+    // TODO: Make 'full' special and add custom sizing
     this.state_.viewportId = validViewportId(value);
   }
 
