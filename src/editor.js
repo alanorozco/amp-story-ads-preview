@@ -21,6 +21,7 @@ import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
+import {wrapEventHandler} from './utils/wrap-event-handler';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
@@ -134,13 +135,6 @@ const EmptyPreview = () => html`
 const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
-
-export const wrapEventHandler = (handler, opts = {}) => ({
-  ...opts,
-  handleEvent(e) {
-    return handler(e);
-  },
-});
 
 class Editor {
   constructor(win, element) {
