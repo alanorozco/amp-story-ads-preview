@@ -16,7 +16,10 @@
 import './viewport.css';
 import {getNamespace} from '../lib/namespace';
 import {html} from 'lit-html';
+import {repeat} from 'lit-html/directives/repeat';
 import {styleMap} from 'lit-html/directives/style-map';
+
+const identity = v => v;
 
 const {n, g} = getNamespace('viewport');
 
@@ -25,14 +28,68 @@ const viewports = {
     name: '(Full)',
     size: {width: '100%', height: '100%'},
   },
+  'galaxy-s5': {
+    name: 'Galaxy S5',
+    size: {width: '360px', height: '640px'},
+  },
+  'iphone-5': {
+    name: 'iPhone 5/SE',
+    size: {width: '320px', height: '568px'},
+  },
+  'iphone-678': {
+    name: 'iPhone 6/7/8',
+    size: {width: '375px', height: '667px'},
+  },
+  'iphone-678-plus': {
+    name: 'iPhone 6/7/8 Plus',
+    size: {width: '414px', height: '736px'},
+  },
   'iphone-x': {
     name: 'iPhone X/XS',
     size: {width: '375px', height: '812px'},
   },
+  'iphone-xs-max': {
+    name: 'iPhone Xs Max',
+    size: {width: '414px', height: '896px'},
+  },
+  'pixel-2': {
+    name: 'Pixel 2',
+    size: {width: '411px', height: '731px'},
+  },
+  'pixel-2-xl': {
+    name: 'Pixel 2 XL',
+    size: {width: '411px', height: '823px'},
+  },
 };
+
+const viewportIds = Object.keys(viewports);
 
 export const viewportIdFull = 'full';
 export const viewportIdDefault = 'iphone-x';
+
+export function validViewportId(viewportId) {
+  if (!viewportIds.includes(viewportId)) {
+    throw new Error(`Invalid viewport "${viewportId}"`);
+  }
+  return viewportId;
+}
+
+export const ViewportSelector = ({selectViewport, viewportId}) => html`
+  <select @change=${selectViewport} .value=${viewportId}>
+    ${repeat(viewportIds, identity, id =>
+      ViewportOption({
+        id,
+        selected: viewportId == id,
+      })
+    )}
+  </select>
+`;
+
+const ViewportOption = ({id, selected}) => html`
+  <option value=${id} ?selected=${selected}>
+    ${viewports[id].name}
+  </option>
+`;
 
 export const Viewport = ({viewportId, previewElement}) => html`
   <div

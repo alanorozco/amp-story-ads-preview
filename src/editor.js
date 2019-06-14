@@ -22,7 +22,13 @@ import {html, render} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
-import {Viewport, viewportIdDefault, viewportIdFull} from './viewport';
+import {
+  validViewportId,
+  Viewport,
+  viewportIdDefault,
+  viewportIdFull,
+  ViewportSelector,
+} from './viewport';
 import {wrapEventHandler} from './utils/wrap-event-handler';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
@@ -59,13 +65,15 @@ const staticServerData = async () => ({
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
  * @param {boolean=} data.isFullPreview = false
- * @param {EventHandler=} data.toggleFullPreview
  * @param {Element=} data.previewElement
  *    Preview element to include inside the viewport.
  *    Defaults to an `EmptyPreview({storyDocTemplate})` element, for
  *    server-side rendering.
  *    (The SSR'd element is taken on runtime to manipulate independently, we
  *    bookkeep it so that it won't be overriden by the client-side rerender.)
+ * @param {EventHandler=} data.selectViewport
+ * @param {string=} data.storyDocTemplate
+ * @param {EventHandler=} data.toggleFullPreview
  * @param {string=} data.viewportId = viewportIdDefault
  *    Viewport id as defined by the `viewports` object in `./viewport.js`.
  *    Defaults to exported `./viewport.viewportIdDefault`.
@@ -78,6 +86,7 @@ const renderEditor = ({
   content = '',
   isFullPreview = false,
   previewElement,
+  selectViewport,
   storyDocTemplate = '',
   toggleFullPreview,
   viewportId = viewportIdDefault,
@@ -88,7 +97,7 @@ const renderEditor = ({
         Default Content to load on the server and then populate codemirror on
         the client.
         codeMirrorElement is a promise resolved by codemirror(), hence the
-        the until directive. Once resolved, content can be empty.
+        until directive. Once resolved, content can be empty.
       -->
       ${until(codeMirrorElement || Textarea({content}))}
     </div>
@@ -97,6 +106,8 @@ const renderEditor = ({
       ${PreviewToolbar({
         isFullPreview,
         toggleFullPreview,
+        selectViewport,
+        viewportId,
       })}
       ${Viewport({
         viewportId,
@@ -111,12 +122,20 @@ const renderEditor = ({
  * Renders toolbar for toggle and viewport selector.
  * @param {Object} data
  * @param {boolean=} data.isFullPreview
+ * @param {EventHandler=} data.selectViewport
  * @param {EventHandler=} data.toggleFullPreview
+ * @param {string=} data.viewportId
  * @return {lit-html/TemplateResult}
  */
-const PreviewToolbar = ({isFullPreview, toggleFullPreview}) => html`
+const PreviewToolbar = ({
+  isFullPreview,
+  selectViewport,
+  toggleFullPreview,
+  viewportId,
+}) => html`
   <div class="${g('flex-center')} ${n('preview-toolbar')}">
     ${FullPreviewToggleButton({toggleFullPreview, isFullPreview})}
+    ${ViewportSelector({selectViewport, viewportId})}
   </div>
 `;
 
@@ -199,6 +218,7 @@ class Editor {
       previewElement,
       isFullPreview: false,
       toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
+      selectViewport: wrapEventHandler(e => this.viewportChange_(e)),
     });
 
     batchedRender();
@@ -206,6 +226,15 @@ class Editor {
     this.refreshCodeMirror_();
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
+  }
+
+  viewportChange_({target}) {
+    const {value} = target;
+
+    // If viewport is changed to 'full', the view will display an error message
+    // instead of the preview.
+    // TODO: Make 'full' special and add custom sizing
+    this.state_.viewportId = validViewportId(value);
   }
 
   render_() {
@@ -226,9 +255,19 @@ class Editor {
   toggleFullPreview_() {
     this.state_.isFullPreview = !this.state_.isFullPreview;
 
-    this.state_.viewportId = this.state_.isFullPreview
-      ? viewportIdFull
-      : viewportIdDefault;
+    // Set full viewport and keep previous for restoring later.
+    if (this.state_.isFullPreview) {
+      this.state_.viewportIdBeforeFullPreview = this.state_.viewportId;
+      this.state_.viewportId = viewportIdFull;
+      return;
+    }
+
+    // Restore viewport as it was before toggling.
+    if (this.state_.viewportIdBeforeFullPreview) {
+      const {viewportIdBeforeFullPreview} = this.state_;
+      delete this.state_.viewportIdBeforeFullPreview;
+      this.state_.viewportId = viewportIdBeforeFullPreview;
+    }
   }
 }
 
