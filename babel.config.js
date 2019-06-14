@@ -20,12 +20,6 @@ export default {
   plugins: [
     '@babel/plugin-transform-async-to-generator',
     '@babel/plugin-transform-runtime',
-    // ['template-html-minifier', {htmlMinifier, modules: {'lit-html': ['html']}}],
-    // // TODO: uncomment this line when normalize licenses plugin is added.
-    // local('normalize-licenses'),
-    // // =======
-    // //     //local('normalize-licenses'),
-    // // >>>>>>> Stashed changes
   ],
   presets: [
     [
