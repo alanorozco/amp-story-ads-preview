@@ -1,0 +1,29 @@
+@component;
+
+.wrap {
+  width: 100%;
+  padding: 20px;
+}
+
+.wrap-full {
+  padding: 0;
+}
+
+.wrap-full > .inner {
+  border-width: 0;
+  box-shadow: none;
+}
+
+.inner {
+  background: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  /*
+    Animating `width` and `height` will always be janky, alas this is the only
+    way when dealing with iframes (ie. they should reflow anyway).
+
+    Definition below is overly precise but it's the same as playground.amp.dev.
+  */
+  transition: width .28s cubic-bezier(.4, 0, .2, 1),
+    height .28s cubic-bezier(.4, 0, .2, 1);
+}

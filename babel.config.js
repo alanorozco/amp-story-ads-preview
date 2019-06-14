@@ -13,30 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {htmlMinifyConfig} from './bin/build';
 
-const local = plugin => `./lib/babel/babel-plugin-${plugin}`;
-
-const htmlMinifier = {
-  ...htmlMinifyConfig,
-  // for element props:
-  caseSensitive: true,
-  // override since they should not be used with lit-html:
-  collapseBooleanAttributes: false,
-  sortClassName: false,
-  sortAttributes: false,
-};
+export const localBabelPlugin = plugin => `./lib/babel/babel-plugin-${plugin}`;
 
 export default {
   plugins: [
     '@babel/plugin-transform-async-to-generator',
     '@babel/plugin-transform-runtime',
-    ['template-html-minifier', {htmlMinifier, modules: {'lit-html': ['html']}}],
-    // TODO: uncomment this line when normalize licenses plugin is added.
-    local('normalize-licenses'),
-    // =======
-    //     //local('normalize-licenses'),
-    // >>>>>>> Stashed changes
+    // ['template-html-minifier', {htmlMinifier, modules: {'lit-html': ['html']}}],
+    // // TODO: uncomment this line when normalize licenses plugin is added.
+    // local('normalize-licenses'),
+    // // =======
+    // //     //local('normalize-licenses'),
+    // // >>>>>>> Stashed changes
   ],
   presets: [
     [

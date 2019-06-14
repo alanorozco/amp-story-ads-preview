@@ -20,20 +20,31 @@ import {attachBlobUrl, fileSortCompare} from './file-upload';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
+import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {repeat} from 'lit-html/directives/repeat';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
+import {Viewport, viewportIdDefault, viewportIdFull} from './viewport';
+import {wrapEventHandler} from './utils/wrap-event-handler';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
-
-const defaultContent = 'src/editor-default.html';
+import htmlMinifier from 'html-minifier';
 
 const {id, g, n, s} = getNamespace('editor');
 
+const readFixtureHtml = async name =>
+  (await fs.readFile(`src/fixtures/${name}.html`)).toString('utf-8');
+
 /** @return {Promise<{content: string}>} */
 const staticServerData = async () => ({
-  content: (await fs.readFile(defaultContent)).toString('utf-8'),
+  content: await readFixtureHtml('ad'),
+  // Since this is a template that is never user-edited, let's minify it to
+  // keep the bundle small.
+  storyDocTemplate: htmlMinifier.minify(
+    await readFixtureHtml('story'),
+    htmlMinifyConfig
+  ),
 });
 
 /**
@@ -49,43 +60,69 @@ const staticServerData = async () => ({
  *    Omitting this before populating will simply result in codemirror not
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
+ * @param {boolean=} data.isFullPreview = false
+ * @param {EventHandler=} data.toggleFullPreview
  * @param {Element=} data.previewElement
  *    Preview element to include inside the viewport.
- *    Defaults to an `EmptyPreview()` element, for server-side rendering.
- *    (The server side-rendered element is taken on runtime to manipulate
- *    independently, its bookkeeping prevents overriding it on hydration.
+ *    Defaults to an `EmptyPreview({storyDocTemplate})` element, for
+ *    server-side rendering.
+ *    (The SSR'd element is taken on runtime to manipulate independently, we
+ *    bookkeep it so that it won't be overriden by the client-side rerender.)
+ * @param {string=} data.viewportId = viewportIdDefault
+ *    Viewport id as defined by the `viewports` object in `./viewport.js`.
+ *    Defaults to exported `./viewport.viewportIdDefault`.
  * @return {lit-html/TemplateResult}
  */
 const fileRepeatKey = ({url}) => url;
 
 const renderEditor = ({
+  // Keep alphabetically sorted.
+  // Or don't. I'm a sign, not a cop. https://git.io/fj2tc
   codeMirrorElement,
   content = '',
+  isFullPreview = false,
+  previewElement,
+  storyDocTemplate = '',
+  toggleFullPreview,
+  viewportId = viewportIdDefault,
   uploadFiles,
   files = [],
-  previewElement,
   isFilesPanelDisplayed = false,
 }) => html`
   <div id=${id} class=${n('wrap')}>
-    <div class="${'files-panel'}" ?hidden=${!isFilesPanelDisplayed}>
-      ${repeat(files, fileRepeatKey, FileListItem)}
-    </div>
+    ${FilePanel({isFilesPanelDisplayed, files})}
     <div class=${n('content')}>
-      <div class=${n('content-toolbar')}>
-        ${FileUploadButton(uploadFiles)}
-      </div>
-      <!--
+      <div id=${id} class=${n('wrap')}>
+        <div class=${n('content')} ?hidden=${isFullPreview}>
+          <!--
         Default Content to load on the server and then populate codemirror on
         the client.
         codeMirrorElement is a promise resolved by codemirror(), hence the
         the until directive. Once resolved, content can be empty.
       -->
-      ${until(codeMirrorElement || Textarea({content}))}
+          ${until(codeMirrorElement || Textarea({content}))}
+        </div>
+        <div class="${g('flex-center')} ${n('preview-wrap')}">
+          <!-- Toolbar for full preview toggle and viewport selector. -->
+          ${PreviewToolbar({
+            uploadFiles,
+            isFullPreview,
+            toggleFullPreview,
+          })}
+          ${Viewport({
+            viewportId,
+            // Empty preview for SSR and inserted as data on the client.
+            previewElement: previewElement || EmptyPreview({storyDocTemplate}),
+          })}
+        </div>
+      </div>
     </div>
-    <div class="${g('flex-center')} ${n('preview-wrap')}">
-      <!-- Empty preview for SSR and inserted as data on the client. -->
-      ${previewElement || EmptyPreview()}
-    </div>
+  </div>
+`;
+
+const FilePanel = ({isFilesPanelDisplayed, files}) => html`
+  <div class="${'files-panel'}" ?hidden=${!isFilesPanelDisplayed}>
+    ${repeat(files, fileRepeatKey, FileListItem)}
   </div>
 `;
 
@@ -97,12 +134,48 @@ const FileListItem = ({name}) =>
   `;
 
 /**
- * Renders preview element.
- * This is then managed independently by AmpStoryAdPreview after hydration.
+ * Renders toolbar for toggle and viewport selector.
+ * @param {Object} data
+ * @param {boolean=} data.isFullPreview
+ * @param {EventHandler=} data.toggleFullPreview
  * @return {lit-html/TemplateResult}
  */
-const EmptyPreview = () => html`
-  <div class=${n('preview')}></div>
+const PreviewToolbar = ({
+  uploadFiles,
+  isFullPreview,
+  toggleFullPreview,
+}) => html`
+  <div class="${g('flex-center')} ${n('preview-toolbar')}">
+    ${FileUploadButton(uploadFiles)}
+    ${FullPreviewToggleButton({toggleFullPreview, isFullPreview})}
+  </div>
+`;
+
+/**
+ * Renders full preview toggle button.
+ * @param {Object} data
+ * @param {boolean=} data.isFullPreview
+ * @param {EventHandler=} data.toggleFullPreview
+ * @return {lit-html/TemplateResult}
+ */
+const FullPreviewToggleButton = ({isFullPreview, toggleFullPreview}) => html`
+  <div
+    class="${g('flex-center')} ${n('content-toggle')}"
+    @click=${toggleFullPreview}
+  >
+    <div>${isFullPreview ? '>' : '<'}</div>
+  </div>
+`;
+
+/**
+ * Renders preview element.
+ * This is then managed independently by AmpStoryAdPreview after hydration.
+ * @param {Object} data
+ * @param {string} data.storyDocTemplate
+ * @return {lit-html/TemplateResult}
+ */
+const EmptyPreview = ({storyDocTemplate}) => html`
+  <div class=${n('preview')} data-template=${storyDocTemplate}></div>
 `;
 
 /**
@@ -166,16 +239,17 @@ class Editor {
 
     const batchedRender = batchedApplier(win, () => this.render_());
 
-    const uploadFiles_ = e => this.uploadFiles_(e);
     this.state_ = appliedState(batchedRender, {
       previewElement,
       codeMirrorElement,
       files: [],
-      uploadFiles: {
-        handleEvent(event) {
-          uploadFiles_(event);
-        },
-      },
+      uploadFiles: wrapEventHandler(e => this.uploadFiles_(e)),
+
+      // No need to bookkeep `content` since we've populated codemirror with it.
+      codeMirrorElement,
+      previewElement,
+      isFullPreview: false,
+      toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
     });
 
     batchedRender();
@@ -208,6 +282,14 @@ class Editor {
 
   updatePreview_() {
     this.preview_.update(this.codeMirror_.getValue());
+  }
+
+  toggleFullPreview_() {
+    this.state_.isFullPreview = !this.state_.isFullPreview;
+
+    this.state_.viewportId = this.state_.isFullPreview
+      ? viewportIdFull
+      : viewportIdDefault;
   }
 }
 

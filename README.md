@@ -33,6 +33,7 @@ Tasks on [`pkg.scripts`](./package.json) run with `yarn TASK_NAME`:
 - `yarn clean` removes a previous build.
 - `yarn lint` lints the project.
 - `yarn serve` serves the build.
+- `yarn watch-slow` for a slow full-restart watch.
 - `yarn x` e\[**x**\]ecutes a `node` binary in the project's context (mainly for `esm`).
 
 ## 🔁 Continuous Integration

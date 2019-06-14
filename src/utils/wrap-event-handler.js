@@ -13,9 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import parseArgs from 'minimist';
 
-export const argv = parseArgs(process.argv);
-export const isRunningFrom = path => (argv._[1] || '').endsWith(`/${path}`);
-export const hasNonOption = name => argv._.includes(name);
-export const whenMinified = ctor => (argv.minify ? [ctor()] : []);
+/**
+ * Wraps a generic event handler into a lit-html EventHandlerWithOptions.
+ * @param {function(Event|undefined):T} handler
+ * @param {Object=} opts (optional)
+ * @param {boolean=} opts.capture (optional)
+ * @param {boolean=} opts.once (optional)
+ * @param {boolean=} opts.passive (optional)
+ * @return {{
+ *  handleEvent: (function(Event):T),
+ *  capture: (boolean|undefined),
+ *  passive: (boolean|undefined),
+ *  once: (boolean|undefined),
+ * }}
+ */
+export const wrapEventHandler = (handler, opts = {}) => ({
+  ...opts,
+  handleEvent(e) {
+    return handler(e);
+  },
+});

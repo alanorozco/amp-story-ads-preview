@@ -13,9 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import parseArgs from 'minimist';
 
-export const argv = parseArgs(process.argv);
-export const isRunningFrom = path => (argv._[1] || '').endsWith(`/${path}`);
-export const hasNonOption = name => argv._.includes(name);
-export const whenMinified = ctor => (argv.minify ? [ctor()] : []);
+// Mirror of lib/bundle.js, with hardcoded component.
+// This is needed since with incremental builds, the entry point gets excluded from watching since
+// the import is aliased.
+// TODO(alanorozco): Revert back generic executable model (it was nice.)
+import './global.css';
+import {ctor, id} from './editor';
+import {IS_DEV} from '../lib/is-dev';
+import {liveReload} from './reload-notifications';
+
+new ctor(self, document.getElementById(id));
+
+if (IS_DEV) {
+  liveReload(self);
+}

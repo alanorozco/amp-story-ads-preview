@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {argv} from './lib/cli';
+import {whenMinified} from './lib/cli';
 import atImport from 'postcss-import';
 import cssnano from 'cssnano';
 import internalNamespace from './lib/postcss/internal-namespace';
 import vars from 'postcss-simple-vars';
-
-const whenMinified = plugin => (argv.minify ? [plugin()] : []);
 
 export const postcssPlugins = () => [
   atImport({from: 'src'}),
