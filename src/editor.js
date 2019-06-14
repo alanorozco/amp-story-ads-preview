@@ -128,7 +128,7 @@ const FilePanel = ({isFilesPanelDisplayed, files}) => html`
 
 const FileListItem = ({name}) =>
   html`
-    <div class="${n('fileList-item')}">
+    <div class="${n('file-list-item')}">
       ${name}
     </div>
   `;
@@ -199,7 +199,7 @@ const FileUploadButton = uploadFiles => html`
     <div class="${n('upload-button')}" @click="${cascadeInputClick}">
       Add files
     </div>
-    <input type="file" style=" opacity: 0" multiple @change="${uploadFiles}" />
+    <input type="file" hidden multiple @change="${uploadFiles}" />
   </div>
 `;
 

@@ -9,7 +9,7 @@
   height: 100%;
 }
 
-.content{
+.content {
   flex: 1;
   overflow: hidden;
 }
@@ -52,30 +52,30 @@
   contain: strict;
 }
 
-.files-panel{
+.files-panel {
   flex: 0 0 110px;
   border-right: 3px solid #5998a6;
 }
 
-.upload-button-container{
+.upload-button-container {
   margin:5px;
   height:35px;
   background: #ddd;
 
 }
 
-.upload-button{
+.upload-button { 
   position: absolute;
   text-align: center;
   cursor:pointer;
   padding: 10px 10px;
 }
 
-.upload-button-container :hover{
+.upload-button-container :hover {
   background:#272822;
   color:white;
 }
 
-.fileList-item{
+.file-list-item {
   padding: 15px 15px;
 }
