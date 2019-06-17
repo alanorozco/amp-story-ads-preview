@@ -73,7 +73,6 @@ const staticServerData = async () => ({
  *    Defaults to exported `./viewport.viewportIdDefault`.
  * @return {lit-html/TemplateResult}
  */
-const fileRepeatKey = ({url}) => url;
 
 const renderEditor = ({
   // Keep alphabetically sorted.
@@ -91,34 +90,33 @@ const renderEditor = ({
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilePanel({isFilesPanelDisplayed, files})}
-    <div class=${n('content')}>
-      <div id=${id} class=${n('wrap')}>
-        <div class=${n('content')} ?hidden=${isFullPreview}>
-          <!--
+
+    <div class=${n('content')} ?hidden=${isFullPreview}>
+      <!--
         Default Content to load on the server and then populate codemirror on
         the client.
         codeMirrorElement is a promise resolved by codemirror(), hence the
         the until directive. Once resolved, content can be empty.
       -->
-          ${until(codeMirrorElement || Textarea({content}))}
-        </div>
-        <div class="${g('flex-center')} ${n('preview-wrap')}">
-          <!-- Toolbar for full preview toggle and viewport selector. -->
-          ${PreviewToolbar({
-            uploadFiles,
-            isFullPreview,
-            toggleFullPreview,
-          })}
-          ${Viewport({
-            viewportId,
-            // Empty preview for SSR and inserted as data on the client.
-            previewElement: previewElement || EmptyPreview({storyDocTemplate}),
-          })}
-        </div>
-      </div>
+      ${until(codeMirrorElement || Textarea({content}))}
+    </div>
+    <div class="${g('flex-center')} ${n('preview-wrap')}">
+      <!-- Toolbar for full preview toggle and viewport selector. -->
+      ${PreviewToolbar({
+        uploadFiles,
+        isFullPreview,
+        toggleFullPreview,
+      })}
+      ${Viewport({
+        viewportId,
+        // Empty preview for SSR and inserted as data on the client.
+        previewElement: previewElement || EmptyPreview({storyDocTemplate}),
+      })}
     </div>
   </div>
 `;
+
+const fileRepeatKey = ({url}) => url;
 
 const FilePanel = ({isFilesPanelDisplayed, files}) => html`
   <div class="${'files-panel'}" ?hidden=${!isFilesPanelDisplayed}>
@@ -128,8 +126,10 @@ const FilePanel = ({isFilesPanelDisplayed, files}) => html`
 
 const FileListItem = ({name}) =>
   html`
-    <div class="${n('file-list-item')}">
-      ${name}
+    <div class="item">
+      <div class="${n('file-list-item')}">
+        ${name}
+      </div>
     </div>
   `;
 
@@ -146,8 +146,8 @@ const PreviewToolbar = ({
   toggleFullPreview,
 }) => html`
   <div class="${g('flex-center')} ${n('preview-toolbar')}">
-    ${FileUploadButton(uploadFiles)}
     ${FullPreviewToggleButton({toggleFullPreview, isFullPreview})}
+    ${FileUploadButton(uploadFiles)}
   </div>
 `;
 
@@ -187,6 +187,7 @@ const EmptyPreview = ({storyDocTemplate}) => html`
 const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
+
 const cascadeInputClick = {
   handleEvent(e) {
     const input = e.target.parentElement.querySelector('input');
@@ -239,17 +240,15 @@ class Editor {
 
     const batchedRender = batchedApplier(win, () => this.render_());
 
+    // No need to bookkeep `content` since we've populated codemirror with it.
+
     this.state_ = appliedState(batchedRender, {
-      previewElement,
       codeMirrorElement,
       files: [],
-      uploadFiles: wrapEventHandler(e => this.uploadFiles_(e)),
-
-      // No need to bookkeep `content` since we've populated codemirror with it.
-      codeMirrorElement,
-      previewElement,
       isFullPreview: false,
+      previewElement,
       toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
+      uploadFiles: wrapEventHandler(e => this.uploadFiles_(e)),
     });
 
     batchedRender();

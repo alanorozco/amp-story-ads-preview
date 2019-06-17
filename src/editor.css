@@ -52,20 +52,13 @@
   contain: strict;
 }
 
-.files-panel {
-  flex: 0 0 110px;
-  border-right: 3px solid #5998a6;
-}
-
 .upload-button-container {
   margin:5px;
   height:35px;
   background: #ddd;
-
 }
 
 .upload-button { 
-  position: absolute;
   text-align: center;
   cursor:pointer;
   padding: 10px 10px;
@@ -76,6 +69,18 @@
   color:white;
 }
 
+.files-panel {
+  flex: 0 0 110px;
+  border-right: 3px solid #5998a6;
+  overflow: none;
+}
+
+.item {
+  position: relative;
+  cursor: pointer;
+}
+
 .file-list-item {
   padding: 15px 15px;
+  width:110px;
 }
