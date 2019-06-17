@@ -79,14 +79,14 @@ const renderEditor = ({
   // Or don't. I'm a sign, not a cop. https://git.io/fj2tc
   codeMirrorElement,
   content = '',
+  files = [],
   isFullPreview = false,
+  isFilesPanelDisplayed = false,
   previewElement,
   storyDocTemplate = '',
   toggleFullPreview,
-  viewportId = viewportIdDefault,
   uploadFiles,
-  files = [],
-  isFilesPanelDisplayed = false,
+  viewportId = viewportIdDefault,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilePanel({isFilesPanelDisplayed, files})}
@@ -127,7 +127,10 @@ const FilePanel = ({isFilesPanelDisplayed, files}) => html`
 const FileListItem = ({name}) =>
   html`
     <div class="item">
-      <div class="${n('file-list-item')}">
+      <div class="${n('file-list-item-clipped')}">
+        ${name}
+      </div>
+      <div class="${n('file-list-item-unclipped')}">
         ${name}
       </div>
     </div>
@@ -188,16 +191,14 @@ const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
 
-const cascadeInputClick = {
-  handleEvent(e) {
-    const input = e.target.parentElement.querySelector('input');
-    input.click();
-  },
-};
+const cascasdeInputClick = wrapEventHandler(e => {
+  const input = e.target.parentElement.querySelector('input');
+  input.click();
+});
 
 const FileUploadButton = uploadFiles => html`
   <div class="${n('upload-button-container')}">
-    <div class="${n('upload-button')}" @click="${cascadeInputClick}">
+    <div class="${n('upload-button')}" @click="${cascasdeInputClick}">
       Add files
     </div>
     <input type="file" hidden multiple @change="${uploadFiles}" />
