@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import './viewport.css';
-import {assertIncludes} from '../lib/assert';
+import {assertArrayIncludes} from '../lib/assert';
 import {getNamespace} from '../lib/namespace';
 import {html} from 'lit-html';
 import {repeat} from 'lit-html/directives/repeat';
@@ -68,9 +68,8 @@ const viewportIds = Object.keys(viewports);
 export const viewportIdFull = 'full';
 export const viewportIdDefault = 'iphone-x';
 
-export function validViewportId(viewportId) {
-  return assertIncludes(viewportIds, viewportId, 'Invalid viewport');
-}
+export const validViewportId = viewportId =>
+  assertArrayIncludes(viewportIds, viewportId);
 
 export const ViewportSelector = ({selectViewport, viewportId}) => html`
   <select @change=${selectViewport} .value=${viewportId}>
