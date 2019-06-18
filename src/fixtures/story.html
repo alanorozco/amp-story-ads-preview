@@ -119,7 +119,7 @@
         margin-right: 16px !important;
       }
               
-      [ad-showing] .i-amphtml-story-ad-attribution {
+      [ad-showing][desktop]:not([supports-landscape]) .i-amphtml-story-ad-attribution {
         /* Have to wait for page to slide in. */
         transition: opacity 0.1s linear 0.3s;
       }
