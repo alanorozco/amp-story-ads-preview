@@ -9,9 +9,18 @@
   height: 100%;
 }
 
+div {
+  box-sizing: border-box;
+}
+
 .content {
   flex: 1;
-  overflow: hidden;
+  overflow: hidden; 
+  z-index: -1;
+}
+
+.content > div {
+  position: inherit;
 }
 
 .content-toggle {
@@ -58,7 +67,7 @@
   background: #ddd;
 }
 
-.upload-button { 
+.upload-button-container .upload-button { 
   text-align: center;
   cursor:pointer;
   padding: 10px 10px;
@@ -76,28 +85,43 @@
 }
 
 .item {
-  padding: 15px 15px;
   position: relative;
   cursor: pointer;
+
 }
 
 .item > div {
+  padding: 15px 15px;
   white-space: nowrap;
 }
 
-.file-list-item-clipped {
+.item .file-list-item-clipped {
   overflow: hidden;
   text-overflow: ellipsis;
   width:110px;
 }
 
-.file-list-item-unclipped {
+.item .file-list-item-unclipped {
   pointer-events: none;
   opacity: 0;
   position: absolute;
   left: 0;
-  top: 0;
-  color:white;
-  background-color: rgb(220, 0, 100);
+  top:0;
+  height:30px;
+  background:#ccc;
+  color:black;
   min-width: 100%;
+  padding: 7px 5px 0px 5px;
+}
+
+.item:hover .file-list-item-clipped {
+  opacity: 0;
+}
+.item:hover .file-list-item-unclipped {
+  opacity: 1;
+  z-index: 1;
+}
+.uploaded-files-title{
+  text-align: center;
+  text-decoration: underline;
 }

@@ -120,13 +120,14 @@ const fileRepeatKey = ({url}) => url;
 
 const FilePanel = ({isFilesPanelDisplayed, files}) => html`
   <div class="${'files-panel'}" ?hidden=${!isFilesPanelDisplayed}>
+    <h4 class="${n('uploaded-files-title')}">Uploaded Files <br /></h4>
     ${repeat(files, fileRepeatKey, FileListItem)}
   </div>
 `;
 
 const FileListItem = ({name}) =>
   html`
-    <div class="item">
+    <div class="${n('item')}">
       <div class="${n('file-list-item-clipped')}">
         ${name}
       </div>
