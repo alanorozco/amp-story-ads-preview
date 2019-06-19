@@ -113,10 +113,12 @@ div {
 .file-list-item:hover .file-list-item-clipped {
   opacity: 0;
 }
+
 .file-list-item:hover .file-list-item-unclipped {
   opacity: 1;
   z-index: 1;
 }
+
 .uploaded-files-title {
   text-align: center;
   text-decoration: underline;
