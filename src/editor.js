@@ -125,17 +125,16 @@ const FilePanel = ({isFilesPanelDisplayed, files}) => html`
   </div>
 `;
 
-const FileListItem = ({name}) =>
-  html`
-    <div class="${n('item')}">
-      <div class="${n('file-list-item-clipped')}">
-        ${name}
-      </div>
-      <div class="${n('file-list-item-unclipped')}">
-        ${name}
-      </div>
+const FileListItem = ({name}) => html`
+  <div class="${n('file-list-item')}">
+    <div class="${n('file-list-item-clipped')}">
+      ${name}
     </div>
-  `;
+    <div class="${n('file-list-item-unclipped')}">
+      ${name}
+    </div>
+  </div>
+`;
 
 /**
  * Renders toolbar for toggle and viewport selector.
