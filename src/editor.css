@@ -9,9 +9,14 @@
   height: 100%;
 }
 
-.wrap > div {
+div {
+  box-sizing: border-box;
+}
+
+.content {
   flex: 1;
-  overflow: hidden;
+  overflow: hidden; 
+  z-index: 0;
 }
 
 .content-toggle {
@@ -50,4 +55,71 @@
   width: 100%;
   height: 100%;
   contain: strict;
+}
+
+.upload-button-container {
+  margin:5px;
+  height:35px;
+  background: #ddd;
+}
+
+.upload-button-container .upload-button { 
+  text-align: center;
+  cursor:pointer;
+  padding: 10px 10px;
+}
+
+.upload-button-container :hover {
+  background:#272822;
+  color:white;
+}
+
+.files-panel {
+  flex: 0 0 110px;
+  border-right: 3px solid #5998a6;
+  overflow: none;
+}
+
+.file-list-item {
+  position: relative;
+  cursor: pointer;
+
+}
+
+.file-list-item > div {
+  padding: 15px 15px;
+  white-space: nowrap;
+}
+
+.file-list-item .file-list-item-clipped {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width:110px;
+}
+
+.file-list-item .file-list-item-unclipped {
+  pointer-events: none;
+  opacity: 0;
+  position: absolute;
+  left: 0;
+  top:0;
+  height:30px;
+  background:#ccc;
+  color:black;
+  min-width: 100%;
+  padding: 7px 5px 0px 5px;
+}
+
+.file-list-item:hover .file-list-item-clipped {
+  opacity: 0;
+}
+
+.file-list-item:hover .file-list-item-unclipped {
+  opacity: 1;
+  z-index: 1;
+}
+
+.uploaded-files-title {
+  text-align: center;
+  text-decoration: underline;
 }

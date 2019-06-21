@@ -16,10 +16,12 @@
 import './editor.css';
 import './monokai.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
+import {attachBlobUrl, fileSortCompare} from './file-upload';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
+import {repeat} from 'lit-html/directives/repeat';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
 import {
@@ -79,19 +81,25 @@ const staticServerData = async () => ({
  *    Defaults to exported `./viewport.viewportIdDefault`.
  * @return {lit-html/TemplateResult}
  */
+
 const renderEditor = ({
   // Keep alphabetically sorted.
   // Or don't. I'm a sign, not a cop. https://git.io/fj2tc
   codeMirrorElement,
   content = '',
+  files = [],
   isFullPreview = false,
+  isFilesPanelDisplayed = false,
   previewElement,
   selectViewport,
   storyDocTemplate = '',
   toggleFullPreview,
+  uploadFiles,
   viewportId = viewportIdDefault,
 }) => html`
   <div id=${id} class=${n('wrap')}>
+    ${FilePanel({isFilesPanelDisplayed, files})}
+
     <div class=${n('content')} ?hidden=${isFullPreview}>
       <!--
         Default Content to load on the server and then populate codemirror on
@@ -104,6 +112,7 @@ const renderEditor = ({
     <div class="${g('flex-center')} ${n('preview-wrap')}">
       <!-- Toolbar for full preview toggle and viewport selector. -->
       ${PreviewToolbar({
+        uploadFiles,
         isFullPreview,
         toggleFullPreview,
         selectViewport,
@@ -114,6 +123,26 @@ const renderEditor = ({
         // Empty preview for SSR and inserted as data on the client.
         previewElement: previewElement || EmptyPreview({storyDocTemplate}),
       })}
+    </div>
+  </div>
+`;
+
+const fileRepeatKey = ({url}) => url;
+
+const FilePanel = ({isFilesPanelDisplayed, files}) => html`
+  <div class="${'files-panel'}" ?hidden=${!isFilesPanelDisplayed}>
+    <h4 class="${n('uploaded-files-title')}">Uploaded Files <br /></h4>
+    ${repeat(files, fileRepeatKey, FileListItem)}
+  </div>
+`;
+
+const FileListItem = ({name}) => html`
+  <div class="${n('file-list-item')}">
+    <div class="${n('file-list-item-clipped')}">
+      ${name}
+    </div>
+    <div class="${n('file-list-item-unclipped')}">
+      ${name}
     </div>
   </div>
 `;
@@ -131,10 +160,12 @@ const PreviewToolbar = ({
   isFullPreview,
   selectViewport,
   toggleFullPreview,
+  uploadFiles,
   viewportId,
 }) => html`
   <div class="${g('flex-center')} ${n('preview-toolbar')}">
     ${FullPreviewToggleButton({toggleFullPreview, isFullPreview})}
+    ${FileUploadButton(uploadFiles)}
     ${ViewportSelector({selectViewport, viewportId})}
   </div>
 `;
@@ -176,6 +207,20 @@ const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
 
+const cascasdeInputClick = wrapEventHandler(e => {
+  const input = e.target.parentElement.querySelector('input');
+  input.click();
+});
+
+const FileUploadButton = uploadFiles => html`
+  <div class="${n('upload-button-container')}">
+    <div class="${n('upload-button')}" @click="${cascasdeInputClick}">
+      Add files
+    </div>
+    <input type="file" hidden multiple @change="${uploadFiles}" />
+  </div>
+`;
+
 class Editor {
   constructor(win, element) {
     const {value} = element.querySelector('textarea');
@@ -212,13 +257,16 @@ class Editor {
 
     const batchedRender = batchedApplier(win, () => this.render_());
 
+    // No need to bookkeep `content` since we've populated codemirror with it.
+
     this.state_ = appliedState(batchedRender, {
-      // No need to bookkeep `content` since we've populated codemirror with it.
       codeMirrorElement,
-      previewElement,
+      files: [],
       isFullPreview: false,
-      toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
+      previewElement,
       selectViewport: wrapEventHandler(e => this.viewportChange_(e)),
+      toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
+      uploadFiles: wrapEventHandler(e => this.uploadFiles_(e)),
     });
 
     batchedRender();
@@ -226,6 +274,16 @@ class Editor {
     this.refreshCodeMirror_();
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
+  }
+
+  uploadFiles_({currentTarget: {files}}) {
+    this.state_.isFilesPanelDisplayed = true;
+
+    this.state_.files = this.state_.files.concat(
+      Array.from(files)
+        .map(f => attachBlobUrl(this.win, f))
+        .sort(fileSortCompare)
+    );
   }
 
   viewportChange_({target}) {
