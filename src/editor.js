@@ -141,27 +141,21 @@ const dispatchInsertFileRef = wrapEventHandler(e => {
   e.preventDefault();
   const {target} = e;
   const name = assert(target.getAttribute('data-name'));
-  
+
   target.dispatchEvent(
     new CustomEvent(g('insert-file-ref'), {
       bubbles: true,
       detail: {name},
     })
   );
-
 });
 
 const FileListItem = ({name}) => html`
-  <div 
-    class="${n('file-list-item')}" 
-    @click="${dispatchInsertFileRef}"
-  >
-    <div class="${n('file-list-item-clipped')}"
-    data-name="${name}" >
+  <div class="${n('file-list-item')}" @click="${dispatchInsertFileRef}">
+    <div class="${n('file-list-item-clipped')}" data-name="${name}">
       ${name}
     </div>
-    <div class="${n('file-list-item-unclipped')}"
-    data-name="${name}" >
+    <div class="${n('file-list-item-unclipped')}" data-name="${name}">
       ${name}
     </div>
   </div>
@@ -295,11 +289,9 @@ class Editor {
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
 
-    this.parent_.addEventListener(
-      g('insert-file-ref'),
-      e => this.insertFileRef_(e)
+    this.parent_.addEventListener(g('insert-file-ref'), e =>
+      this.insertFileRef_(e)
     );
-
   }
 
   uploadFiles_({currentTarget: {files}}) {
@@ -364,10 +356,7 @@ class Editor {
 
   replaceFileRefs_(str) {
     for (const {name, url} of this.state_.files) {
-      str = str.replace(
-        new RegExp(`/${name}`, 'g'),
-        url
-      );
+      str = str.replace(new RegExp(`/${name}`, 'g'), url);
     }
     return str;
   }
