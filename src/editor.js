@@ -16,6 +16,7 @@
 import './editor.css';
 import './monokai.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
+import {assert} from '../lib/assert';
 import {attachBlobUrl, fileSortCompare} from './file-upload';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
@@ -36,6 +37,7 @@ import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
 import htmlMinifier from 'html-minifier';
+import {hostRelativeUrl} from './utils/applied-state';
 
 const {id, g, n, s} = getNamespace('editor');
 
@@ -136,12 +138,31 @@ const FilePanel = ({isFilesPanelDisplayed, files}) => html`
   </div>
 `;
 
+const dispatchInsertFileRef = wrapEventHandler(e => {
+  e.preventDefault();
+  const {target} = e;
+  const name = assert(target.getAttribute('data-name'));
+  
+  target.dispatchEvent(
+    new CustomEvent(g('insert-file-ref'), {
+      bubbles: true,
+      detail: {name},
+    })
+  );
+
+});
+
 const FileListItem = ({name}) => html`
-  <div class="${n('file-list-item')}">
-    <div class="${n('file-list-item-clipped')}">
+  <div 
+    class="${n('file-list-item')}" 
+    @click="${dispatchInsertFileRef}"
+  >
+    <div class="${n('file-list-item-clipped')}"
+    data-name="${name}" >
       ${name}
     </div>
-    <div class="${n('file-list-item-unclipped')}">
+    <div class="${n('file-list-item-unclipped')}"
+    data-name="${name}" >
       ${name}
     </div>
   </div>
@@ -274,6 +295,12 @@ class Editor {
     this.refreshCodeMirror_();
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
+
+    this.parent_.addEventListener(
+      g('insert-file-ref'),
+      e => this.insertFileRef_(e)
+    );
+
   }
 
   uploadFiles_({currentTarget: {files}}) {
@@ -307,7 +334,10 @@ class Editor {
   }
 
   updatePreview_() {
-    this.preview_.update(this.codeMirror_.getValue());
+    // this.preview_.update(this.codeMirror_.getValue());
+    const doc = this.codeMirror_.getValue();
+    const docWithFileRefs = this.replaceFileRefs_(doc);
+    this.preview_.update(docWithFileRefs);
   }
 
   toggleFullPreview_() {
@@ -326,6 +356,21 @@ class Editor {
       delete this.state_.viewportIdBeforeFullPreview;
       this.state_.viewportId = viewportIdBeforeFullPreview;
     }
+  }
+
+  insertFileRef_({detail}) {
+    const name = assert(detail.name);
+    this.codeMirror_.replaceSelection(`/${name}`, 'around');
+  }
+
+  replaceFileRefs_(str) {
+    for (const {name, url} of this.state_.files) {
+      str = str.replace(
+        new RegExp(`/${name}`, 'g'),
+        url
+      );
+    }
+    return str;
   }
 }
 
