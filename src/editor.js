@@ -325,7 +325,6 @@ class Editor {
   }
 
   updatePreview_() {
-    // this.preview_.update(this.codeMirror_.getValue());
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = this.replaceFileRefs_(doc);
     this.preview_.update(docWithFileRefs);
