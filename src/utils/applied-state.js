@@ -115,11 +115,3 @@ export const batchedApplier = (win, applier) => state => {
   }, 0);
 };
 
-const hostRelativeRe = /^([^\/]*\/){3}/;
-
-export function hostRelativeUrl(url) {
-  if (/https?:/.test(url)) {
-    return `/${url.replace(hostRelativeRe, '')}`;
-  }
-  return url;
-}
