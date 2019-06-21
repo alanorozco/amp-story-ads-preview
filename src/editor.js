@@ -37,7 +37,6 @@ import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
 import htmlMinifier from 'html-minifier';
-import {hostRelativeUrl} from './utils/applied-state';
 
 const {id, g, n, s} = getNamespace('editor');
 

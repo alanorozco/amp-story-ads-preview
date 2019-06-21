@@ -114,4 +114,3 @@ export const batchedApplier = (win, applier) => state => {
     delete applier.__applyMicroTask; // GC
   }, 0);
 };
-
