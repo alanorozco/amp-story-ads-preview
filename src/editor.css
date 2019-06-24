@@ -19,10 +19,6 @@ div {
   z-index: 0;
 }
 
-.content > div {
-  position: inherit;
-}
-
 .content-toggle {
   flex: 0 0 44px;
   height: 44px;
@@ -84,24 +80,24 @@ div {
   overflow: none;
 }
 
-.item {
+.file-list-item {
   position: relative;
   cursor: pointer;
 
 }
 
-.item > div {
+.file-list-item > div {
   padding: 15px 15px;
   white-space: nowrap;
 }
 
-.item .file-list-item-clipped {
+.file-list-item .file-list-item-clipped {
   overflow: hidden;
   text-overflow: ellipsis;
   width:110px;
 }
 
-.item .file-list-item-unclipped {
+.file-list-item .file-list-item-unclipped {
   pointer-events: none;
   opacity: 0;
   position: absolute;
@@ -114,14 +110,16 @@ div {
   padding: 7px 5px 0px 5px;
 }
 
-.item:hover .file-list-item-clipped {
+.file-list-item:hover .file-list-item-clipped {
   opacity: 0;
 }
-.item:hover .file-list-item-unclipped {
+
+.file-list-item:hover .file-list-item-unclipped {
   opacity: 1;
   z-index: 1;
 }
-.uploaded-files-title{
+
+.uploaded-files-title {
   text-align: center;
   text-decoration: underline;
 }

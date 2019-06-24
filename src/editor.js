@@ -16,6 +16,7 @@
 import './editor.css';
 import './monokai.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
+import {assert} from '../lib/assert';
 import {attachBlobUrl, fileSortCompare} from './file-upload';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
@@ -24,7 +25,13 @@ import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {repeat} from 'lit-html/directives/repeat';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
-import {Viewport, viewportIdDefault, viewportIdFull} from './viewport';
+import {
+  validViewportId,
+  Viewport,
+  viewportIdDefault,
+  viewportIdFull,
+  ViewportSelector,
+} from './viewport';
 import {wrapEventHandler} from './utils/wrap-event-handler';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
@@ -61,13 +68,15 @@ const staticServerData = async () => ({
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
  * @param {boolean=} data.isFullPreview = false
- * @param {EventHandler=} data.toggleFullPreview
  * @param {Element=} data.previewElement
  *    Preview element to include inside the viewport.
  *    Defaults to an `EmptyPreview({storyDocTemplate})` element, for
  *    server-side rendering.
  *    (The SSR'd element is taken on runtime to manipulate independently, we
  *    bookkeep it so that it won't be overriden by the client-side rerender.)
+ * @param {EventHandler=} data.selectViewport
+ * @param {string=} data.storyDocTemplate
+ * @param {EventHandler=} data.toggleFullPreview
  * @param {string=} data.viewportId = viewportIdDefault
  *    Viewport id as defined by the `viewports` object in `./viewport.js`.
  *    Defaults to exported `./viewport.viewportIdDefault`.
@@ -83,6 +92,7 @@ const renderEditor = ({
   isFullPreview = false,
   isFilesPanelDisplayed = false,
   previewElement,
+  selectViewport,
   storyDocTemplate = '',
   toggleFullPreview,
   uploadFiles,
@@ -96,7 +106,7 @@ const renderEditor = ({
         Default Content to load on the server and then populate codemirror on
         the client.
         codeMirrorElement is a promise resolved by codemirror(), hence the
-        the until directive. Once resolved, content can be empty.
+        until directive. Once resolved, content can be empty.
       -->
       ${until(codeMirrorElement || Textarea({content}))}
     </div>
@@ -106,6 +116,8 @@ const renderEditor = ({
         uploadFiles,
         isFullPreview,
         toggleFullPreview,
+        selectViewport,
+        viewportId,
       })}
       ${Viewport({
         viewportId,
@@ -125,33 +137,50 @@ const FilePanel = ({isFilesPanelDisplayed, files}) => html`
   </div>
 `;
 
-const FileListItem = ({name}) =>
-  html`
-    <div class="${n('item')}">
-      <div class="${n('file-list-item-clipped')}">
-        ${name}
-      </div>
-      <div class="${n('file-list-item-unclipped')}">
-        ${name}
-      </div>
+const dispatchInsertFileRef = wrapEventHandler(e => {
+  e.preventDefault();
+  const {target} = e;
+  const name = assert(target.getAttribute('data-name'));
+
+  target.dispatchEvent(
+    new CustomEvent(g('insert-file-ref'), {
+      bubbles: true,
+      detail: {name},
+    })
+  );
+});
+
+const FileListItem = ({name}) => html`
+  <div class="${n('file-list-item')}" @click="${dispatchInsertFileRef}">
+    <div class="${n('file-list-item-clipped')}" data-name="${name}">
+      ${name}
     </div>
-  `;
+    <div class="${n('file-list-item-unclipped')}" data-name="${name}">
+      ${name}
+    </div>
+  </div>
+`;
 
 /**
  * Renders toolbar for toggle and viewport selector.
  * @param {Object} data
  * @param {boolean=} data.isFullPreview
+ * @param {EventHandler=} data.selectViewport
  * @param {EventHandler=} data.toggleFullPreview
+ * @param {string=} data.viewportId
  * @return {lit-html/TemplateResult}
  */
 const PreviewToolbar = ({
-  uploadFiles,
   isFullPreview,
+  selectViewport,
   toggleFullPreview,
+  uploadFiles,
+  viewportId,
 }) => html`
   <div class="${g('flex-center')} ${n('preview-toolbar')}">
     ${FullPreviewToggleButton({toggleFullPreview, isFullPreview})}
     ${FileUploadButton(uploadFiles)}
+    ${ViewportSelector({selectViewport, viewportId})}
   </div>
 `;
 
@@ -251,6 +280,7 @@ class Editor {
       previewElement,
       toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
       uploadFiles: wrapEventHandler(e => this.uploadFiles_(e)),
+      selectViewport: wrapEventHandler(e => this.viewportChange_(e)),
     });
 
     batchedRender();
@@ -258,6 +288,10 @@ class Editor {
     this.refreshCodeMirror_();
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
+
+    this.parent_.addEventListener(g('insert-file-ref'), e =>
+      this.insertFileRef_(e)
+    );
   }
 
   uploadFiles_({currentTarget: {files}}) {
@@ -268,6 +302,15 @@ class Editor {
         .map(f => attachBlobUrl(this.win, f))
         .sort(fileSortCompare)
     );
+  }
+
+  viewportChange_({target}) {
+    const {value} = target;
+
+    // If viewport is changed to 'full', the view will display an error message
+    // instead of the preview.
+    // TODO: Make 'full' special and add custom sizing
+    this.state_.viewportId = validViewportId(value);
   }
 
   render_() {
@@ -282,15 +325,39 @@ class Editor {
   }
 
   updatePreview_() {
-    this.preview_.update(this.codeMirror_.getValue());
+    const doc = this.codeMirror_.getValue();
+    const docWithFileRefs = this.replaceFileRefs_(doc);
+    this.preview_.update(docWithFileRefs);
   }
 
   toggleFullPreview_() {
     this.state_.isFullPreview = !this.state_.isFullPreview;
 
-    this.state_.viewportId = this.state_.isFullPreview
-      ? viewportIdFull
-      : viewportIdDefault;
+    // Set full viewport and keep previous for restoring later.
+    if (this.state_.isFullPreview) {
+      this.state_.viewportIdBeforeFullPreview = this.state_.viewportId;
+      this.state_.viewportId = viewportIdFull;
+      return;
+    }
+
+    // Restore viewport as it was before toggling.
+    if (this.state_.viewportIdBeforeFullPreview) {
+      const {viewportIdBeforeFullPreview} = this.state_;
+      delete this.state_.viewportIdBeforeFullPreview;
+      this.state_.viewportId = viewportIdBeforeFullPreview;
+    }
+  }
+
+  insertFileRef_({detail}) {
+    const name = assert(detail.name);
+    this.codeMirror_.replaceSelection(`/${name}`, 'around');
+  }
+
+  replaceFileRefs_(str) {
+    for (const {name, url} of this.state_.files) {
+      str = str.replace(new RegExp(`/${name}`, 'g'), url);
+    }
+    return str;
   }
 }
 
