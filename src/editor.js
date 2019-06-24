@@ -282,9 +282,9 @@ class Editor {
       files: [],
       isFullPreview: false,
       previewElement,
+      selectViewport: wrapEventHandler(e => this.viewportChange_(e)),
       toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
       uploadFiles: wrapEventHandler(e => this.uploadFiles_(e)),
-      selectViewport: wrapEventHandler(e => this.viewportChange_(e)),
     });
 
     batchedRender();
@@ -295,6 +295,16 @@ class Editor {
 
     this.parent_.addEventListener(g('insert-file-ref'), e =>
       this.insertFileRef_(e)
+    );
+  }
+
+  uploadFiles_({currentTarget: {files}}) {
+    this.state_.isFilesPanelDisplayed = true;
+
+    this.state_.files = this.state_.files.concat(
+      Array.from(files)
+        .map(f => attachBlobUrl(this.win, f))
+        .sort(fileSortCompare)
     );
   }
 
