@@ -139,10 +139,10 @@ const FilePanel = ({isFilesPanelDisplayed, files}) => html`
 
 const dispatchInsertFileRef = wrapEventHandler(e => {
   e.preventDefault();
-  const {target} = e;
-  const name = assert(target.getAttribute('data-name'));
+  const {currentTarget} = e;
+  const name = assert(currentTarget.getAttribute('data-name'));
 
-  target.dispatchEvent(
+  currentTarget.dispatchEvent(
     new CustomEvent(g('insert-file-ref'), {
       bubbles: true,
       detail: {name},
@@ -151,11 +151,15 @@ const dispatchInsertFileRef = wrapEventHandler(e => {
 });
 
 const FileListItem = ({name}) => html`
-  <div class="${n('file-list-item')}" @click="${dispatchInsertFileRef}">
-    <div class="${n('file-list-item-clipped')}" data-name="${name}">
+  <div
+    class="${n('file-list-item')}"
+    @click="${dispatchInsertFileRef}"
+    data-name="${name}"
+  >
+    <div class="${n('file-list-item-clipped')}">
       ${name}
     </div>
-    <div class="${n('file-list-item-unclipped')}" data-name="${name}">
+    <div class="${n('file-list-item-unclipped')}">
       ${name}
     </div>
   </div>
