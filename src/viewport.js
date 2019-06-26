@@ -17,11 +17,10 @@ import './viewport.css';
 import {assertArrayIncludes} from '../lib/assert';
 import {getNamespace} from '../lib/namespace';
 import {html} from 'lit-html';
+import {identity} from './utils/function';
 import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
 import {styleMap} from 'lit-html/directives/style-map';
-
-const identity = v => v;
 
 const {n, g} = getNamespace('viewport');
 

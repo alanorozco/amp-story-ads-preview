@@ -15,6 +15,7 @@
 import './amp-story-ad-preview.css';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
+import {minifyInlineJs} from './utils/minify-inline-js';
 import {restartIframeWithDocument} from './utils/document-html';
 import {untilAttached} from './utils/until-attached';
 
@@ -48,16 +49,18 @@ const WrappedIframe = () => html`
   </div>
 `;
 
-const httpsCircumventionPatch = `
-      const createElement = document.createElement.bind(document);
-      document.createElement = function(tagName) { 
-        const el = createElement(...arguments); 
-        if (tagName.toLowerCase() == 'a') {
-          Object.defineProperty(el, 'protocol', {value: 'https:'});
-        }
-        return el; 
-      };
-    `;
+const httpsCircumventionPatch = minifyInlineJs(`
+  (() => {
+    const createElement = document.createElement.bind(document);
+    document.createElement = function(tagName) {
+      const el = createElement(...arguments);
+      if (tagName.toLowerCase() == 'a') {
+        Object.defineProperty(el, 'protocol', {value: 'https:'});
+      }
+      return el;
+    };
+  })();
+`);
 
 const insertHttpsCircumventionPatch = docStr =>
   docStr.replace('<head>', `<head><script>${httpsCircumventionPatch}</script>`);

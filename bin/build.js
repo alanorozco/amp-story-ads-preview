@@ -22,6 +22,7 @@ import {error, fatal, log, step} from '../lib/log';
 import {minify as htmlMinify} from 'html-minifier';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {minify as jsMinify} from 'terser';
+import {jsMinifyConfig} from '../lib/js-minify-config';
 import {localBabelPlugin} from '../babel.config';
 import {postcssPlugins} from '../postcss.config';
 import {renderableBundle, renderBundleToString} from '../lib/renderables';
@@ -92,6 +93,7 @@ const inputConfig = async name => ({
         ...whenMinified(() => litHtmlMinifierBabelPlugin),
         ...whenMinified(() => localBabelPlugin('normalize-licenses')),
         ...whenMinified(() => localBabelPlugin('minify-assert')),
+        ...whenMinified(() => localBabelPlugin('minify-inline-js')),
       ],
     }),
     commonjs(),
@@ -108,12 +110,6 @@ const inputConfig = async name => ({
 });
 
 const outputConfigs = [{format: 'iife'}];
-
-const jsMinifyConfig = {
-  compress: {unsafe_arrows: true},
-  mangle: {toplevel: true, properties: {regex: /_$/}},
-  output: {comments: 'some'},
-};
 
 /**
  * Magic below.
