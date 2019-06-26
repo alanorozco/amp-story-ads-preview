@@ -18,25 +18,6 @@ $ampBlue: #005af0;
   border-right: 1px solid #ccc;
 }
 
-.toggle {
-  flex: 0 0 44px;
-  height: 44px;
-  justify-self: start;
-  cursor: pointer;
-  align-self: flex-start;
-
-  /* Using <, > symbols in place of svgs: */
-  text-align: center;
-  font-weight: 500;
-  font-size: 16px;
-  color: #888;
-}
-
-.toggle > div {
-  /* Make the <, > symbols look roughly equilateral and vertically center. */
-  transform: scaleY(1.5) translateY(-0.1em);
-}
-
 .preview-wrap {
   flex-direction: column;
   background: #ddd;

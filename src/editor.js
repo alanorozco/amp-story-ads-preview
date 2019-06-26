@@ -24,6 +24,7 @@ import {html, render} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
+import {ToggleButton} from './toggle-button';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
 import {
@@ -122,6 +123,12 @@ const renderEditor = ({
 
 const fileRepeatKey = ({url}) => url;
 
+/**
+ * @param {Object} data
+ * @param {boolean} isFilesPanelDisplayed
+ * @param {Array<{name: string}>} data.files
+ * @return {lit-html/TemplateResult}
+ */
 const FilePanel = ({isFilesPanelDisplayed, files}) => html`
   <div class="${n('files-panel')}" ?hidden=${!isFilesPanelDisplayed}>
     <div class="${g('flex-center')} ${n('toolbar')}">
@@ -131,6 +138,13 @@ const FilePanel = ({isFilesPanelDisplayed, files}) => html`
   </div>
 `;
 
+/**
+ * When `data.files` is empty, renders a "No files" message.
+ * Otherwise renders the file list.
+ * @param {Object} data
+ * @param {Array<{name: string}>} data.files
+ * @return {lit-html/TemplateResult}
+ */
 const FileList = ({files}) =>
   files.length < 1
     ? html`
@@ -147,6 +161,10 @@ const FileList = ({files}) =>
 
 const dispatchInsertFileRef = redispatchAs(g('insert-file-ref'));
 
+/**
+ * @param {{name: string}} file
+ * @return {lit-html/TemplateResult}
+ */
 const FileListItem = ({name}) => html`
   <div
     class="${n('file-list-item')}"
@@ -163,7 +181,7 @@ const FileListItem = ({name}) => html`
 `;
 
 /**
- * Renders toolbar for toggle and viewport selector.
+ * Renders preview panel toolbar.
  * @param {Object} data
  * @param {boolean=} data.isFullPreview
  * @param {string=} data.viewportId
@@ -176,7 +194,7 @@ const PreviewToolbar = ({isFullPreview, viewportId}) => html`
 `;
 
 /**
- * Renders toolbar for toggle and viewport selector.
+ * Renders content panel toolbar.
  * @param {Object} data
  * @param {boolean=} data.isFilesPanelDisplayed
  * @return {lit-html/TemplateResult}
@@ -184,20 +202,6 @@ const PreviewToolbar = ({isFullPreview, viewportId}) => html`
 const ContentToolbar = ({isFilesPanelDisplayed}) => html`
   <div class="${`${g('flex-center')} ${n('content-toolbar')} ${n('toolbar')}`}">
     ${ToggleButton({isOpen: isFilesPanelDisplayed})} ${FileUploadButton()}
-  </div>
-`;
-
-const dispatchToggle = redispatchAs(g('toggle'));
-
-/**
- * Renders full preview toggle button.
- * @param {Object} data
- * @param {boolean=} data.isOpen
- * @return {lit-html/TemplateResult}
- */
-const ToggleButton = ({isOpen}) => html`
-  <div class="${g('flex-center')} ${n('toggle')}" @click=${dispatchToggle}>
-    <div>${isOpen ? '<' : '>'}</div>
   </div>
 `;
 
@@ -222,10 +226,14 @@ const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
 
-const cascasdeInputClick = e => {
-  const input = e.target.parentElement.querySelector('input');
-  input.click();
-};
+/**
+ * Cascades a click from a parent so it programatically clicks an <input> inside
+ * of it, to propagate a click into a hidden `input[type=file]` element.
+ * @param {Event} e
+ */
+function cascasdeInputClick({currentTarget}) {
+  assert(currentTarget.querySelector('input')).click();
+}
 
 const dispatchUploadFiles = redispatchAs(g('upload-files'));
 
@@ -234,8 +242,8 @@ const dispatchUploadFiles = redispatchAs(g('upload-files'));
  * accessible from the AMP Ad document.
  */
 const FileUploadButton = () => html`
-  <div class="${n('upload-button-container')}">
-    <div class="${n('upload-button')}" @click="${cascasdeInputClick}">
+  <div class="${n('upload-button-container')}" @click="${cascasdeInputClick}">
+    <div class="${n('upload-button')}">
       Add files
     </div>
     <input type="file" hidden multiple @change="${dispatchUploadFiles}" />
