@@ -79,6 +79,7 @@ $fileListItemHorizontalPadding: 14px;
 
 .files-panel-header {
   padding: 0 $fileListItemHorizontalPadding;
+  font-weight: bold;
 }
 
 .file-list-item > div {
