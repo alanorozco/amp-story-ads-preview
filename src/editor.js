@@ -22,6 +22,7 @@ import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
+import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
@@ -32,7 +33,6 @@ import {
   viewportIdFull,
   ViewportSelector,
 } from './viewport';
-import {wrapEventHandler} from './utils/wrap-event-handler';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
@@ -74,15 +74,12 @@ const staticServerData = async () => ({
  *    server-side rendering.
  *    (The SSR'd element is taken on runtime to manipulate independently, we
  *    bookkeep it so that it won't be overriden by the client-side rerender.)
- * @param {EventHandler=} data.selectViewport
  * @param {string=} data.storyDocTemplate
- * @param {EventHandler=} data.toggleFullPreview
  * @param {string=} data.viewportId = viewportIdDefault
  *    Viewport id as defined by the `viewports` object in `./viewport.js`.
  *    Defaults to exported `./viewport.viewportIdDefault`.
  * @return {lit-html/TemplateResult}
  */
-
 const renderEditor = ({
   // Keep alphabetically sorted.
   // Or don't. I'm a sign, not a cop. https://git.io/fj2tc
@@ -92,16 +89,14 @@ const renderEditor = ({
   isFullPreview = false,
   isFilesPanelDisplayed = false,
   previewElement,
-  selectViewport,
   storyDocTemplate = '',
-  toggleFullPreview,
-  uploadFiles,
   viewportId = viewportIdDefault,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilePanel({isFilesPanelDisplayed, files})}
 
     <div class=${n('content')} ?hidden=${isFullPreview}>
+      ${ContentToolbar({isFilesPanelDisplayed})}
       <!--
         Default Content to load on the server and then populate codemirror on
         the client.
@@ -113,10 +108,7 @@ const renderEditor = ({
     <div class="${g('flex-center')} ${n('preview-wrap')}">
       <!-- Toolbar for full preview toggle and viewport selector. -->
       ${PreviewToolbar({
-        uploadFiles,
         isFullPreview,
-        toggleFullPreview,
-        selectViewport,
         viewportId,
       })}
       ${Viewport({
@@ -131,24 +123,29 @@ const renderEditor = ({
 const fileRepeatKey = ({url}) => url;
 
 const FilePanel = ({isFilesPanelDisplayed, files}) => html`
-  <div class="${'files-panel'}" ?hidden=${!isFilesPanelDisplayed}>
-    <h4 class="${n('uploaded-files-title')}">Uploaded Files <br /></h4>
-    ${repeat(files, fileRepeatKey, FileListItem)}
+  <div class="${n('files-panel')}" ?hidden=${!isFilesPanelDisplayed}>
+    <div class="${g('flex-center')} ${n('toolbar')}">
+      Files
+    </div>
+    ${FileList({files})}
   </div>
 `;
 
-const dispatchInsertFileRef = wrapEventHandler(e => {
-  e.preventDefault();
-  const {currentTarget} = e;
-  const name = assert(currentTarget.getAttribute('data-name'));
+const FileList = ({files}) =>
+  files.length < 1
+    ? html`
+        <div class="${g('flex-center')} ${n('file-list-empty')}">
+          <div>No files uploaded.</div>
+          ${FileUploadButton()}
+        </div>
+      `
+    : html`
+        <div class="${n('file-list')}">
+          ${repeat(files, fileRepeatKey, FileListItem)}
+        </div>
+      `;
 
-  currentTarget.dispatchEvent(
-    new CustomEvent(g('insert-file-ref'), {
-      bubbles: true,
-      detail: {name},
-    })
-  );
-});
+const dispatchInsertFileRef = redispatchAs(g('insert-file-ref'));
 
 const FileListItem = ({name}) => html`
   <div
@@ -169,38 +166,38 @@ const FileListItem = ({name}) => html`
  * Renders toolbar for toggle and viewport selector.
  * @param {Object} data
  * @param {boolean=} data.isFullPreview
- * @param {EventHandler=} data.selectViewport
- * @param {EventHandler=} data.toggleFullPreview
  * @param {string=} data.viewportId
  * @return {lit-html/TemplateResult}
  */
-const PreviewToolbar = ({
-  isFullPreview,
-  selectViewport,
-  toggleFullPreview,
-  uploadFiles,
-  viewportId,
-}) => html`
-  <div class="${g('flex-center')} ${n('preview-toolbar')}">
-    ${FullPreviewToggleButton({toggleFullPreview, isFullPreview})}
-    ${FileUploadButton(uploadFiles)}
-    ${ViewportSelector({selectViewport, viewportId})}
+const PreviewToolbar = ({isFullPreview, viewportId}) => html`
+  <div class="${g('flex-center')} ${n('preview-toolbar')} ${n('toolbar')}">
+    ${ToggleButton({isOpen: !isFullPreview})} ${ViewportSelector({viewportId})}
   </div>
 `;
 
 /**
- * Renders full preview toggle button.
+ * Renders toolbar for toggle and viewport selector.
  * @param {Object} data
- * @param {boolean=} data.isFullPreview
- * @param {EventHandler=} data.toggleFullPreview
+ * @param {boolean=} data.isFilesPanelDisplayed
  * @return {lit-html/TemplateResult}
  */
-const FullPreviewToggleButton = ({isFullPreview, toggleFullPreview}) => html`
-  <div
-    class="${g('flex-center')} ${n('content-toggle')}"
-    @click=${toggleFullPreview}
-  >
-    <div>${isFullPreview ? '>' : '<'}</div>
+const ContentToolbar = ({isFilesPanelDisplayed}) => html`
+  <div class="${g('flex-center')} ${n('content-toolbar')} ${n('toolbar')}">
+    ${ToggleButton({isOpen: isFilesPanelDisplayed})} ${FileUploadButton()}
+  </div>
+`;
+
+const dispatchToggle = redispatchAs(g('toggle'));
+
+/**
+ * Renders full preview toggle button.
+ * @param {Object} data
+ * @param {boolean=} data.isOpen
+ * @return {lit-html/TemplateResult}
+ */
+const ToggleButton = ({isOpen}) => html`
+  <div class="${g('flex-center')} ${n('toggle')}" @click=${dispatchToggle}>
+    <div>${isOpen ? '<' : '>'}</div>
   </div>
 `;
 
@@ -225,17 +222,23 @@ const Textarea = ({content}) => html`
   <textarea>${content}</textarea>
 `;
 
-const cascasdeInputClick = wrapEventHandler(e => {
+const cascasdeInputClick = e => {
   const input = e.target.parentElement.querySelector('input');
   input.click();
-});
+};
 
-const FileUploadButton = uploadFiles => html`
+const dispatchUploadFiles = redispatchAs(g('upload-files'));
+
+/**
+ * Renders a button to "upload" files--that is, set Blob URLs so they're
+ * accessible from the AMP Ad document.
+ */
+const FileUploadButton = () => html`
   <div class="${n('upload-button-container')}">
     <div class="${n('upload-button')}" @click="${cascasdeInputClick}">
       Add files
     </div>
-    <input type="file" hidden multiple @change="${uploadFiles}" />
+    <input type="file" hidden multiple @change="${dispatchUploadFiles}" />
   </div>
 `;
 
@@ -275,16 +278,12 @@ class Editor {
 
     const batchedRender = batchedApplier(win, () => this.render_());
 
-    // No need to bookkeep `content` since we've populated codemirror with it.
-
     this.state_ = appliedState(batchedRender, {
+      // No need to bookkeep `content` since we've populated codemirror with it.
       codeMirrorElement,
       files: [],
       isFullPreview: false,
       previewElement,
-      selectViewport: wrapEventHandler(e => this.viewportChange_(e)),
-      toggleFullPreview: wrapEventHandler(() => this.toggleFullPreview_()),
-      uploadFiles: wrapEventHandler(e => this.uploadFiles_(e)),
     });
 
     batchedRender();
@@ -293,12 +292,41 @@ class Editor {
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
 
-    this.parent_.addEventListener(g('insert-file-ref'), e =>
-      this.insertFileRef_(e)
+    // yield to first render... annoying.
+    this.win.requestAnimationFrame(() =>
+      setTimeout(() => this.attachEventHandlers_(), 0)
     );
   }
 
-  uploadFiles_({currentTarget: {files}}) {
+  attachEventHandlers_() {
+    const topLevelHandlers = {
+      [g('upload-files')]: this.uploadFiles_,
+      [g('insert-file-ref')]: this.insertFileRef_,
+      [g('select-viewport')]: this.selectViewport_,
+    };
+
+    for (const eventType of Object.keys(topLevelHandlers)) {
+      const boundHandler = topLevelHandlers[eventType].bind(this);
+      this.parent_.addEventListener(eventType, boundHandler);
+    }
+
+    this.attachEventListenerBySelector_(s('.content-toolbar'), g('toggle'), e =>
+      this.toggleFilesPanel_(e)
+    );
+
+    this.attachEventListenerBySelector_(s('.preview-toolbar'), g('toggle'), e =>
+      this.toggleFullPreview_(e)
+    );
+  }
+
+  async attachEventListenerBySelector_(selector, eventTyper, listener) {
+    (await untilAttached(this.parent_, selector)).addEventListener(
+      eventTyper,
+      listener
+    );
+  }
+
+  uploadFiles_({target: {files}}) {
     this.state_.isFilesPanelDisplayed = true;
 
     this.state_.files = this.state_.files.concat(
@@ -308,17 +336,7 @@ class Editor {
     );
   }
 
-  uploadFiles_({currentTarget: {files}}) {
-    this.state_.isFilesPanelDisplayed = true;
-
-    this.state_.files = this.state_.files.concat(
-      Array.from(files)
-        .map(f => attachBlobUrl(this.win, f))
-        .sort(fileSortCompare)
-    );
-  }
-
-  viewportChange_({target}) {
+  selectViewport_({target}) {
     const {value} = target;
 
     // If viewport is changed to 'full', the view will display an error message
@@ -351,6 +369,7 @@ class Editor {
     if (this.state_.isFullPreview) {
       this.state_.viewportIdBeforeFullPreview = this.state_.viewportId;
       this.state_.viewportId = viewportIdFull;
+      this.state_.isFilesPanelDisplayed = false;
       return;
     }
 
@@ -362,8 +381,12 @@ class Editor {
     }
   }
 
-  insertFileRef_({detail}) {
-    const name = assert(detail.name);
+  toggleFilesPanel_() {
+    this.state_.isFilesPanelDisplayed = !this.state_.isFilesPanelDisplayed;
+  }
+
+  insertFileRef_({target: {dataset}}) {
+    const name = assert(dataset.name);
     this.codeMirror_.replaceSelection(`/${name}`, 'around');
   }
 

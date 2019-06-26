@@ -14,23 +14,7 @@
  * limitations under the License.
  */
 
-/**
- * Wraps a generic event handler into a lit-html EventHandlerWithOptions.
- * @param {function(Event|undefined):T} handler
- * @param {Object=} opts (optional)
- * @param {boolean=} opts.capture (optional)
- * @param {boolean=} opts.once (optional)
- * @param {boolean=} opts.passive (optional)
- * @return {{
- *  handleEvent: (function(Event):T),
- *  capture: (boolean|undefined),
- *  passive: (boolean|undefined),
- *  once: (boolean|undefined),
- * }}
- */
-export const wrapEventHandler = (handler, opts = {}) => ({
-  ...opts,
-  handleEvent(e) {
-    return handler(e);
-  },
-});
+export const redispatchAs = eventType => e => {
+  e.preventDefault();
+  e.currentTarget.dispatchEvent(new CustomEvent(eventType, {bubbles: true}));
+};

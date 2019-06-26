@@ -17,12 +17,15 @@ import './viewport.css';
 import {assertArrayIncludes} from '../lib/assert';
 import {getNamespace} from '../lib/namespace';
 import {html} from 'lit-html';
+import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
 import {styleMap} from 'lit-html/directives/style-map';
 
 const identity = v => v;
 
 const {n, g} = getNamespace('viewport');
+
+const dispatchSelectViewport = redispatchAs(g('select-viewport'));
 
 const viewports = {
   full: {
@@ -71,8 +74,8 @@ export const viewportIdDefault = 'iphone-x';
 export const validViewportId = viewportId =>
   assertArrayIncludes(viewportIds, viewportId);
 
-export const ViewportSelector = ({selectViewport, viewportId}) => html`
-  <select @change=${selectViewport} .value=${viewportId}>
+export const ViewportSelector = ({viewportId}) => html`
+  <select @change=${dispatchSelectViewport} .value=${viewportId}>
     ${repeat(viewportIds, identity, id =>
       ViewportOption({
         id,

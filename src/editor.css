@@ -2,6 +2,8 @@
   height: 100% !important;
 }
 
+$ampBlue: #005af0;
+
 @component;
 
 .wrap {
@@ -9,21 +11,19 @@
   height: 100%;
 }
 
-div {
-  box-sizing: border-box;
-}
-
 .content {
   flex: 1;
-  overflow: hidden; 
+  overflow: hidden;
   z-index: 0;
+  border-right: 1px solid #ccc;
 }
 
-.content-toggle {
+.toggle {
   flex: 0 0 44px;
   height: 44px;
   justify-self: start;
   cursor: pointer;
+  align-self: flex-start;
 
   /* Using <, > symbols in place of svgs: */
   text-align: center;
@@ -32,7 +32,7 @@ div {
   color: #888;
 }
 
-.content-toggle > div {
+.toggle > div {
   /* Make the <, > symbols look roughly equilateral and vertically center. */
   transform: scaleY(1.5) translateY(-0.1em);
 }
@@ -42,7 +42,7 @@ div {
   background: #ddd;
 }
 
-.preview-toolbar {
+.toolbar {
   background: white;
   flex-direction: row;
   justify-self: start;
@@ -58,32 +58,38 @@ div {
 }
 
 .upload-button-container {
-  margin:5px;
-  height:35px;
-  background: #ddd;
+  margin: 5px;
 }
 
-.upload-button-container .upload-button { 
+.upload-button {
   text-align: center;
-  cursor:pointer;
-  padding: 10px 10px;
+  cursor: pointer;
+  padding: 8px 10px;
+  background: #ddd;
+  border-radius: 2px;
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
 }
 
-.upload-button-container :hover {
-  background:#272822;
-  color:white;
+.upload-button:hover {
+  color: $ampBlue;
 }
 
 .files-panel {
-  flex: 0 0 110px;
-  border-right: 3px solid #5998a6;
-  overflow: none;
+  flex: 0 0 200px;
+  border-right: 1px solid #ccc;
+  overflow: visible;
+  flex-direction: column;
+}
+
+.files-panel:not([hidden]) {
+  display: flex;
 }
 
 .file-list-item {
   position: relative;
   cursor: pointer;
-
 }
 
 .file-list-item > div {
@@ -94,7 +100,7 @@ div {
 .file-list-item .file-list-item-clipped {
   overflow: hidden;
   text-overflow: ellipsis;
-  width:110px;
+  width: 199px; /* .files-panel width - 1px for border */
 }
 
 .file-list-item .file-list-item-unclipped {
@@ -102,10 +108,10 @@ div {
   opacity: 0;
   position: absolute;
   left: 0;
-  top:0;
-  height:30px;
-  background:#ccc;
-  color:black;
+  top: 0;
+  height: 30px;
+  background: #ccc;
+  color: black;
   min-width: 100%;
   padding: 7px 5px 0px 5px;
 }
@@ -122,4 +128,15 @@ div {
 .uploaded-files-title {
   text-align: center;
   text-decoration: underline;
+}
+
+.file-list-empty {
+  flex: 0;
+  margin: 20px 0;
+  flex-direction: column;
+  justify-self: start;
+}
+
+.file-list-empty > div {
+  margin: 10px 0;
 }
