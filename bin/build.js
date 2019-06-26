@@ -186,6 +186,7 @@ async function minifyBundle(filename) {
 
 export async function build() {
   await copyStaticAssets();
+  await buildJsonFile();
   await step('🚧 Building js', () =>
     withAllBundles(async name => {
       const bundle = await rollup(await inputConfig(name));
@@ -201,6 +202,108 @@ export async function build() {
 
 const copyStaticAssets = () =>
   step('📋 Copying static assets', () => fs.copy('static', 'dist/static'));
+
+const buildJsonFile = () => step('Building json file', () => buildJson());
+
+const buildJson = () => {
+  let appInstallAds = {
+    'name': 'app-install-ads',
+    'contentUrl': '/static/templates/app_install_ads/app-install.html',
+    'files': [
+      {
+        'name': 'app-install-hero-blurred.jpg',
+        'src': '/static/templates/app_install_ads/app-install-hero-blurred.jpg',
+      },
+      {
+        'name': 'app-install-logo-blurred',
+        'src': '/static/templates/app_install_ads/app-install-logo-blurred.jpg',
+      },
+    ],
+  };
+  let multiImageAds = {
+    'name': 'multi-image-ads',
+    'contentUrl': '/static/templates/multi_image_ads/multi-image.html',
+    'files': [
+      {
+        'name': 'blue-blurred',
+        'src': '/static/templates/multi_image_ads/blue-blurred.jpg',
+      },
+      {
+        'name': 'peach-blurred',
+        'src': '/static/templates/multi_image_ads/peach-blurred.jpg',
+      },
+      {
+        'name': 'purple-blurred',
+        'src': '/static/templates/multi_image_ads/purple-blurred.jpg',
+      },
+      {
+        'name': 'yellow-blurred',
+        'src': '/static/templates/multi_image_ads/yellow-blurred.jpg',
+      },
+    ],
+  };
+  let singleImageAds = {
+    'name': 'single-image-ads',
+    'contentUrl': '/static/templates/single_image_ads/single-image.html',
+    'files': [
+      {
+        'name': 'cool-shirt-blurred',
+        'src': '/static/templates/single_image_ads/cool-shirt-blurred.png',
+      },
+      {
+        'name': 'single-image-logo',
+        'src': '/static/templates/single_image_ads/single-image-logo.png',
+      },
+    ],
+  };
+  let singleVideo = {
+    'name': 'single-video',
+    'contentUrl': '/static/templates/single_video/single-video.html',
+    'files': [
+      {
+        'name': 'logo-single-video',
+        'src': 'static/templates/single_video/logo-single-video.png',
+      },
+      {
+        'name': 'single-video-1080x1920',
+        'src':
+          'static/templates/single_video/videos/single-video-1080x1920.mp4',
+      },
+      {
+        'name': 'single-video-1920x1080',
+        'src':
+          'static/templates/single_video/videos/single-video-1920x1080.mp4',
+      },
+    ],
+  };
+  let text = {
+    'name': 'text',
+    'contentUrl': '/static/templates/text/text.html',
+    'files': [
+      {'name': 'text-logo', 'src': 'static/templates/text/text_logo.png'},
+    ],
+  };
+  let templates = [
+    appInstallAds,
+    multiImageAds,
+    singleImageAds,
+    singleVideo,
+    text,
+  ];
+  let allTemplates = '{';
+  for (let x of templates) {
+    let name = JSON.stringify(x.name);
+    allTemplates += name + ':' + JSON.stringify(x);
+    allTemplates += ',';
+  }
+  allTemplates = allTemplates.substring(0, allTemplates.length - 1) + '}';
+  let fs = require('fs');
+  fs.writeFile('dist/templates.json', allTemplates, function(err) {
+    if (err) {
+      console.log('error');
+    }
+  });
+};
 
 const freezeStaticHtml = (opts = {}) =>
   step('❄️ Freezing static html', () =>
@@ -268,6 +371,7 @@ async function incrementalBuild() {
     },
     START: async () => {
       await copyStaticAssets();
+      await buildJsonFile();
       log(yellow('🚧 Starting incremental build...'));
     },
     BUNDLE_START: ({output}) => {
