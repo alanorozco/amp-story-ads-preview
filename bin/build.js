@@ -91,6 +91,7 @@ const inputConfig = async name => ({
       plugins: [
         ...whenMinified(() => litHtmlMinifierBabelPlugin),
         ...whenMinified(() => localBabelPlugin('normalize-licenses')),
+        ...whenMinified(() => localBabelPlugin('minify-assert')),
       ],
     }),
     commonjs(),
