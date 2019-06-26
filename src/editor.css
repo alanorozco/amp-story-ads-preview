@@ -75,14 +75,14 @@ $blueishgray: rgb(238, 240, 245);
   cursor: pointer;
 }
 
-$fileListItemHorizontalPadding: 10px;
+$fileListItemHorizontalPadding: 14px;
 
 .files-panel-header {
   padding: 0 $fileListItemHorizontalPadding;
 }
 
 .file-list-item > div {
-  padding: 14px $fileListItemHorizontalPadding;
+  padding: 8px $fileListItemHorizontalPadding;
   white-space: nowrap;
 }
 
