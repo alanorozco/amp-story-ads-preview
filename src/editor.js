@@ -68,6 +68,7 @@ const staticServerData = async () => ({
  *    Omitting this before populating will simply result in codemirror not
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
+ * @param {boolean=} data.isFilesPanelDisplayed = false
  * @param {boolean=} data.isFullPreview = false
  * @param {Element=} data.previewElement
  *    Preview element to include inside the viewport.
@@ -94,49 +95,41 @@ const renderEditor = ({
   viewportId = viewportIdDefault,
 }) => html`
   <div id=${id} class=${n('wrap')}>
-    ${FilePanel({isFilesPanelDisplayed, files})}
-
-    <div class=${n('content')} ?hidden=${isFullPreview}>
-      ${ContentToolbar({isFilesPanelDisplayed})}
-      <!--
-        Default Content to load on the server and then populate codemirror on
-        the client.
-        codeMirrorElement is a promise resolved by codemirror(), hence the
-        until directive. Once resolved, content can be empty.
-      -->
-      ${until(codeMirrorElement || Textarea({content}))}
-    </div>
-    <div class="${g('flex-center')} ${n('preview-wrap')}">
-      <!-- Toolbar for full preview toggle and viewport selector. -->
-      ${PreviewToolbar({
-        isFullPreview,
-        viewportId,
-      })}
-      ${Viewport({
-        viewportId,
-        // Empty preview for SSR and inserted as data on the client.
-        previewElement: previewElement || EmptyPreview({storyDocTemplate}),
-      })}
-    </div>
+    ${FilesPanel({
+      files,
+      isDisplayed: !isFullPreview && isFilesPanelDisplayed,
+    })}
+    ${ContentPanel({
+      isDisplayed: !isFullPreview,
+      isFilesPanelDisplayed,
+      codeMirrorElement,
+      content,
+    })}
+    ${PreviewPanel({
+      isFullPreview,
+      previewElement,
+      storyDocTemplate,
+      viewportId,
+    })}
   </div>
 `;
 
-const fileRepeatKey = ({url}) => url;
-
 /**
  * @param {Object} data
- * @param {boolean} isFilesPanelDisplayed
+ * @param {boolean} isDisplayed
  * @param {Array<{name: string}>} data.files
  * @return {lit-html/TemplateResult}
  */
-const FilePanel = ({isFilesPanelDisplayed, files}) => html`
-  <div class="${n('files-panel')}" ?hidden=${!isFilesPanelDisplayed}>
+const FilesPanel = ({isDisplayed, files}) => html`
+  <div class="${n('files-panel')}" ?hidden=${!isDisplayed}>
     <div class="${g('flex-center')} ${n('toolbar')}">
       Files
     </div>
     ${FileList({files})}
   </div>
 `;
+
+const fileRepeatKey = ({url}) => url;
 
 /**
  * When `data.files` is empty, renders a "No files" message.
@@ -181,52 +174,6 @@ const FileListItem = ({name}) => html`
 `;
 
 /**
- * Renders preview panel toolbar.
- * @param {Object} data
- * @param {boolean=} data.isFullPreview
- * @param {string=} data.viewportId
- * @return {lit-html/TemplateResult}
- */
-const PreviewToolbar = ({isFullPreview, viewportId}) => html`
-  <div class="${`${g('flex-center')} ${n('preview-toolbar')} ${n('toolbar')}`}">
-    ${ToggleButton({isOpen: !isFullPreview})} ${ViewportSelector({viewportId})}
-  </div>
-`;
-
-/**
- * Renders content panel toolbar.
- * @param {Object} data
- * @param {boolean=} data.isFilesPanelDisplayed
- * @return {lit-html/TemplateResult}
- */
-const ContentToolbar = ({isFilesPanelDisplayed}) => html`
-  <div class="${`${g('flex-center')} ${n('content-toolbar')} ${n('toolbar')}`}">
-    ${ToggleButton({isOpen: isFilesPanelDisplayed})} ${FileUploadButton()}
-  </div>
-`;
-
-/**
- * Renders preview element.
- * This is then managed independently by AmpStoryAdPreview after hydration.
- * @param {Object} data
- * @param {string} data.storyDocTemplate
- * @return {lit-html/TemplateResult}
- */
-const EmptyPreview = ({storyDocTemplate}) => html`
-  <div class=${n('preview')} data-template=${storyDocTemplate}></div>
-`;
-
-/**
- * Renders default editor content to hydrate on runtime.
- * @param {Object} data
- * @param {string=} data.content
- * @return {lit-html/TemplateResult}
- */
-const Textarea = ({content}) => html`
-  <textarea>${content}</textarea>
-`;
-
-/**
  * Cascades a click from a parent so it programatically clicks an <input> inside
  * of it, to propagate a click into a hidden `input[type=file]` element.
  * @param {Event} e
@@ -248,6 +195,106 @@ const FileUploadButton = () => html`
     </div>
     <input type="file" hidden multiple @change="${dispatchUploadFiles}" />
   </div>
+`;
+
+/**
+ * @param {Object} data
+ * @param {Promise<Element>=} data.codeMirrorElement
+ * @param {string=} data.content
+ * @param {boolean} data.isDisplayed
+ * @param {boolean} data.isFilesPanelDisplayed
+ * @return {lit-html/TemplateResult}
+ */
+const ContentPanel = ({
+  codeMirrorElement,
+  content,
+  isDisplayed,
+  isFilesPanelDisplayed,
+}) => html`
+  <div class=${n('content')} ?hidden=${!isDisplayed}>
+    ${ContentToolbar({isFilesPanelDisplayed})}
+    <!--
+        Default Content to load on the server and then populate codemirror on
+        the client.
+        codeMirrorElement is a promise resolved by codemirror(), hence the
+        until directive. Once resolved, content can be empty.
+      -->
+    ${until(codeMirrorElement || Textarea({content}))}
+  </div>
+`;
+
+/**
+ * Renders content panel toolbar.
+ * @param {Object} data
+ * @param {boolean=} data.isFilesPanelDisplayed
+ * @return {lit-html/TemplateResult}
+ */
+const ContentToolbar = ({isFilesPanelDisplayed}) => html`
+  <div class="${`${g('flex-center')} ${n('content-toolbar')} ${n('toolbar')}`}">
+    ${ToggleButton({isOpen: isFilesPanelDisplayed})} ${FileUploadButton()}
+  </div>
+`;
+
+/**
+ * Renders default editor content to hydrate on runtime.
+ * @param {Object} data
+ * @param {string=} data.content
+ * @return {lit-html/TemplateResult}
+ */
+const Textarea = ({content}) => html`
+  <textarea>${content}</textarea>
+`;
+
+/**
+ * @param {Object} data
+ * @param {boolean} data.isFullPreview
+ * @param {string} data.viewportId
+ * @param {Element=} data.previewElement
+ * @param {string=} data.storyDocTemplate
+ * @return {lit-html/TemplateResult}
+ */
+const PreviewPanel = ({
+  isFullPreview,
+  viewportId,
+  previewElement,
+  storyDocTemplate,
+}) => html`
+  <div class="${g('flex-center')} ${n('preview-wrap')}">
+    <!-- Toolbar for full preview toggle and viewport selector. -->
+    ${PreviewToolbar({
+      isFullPreview,
+      viewportId,
+    })}
+    ${Viewport({
+      viewportId,
+      // Empty preview for SSR and inserted as data on the client.
+      previewElement: previewElement || EmptyPreview({storyDocTemplate}),
+    })}
+  </div>
+`;
+
+/**
+ * Renders preview panel toolbar.
+ * @param {Object} data
+ * @param {boolean=} data.isFullPreview
+ * @param {string=} data.viewportId
+ * @return {lit-html/TemplateResult}
+ */
+const PreviewToolbar = ({isFullPreview, viewportId}) => html`
+  <div class="${`${g('flex-center')} ${n('preview-toolbar')} ${n('toolbar')}`}">
+    ${ToggleButton({isOpen: !isFullPreview})} ${ViewportSelector({viewportId})}
+  </div>
+`;
+
+/**
+ * Renders preview element.
+ * This is then managed independently by AmpStoryAdPreview after hydration.
+ * @param {Object} data
+ * @param {string} data.storyDocTemplate
+ * @return {lit-html/TemplateResult}
+ */
+const EmptyPreview = ({storyDocTemplate}) => html`
+  <div class=${n('preview')} data-template=${storyDocTemplate}></div>
 `;
 
 class Editor {
@@ -378,7 +425,6 @@ class Editor {
     if (this.state_.isFullPreview) {
       this.state_.viewportIdBeforeFullPreview = this.state_.viewportId;
       this.state_.viewportId = viewportIdFull;
-      this.state_.isFilesPanelDisplayed = false;
       return;
     }
 
