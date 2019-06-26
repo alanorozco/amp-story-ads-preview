@@ -122,7 +122,11 @@ const renderEditor = ({
  */
 const FilesPanel = ({isDisplayed, files}) => html`
   <div class="${n('files-panel')}" ?hidden=${!isDisplayed}>
-    <div class="${g('flex-center')} ${n('toolbar')}">
+    <div
+      class="${[g('flex-center'), n('toolbar'), n('files-panel-header')].join(
+        ' '
+      )}"
+    >
       Files
     </div>
     ${FileList({files})}
@@ -282,7 +286,11 @@ const PreviewPanel = ({
  */
 const PreviewToolbar = ({isFullPreview, viewportId}) => html`
   <div class="${`${g('flex-center')} ${n('preview-toolbar')} ${n('toolbar')}`}">
-    ${ToggleButton({isOpen: !isFullPreview})} ${ViewportSelector({viewportId})}
+    ${ToggleButton({isOpen: !isFullPreview})}
+    ${ViewportSelector({
+      className: [g('flex-center')],
+      viewportId,
+    })}
   </div>
 `;
 

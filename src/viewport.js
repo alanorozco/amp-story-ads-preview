@@ -74,15 +74,17 @@ export const viewportIdDefault = 'iphone-x';
 export const validViewportId = viewportId =>
   assertArrayIncludes(viewportIds, viewportId);
 
-export const ViewportSelector = ({viewportId}) => html`
-  <select @change=${dispatchSelectViewport} .value=${viewportId}>
-    ${repeat(viewportIds, identity, id =>
-      ViewportOption({
-        id,
-        selected: viewportId == id,
-      })
-    )}
-  </select>
+export const ViewportSelector = ({viewportId, className = []}) => html`
+  <div class="${[n('selector'), ...className].join(' ')}">
+    <select @change=${dispatchSelectViewport} .value=${viewportId}>
+      ${repeat(viewportIds, identity, id =>
+        ViewportOption({
+          id,
+          selected: viewportId == id,
+        })
+      )}
+    </select>
+  </div>
 `;
 
 const ViewportOption = ({id, selected}) => html`

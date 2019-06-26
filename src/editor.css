@@ -28,6 +28,7 @@ $blueishgray: rgb(238, 240, 245);
   background: white;
   flex-direction: row;
   justify-self: start;
+  justify-content: start;
   flex: 0 0 45px;
   width: 100%;
   border-bottom: 1px solid #ccc;
@@ -74,8 +75,14 @@ $blueishgray: rgb(238, 240, 245);
   cursor: pointer;
 }
 
+$fileListItemHorizontalPadding: 10px;
+
+.files-panel-header {
+  padding: 0 $fileListItemHorizontalPadding;
+}
+
 .file-list-item > div {
-  padding: 14px 10px;
+  padding: 14px $fileListItemHorizontalPadding;
   white-space: nowrap;
 }
 

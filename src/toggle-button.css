@@ -3,9 +3,7 @@
 .button {
   flex: 0 0 44px;
   height: 44px;
-  justify-self: start;
   cursor: pointer;
-  align-self: flex-start;
 
   /* Using <, > symbols in place of svgs: */
   text-align: center;
