@@ -319,9 +319,9 @@ class Editor {
     );
   }
 
-  async attachEventListenerBySelector_(selector, eventTyper, listener) {
+  async attachEventListenerBySelector_(selector, eventType, listener) {
     (await untilAttached(this.parent_, selector)).addEventListener(
-      eventTyper,
+      eventType,
       listener
     );
   }
