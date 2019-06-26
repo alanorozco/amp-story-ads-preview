@@ -170,7 +170,7 @@ const FileListItem = ({name}) => html`
  * @return {lit-html/TemplateResult}
  */
 const PreviewToolbar = ({isFullPreview, viewportId}) => html`
-  <div class="${g('flex-center')} ${n('preview-toolbar')} ${n('toolbar')}">
+  <div class="${`${g('flex-center')} ${n('preview-toolbar')} ${n('toolbar')}`}">
     ${ToggleButton({isOpen: !isFullPreview})} ${ViewportSelector({viewportId})}
   </div>
 `;
@@ -182,7 +182,7 @@ const PreviewToolbar = ({isFullPreview, viewportId}) => html`
  * @return {lit-html/TemplateResult}
  */
 const ContentToolbar = ({isFilesPanelDisplayed}) => html`
-  <div class="${g('flex-center')} ${n('content-toolbar')} ${n('toolbar')}">
+  <div class="${`${g('flex-center')} ${n('content-toolbar')} ${n('toolbar')}`}">
     ${ToggleButton({isOpen: isFilesPanelDisplayed})} ${FileUploadButton()}
   </div>
 `;
