@@ -3,6 +3,7 @@
 }
 
 $ampBlue: #005af0;
+$blueishgray: rgb(238, 240, 245);
 
 @component;
 
@@ -27,7 +28,7 @@ $ampBlue: #005af0;
   background: white;
   flex-direction: row;
   justify-self: start;
-  flex: 0 0 44px;
+  flex: 0 0 45px;
   width: 100%;
   border-bottom: 1px solid #ccc;
 }
@@ -46,7 +47,7 @@ $ampBlue: #005af0;
   text-align: center;
   cursor: pointer;
   padding: 8px 10px;
-  background: #ddd;
+  background: $blueishgray;
   border-radius: 2px;
   font-weight: bold;
   font-size: 12px;
@@ -74,7 +75,7 @@ $ampBlue: #005af0;
 }
 
 .file-list-item > div {
-  padding: 15px 15px;
+  padding: 14px 10px;
   white-space: nowrap;
 }
 
@@ -90,11 +91,9 @@ $ampBlue: #005af0;
   position: absolute;
   left: 0;
   top: 0;
-  height: 30px;
-  background: #ccc;
-  color: black;
+  background: $blueishgray;
+  color: $ampBlue;
   min-width: 100%;
-  padding: 7px 5px 0px 5px;
 }
 
 .file-list-item:hover .file-list-item-clipped {
