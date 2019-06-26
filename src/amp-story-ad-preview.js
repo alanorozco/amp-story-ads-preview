@@ -48,6 +48,20 @@ const WrappedIframe = () => html`
   </div>
 `;
 
+const httpsCircumventionPatch = `
+      const createElement = document.createElement.bind(document);
+      document.createElement = function(tagName) { 
+        const el = createElement(...arguments); 
+        if (tagName.toLowerCase() == 'a') {
+          Object.defineProperty(el, 'protocol', {value: 'https:'});
+        }
+        return el; 
+      };
+    `;
+
+const insertHttpsCircumventionPatch = docStr =>
+  docStr.replace('<head>', `<head><script>${httpsCircumventionPatch}</script>`);
+
 export default class AmpStoryAdPreview {
   constructor(win, element) {
     this.win = win;
@@ -76,17 +90,6 @@ export default class AmpStoryAdPreview {
     // TODO: Either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    const httpsCircumventionPatch = `
-      const createElement = document.createElement.bind(document);
-      document.createElement = function(tagName) { const el =
-      createElement(...arguments); if (tagName.toLowerCase() == 'a') {
-      Object.defineProperty(el, 'protocol', {value: 'https:'}); } return el; };
-    `;
-    const insertHttpsCircumventionPatch = docStr =>
-      docStr.replace(
-        '<head>',
-        `<head><script>${httpsCircumventionPatch}</script>`
-      );
     const {Blob, URL} = this.win;
     const adDocBlob = new Blob([insertHttpsCircumventionPatch(dirty)], {
       type: 'text/html',
