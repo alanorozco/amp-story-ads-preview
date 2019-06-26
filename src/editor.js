@@ -292,6 +292,7 @@ class Editor {
       files: [],
       isFullPreview: false,
       previewElement,
+      viewportId: viewportIdDefault,
     });
 
     batchedRender();
