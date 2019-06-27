@@ -614,16 +614,16 @@ class Editor {
    * @private
    */
   updateFileHints_() {
-    const {files} = this.state_;
-    const readableUrls = files.map(({name}) => `/${name}`);
+    const readableUrls = this.state_.files.map(({name}) => `/${name}`);
+
     for (const tagName of attrFileHintTagNames) {
       if (!(tagName in codemirror.htmlSchema)) {
         // spec not populated yet, will exec again when fetched.
         return;
       }
+      const {attrs} = codemirror.htmlSchema[tagName];
       for (const attr of attrFileHintTagAttrs[tagName]) {
-        codemirror.htmlSchema[tagName]['attrs'][attr] =
-          readableUrls.length > 0 ? [...readableUrls] : null;
+        attrs[attr] = readableUrls.length > 0 ? [...readableUrls] : null;
       }
     }
   }
