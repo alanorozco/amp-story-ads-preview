@@ -474,7 +474,6 @@ class Editor {
         const isCss = token.state.htmlState.context.tagName === 'style';
         const isTagDeclaration = token.state.htmlState.tagName;
         const isTagStart = token.string === '<';
-        console.log(token.state.htmlState);
         if (isCss || isTagDeclaration || isTagStart) {
           codemirror.commands.autocomplete(editor);
         }
