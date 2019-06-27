@@ -585,8 +585,8 @@ class Editor {
   }
 
   /**
-   * Loads a JSON containing the CodeMirror HTML Schema to be consumed for AMP
-   * formats.
+   * Loads a JSON file containing the CodeMirror HTML Schema to be consumed for
+   * AMP formats.
    *
    * Kinda stolen from @ampproject/docs/playground/src/editor.js
    * (Editor#fetchHintsData).
