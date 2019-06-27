@@ -597,9 +597,7 @@ class Editor {
     this.win.requestIdleCallback(async () => {
       try {
         const response = await fetch(hintsUrl);
-        if (response.status !== 200) {
-          return reject(new Error(`Error code ${response.status}`));
-        }
+        assert(response.status === 200, `fetch got ${response.status}`);
         resolve(response.json());
       } catch (err) {
         reject(err);
