@@ -40,6 +40,51 @@ import htmlMinifier from 'html-minifier';
 
 const {id, g, n, s} = getNamespace('editor');
 
+/**
+ * Holds CodeMirror HTML autocompletion specs for AMP formats.
+ * This is taken from amp.dev and is built from the AMP spec... somehow.
+ */
+const hintsUrl = '/static/hints/amphtml-hint.json';
+
+/**
+ * Hints ignored on typing when delimited by these chars.
+ * Stolen from @ampproject/docs/playground/src/editor/editor.js
+ */
+const hintIgnoreEnds = new Set([
+  ';',
+  ',',
+  ')',
+  '`',
+  '"',
+  "'",
+  '>',
+  '{',
+  '}',
+  '[',
+  ']',
+]);
+
+/**
+ * tagName-to-attributes for uploaded file autocomplete hints.
+ * (These only apply to the amp4ads validation set.)
+ *
+ * TODO(alanorozco): build this set dynamically
+ * TODO(alanorozco): set hints for tag context based on file extension
+ */
+const attrFileHintTagAttrs = {
+  'amp-img': ['src'],
+  'amp-anim': ['src'],
+  'amp-video': ['src', 'poster'],
+  'amp-audio': ['src'],
+  'amp-video-iframe': ['src', 'poster'],
+  'amp-iframe': ['src'],
+  'amp-ima-video': ['poster'],
+  'source': ['src'],
+  'track': ['src'],
+};
+
+const attrFileHintTagNames = Object.keys(attrFileHintTagAttrs);
+
 const readFixtureHtml = async name =>
   (await fs.readFile(`src/fixtures/${name}.html`)).toString('utf-8');
 
@@ -322,6 +367,9 @@ class Editor {
 
     this.parent_ = element.parentElement;
 
+    this.hintTimeout_ = null;
+    this.amphtmlHints_ = this.fetchHintsData_();
+
     const {
       promise: codeMirrorElement,
       resolve: codeMirrorElementResolve,
@@ -361,8 +409,12 @@ class Editor {
     batchedRender();
 
     this.refreshCodeMirror_();
+    this.attachCodeMirrorEvents_();
+
+    // We only run amp4ads in this REPL.
+    this.setHints_('amp4ads');
+
     this.updatePreview_();
-    this.codeMirror_.on('change', () => this.updatePreview_());
 
     this.attachEventHandlers_();
   }
@@ -398,6 +450,38 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
+  attachCodeMirrorEvents_() {
+    this.codeMirror_.on('change', () => this.updatePreview_());
+
+    // Below stolen from @ampproject/docs/playground/src/editor/editor.js
+    // (Editor#createCodeMirror)
+    this.codeMirror_.on('inputRead', (editor, change) => {
+      if (this.hintTimeout_) {
+        clearTimeout(this.hintTimeout_);
+      }
+      if (change.origin !== '+input') {
+        return;
+      }
+      if (change && change.text && hintIgnoreEnds.has(change.text.join(''))) {
+        return;
+      }
+      this.hintTimeout_ = setTimeout(() => {
+        if (editor.state.completionActive) {
+          return;
+        }
+        const cur = editor.getCursor();
+        const token = editor.getTokenAt(cur);
+        const isCss = token.state.htmlState.context.tagName === 'style';
+        const isTagDeclaration = token.state.htmlState.tagName;
+        const isTagStart = token.string === '<';
+        console.log(token.state.htmlState);
+        if (isCss || isTagDeclaration || isTagStart) {
+          codemirror.commands.autocomplete(editor);
+        }
+      }, 150);
+    });
+  }
+
   async attachEventListenerBySelector_(selector, eventType, listener) {
     (await untilAttached(this.parent_, selector)).addEventListener(
       eventType,
@@ -413,6 +497,8 @@ class Editor {
         .map(f => attachBlobUrl(this.win, f))
         .sort(fileSortCompare)
     );
+
+    this.updateFileHints_();
   }
 
   selectViewport_({target}) {
@@ -473,6 +559,74 @@ class Editor {
       str = str.replace(new RegExp(`/${name}`, 'g'), url);
     }
     return str;
+  }
+
+  /**
+   * Replaces CodeMirror hints with the AMP spec.
+   *
+   * Kinda stolen from @ampproject/docs/playground/src/editor.js
+   * (Editor#loadHints).
+   *
+   * Additionally sets uploaded file name hints for attrs like "src".
+   *
+   * @param {string} format
+   *    Should always be "amp4ads" for our use case, see top-level keys of
+   *    amphtml-hint.json for possible values.
+   * @private
+   */
+  async setHints_(format) {
+    const hints = await this.amphtmlHints_;
+    for (const key of Object.keys(codemirror.htmlSchema)) {
+      delete codemirror.htmlSchema[key];
+    }
+    Object.assign(codemirror.htmlSchema, hints[format.toLowerCase()]);
+
+    // Below, ours, in case of race:
+    this.updateFileHints_();
+  }
+
+  /**
+   * Loads a JSON containing the CodeMirror HTML Schema to be consumed for AMP
+   * formats.
+   *
+   * Kinda stolen from @ampproject/docs/playground/src/editor.js
+   * (Editor#fetchHintsData).
+   * @private
+   */
+  fetchHintsData_() {
+    const {promise, reject, resolve} = new Deferred();
+    this.win.requestIdleCallback(async () => {
+      try {
+        const response = await fetch(hintsUrl);
+        if (response.status !== 200) {
+          return reject(new Error(`Error code ${response.status}`));
+        }
+        resolve(response.json());
+      } catch (err) {
+        reject(err);
+      }
+    });
+    return promise;
+  }
+
+  /**
+   * Sets attr hints like for "src" and "poster" for the tags in the spec that
+   * allow it, so that they show uploaded files.
+   * @private
+   */
+  updateFileHints_() {
+    const {files} = this.state_;
+    const readableUrls = files.map(({name}) => `/${name}`);
+    for (const tagName of attrFileHintTagNames) {
+      if (!(tagName in codemirror.htmlSchema)) {
+        // spec not populated yet, will exec again when fetched.
+        return;
+      }
+      for (const attr of attrFileHintTagAttrs[tagName]) {
+        codemirror.htmlSchema[tagName]['attrs'][attr] =
+          readableUrls.length > 0 ? [...readableUrls] : null;
+      }
+    }
   }
 }
 
