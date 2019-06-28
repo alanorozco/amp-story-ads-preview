@@ -109,7 +109,7 @@ const inputConfig = async name => ({
   ],
 });
 
-const outputConfigs = [{format: 'iife'}];
+const outputConfigs = [{format: 'iife', sourcemap: true}];
 
 /**
  * Magic below.
@@ -196,11 +196,47 @@ export async function build() {
       );
     })
   );
+  await buildJsonFile();
   await freezeStaticHtml();
 }
 
 const copyStaticAssets = () =>
   step('📋 Copying static assets', () => fs.copy('static', 'dist/static'));
+
+const buildJsonFile = () => step('Building json file', () => buildJson());
+
+async function buildJson() {
+  let templateFolders = await fs.readdir('static/templates');
+  let templateContents = new Array();
+  for (let templateFolder of templateFolders) {
+    templateContents.push(
+      await fs.readdir('static/templates/' + templateFolder)
+    );
+  }
+  let templateObjects = new Array();
+  for (let i = 0; i < templateContents.length; i++) {
+    let assets = new Array();
+    let contentUrl = '';
+    for (let file of templateContents[i]) {
+      if (file.includes('.html')) {
+        contentUrl = file;
+      } else if (!file.includes('.txt')) {
+        assets.push(file);
+      }
+    }
+    templateObjects.push({
+      'contentUrl': 'static/templates/' + templateFolders[i] + '/' + contentUrl,
+      'assets': assets,
+    });
+  }
+  fs.writeFile('dist/templates.json', JSON.stringify(templateObjects), function(
+    err
+  ) {
+    if (err) {
+      console.log(err);
+    }
+  });
+}
 
 const freezeStaticHtml = (opts = {}) =>
   step('❄️ Freezing static html', () =>
@@ -268,6 +304,7 @@ async function incrementalBuild() {
     },
     START: async () => {
       await copyStaticAssets();
+      await buildJsonFile();
       log(yellow('🚧 Starting incremental build...'));
     },
     BUNDLE_START: ({output}) => {

@@ -90,8 +90,10 @@ const renderEditor = ({
   files = [],
   isFullPreview = false,
   isFilesPanelDisplayed = false,
+  isTemplateLightboxDisplayed = false,
   previewElement,
   storyDocTemplate = '',
+  templates,
   viewportId = viewportIdDefault,
 }) => html`
   <div id=${id} class=${n('wrap')}>
@@ -102,8 +104,10 @@ const renderEditor = ({
     ${ContentPanel({
       isDisplayed: !isFullPreview,
       isFilesPanelDisplayed,
+      isTemplateLightboxDisplayed,
       codeMirrorElement,
       content,
+      templates,
     })}
     ${PreviewPanel({
       isFullPreview,
@@ -182,22 +186,30 @@ const FileListItem = ({name}) => html`
  * of it, to propagate a click into a hidden `input[type=file]` element.
  * @param {Event} e
  */
-function cascasdeInputClick({currentTarget}) {
+function cascadeInputClick({currentTarget}) {
   assert(currentTarget.querySelector('input')).click();
 }
 
 const dispatchUploadFiles = redispatchAs(g('upload-files'));
+
+const dispatchShowTemplates = redispatchAs(g('show-templates'));
 
 /**
  * Renders a button to "upload" files--that is, set Blob URLs so they're
  * accessible from the AMP Ad document.
  */
 const FileUploadButton = () => html`
-  <div class="${n('upload-button-container')}" @click="${cascasdeInputClick}">
+  <div class="${n('upload-button-container')}" @click="${cascadeInputClick}">
     <div class="${n('upload-button')}">
       Add files
     </div>
     <input type="file" hidden multiple @change="${dispatchUploadFiles}" />
+  </div>
+`;
+
+const ChooseTemplatesButton = () => html`
+  <div class="${n('upload-button')}" @click=${dispatchShowTemplates}>
+    Choose Template
   </div>
 `;
 
@@ -214,6 +226,8 @@ const ContentPanel = ({
   content,
   isDisplayed,
   isFilesPanelDisplayed,
+  isTemplateLightboxDisplayed,
+  templates,
 }) => html`
   <div class=${n('content')} ?hidden=${!isDisplayed}>
     ${ContentToolbar({isFilesPanelDisplayed})}
@@ -223,9 +237,35 @@ const ContentPanel = ({
         codeMirrorElement is a promise resolved by codemirror(), hence the
         until directive. Once resolved, content can be empty.
       -->
+    ${TemplateLightbox({isTemplateLightboxDisplayed, templates})}
     ${until(codeMirrorElement || Textarea({content}))}
   </div>
 `;
+const dispatchLoadHtmlFile = redispatchAs(g('load-html'));
+
+const TemplateLightbox = ({isTemplateLightboxDisplayed, templates}) => html`
+  <div
+    class="${n('template-lightbox')}"
+    ?hidden=${!isTemplateLightboxDisplayed}
+    @click=${dispatchLoadHtmlFile}
+  >
+    ${until(getNamesOfTemplates({templates}), 'Loading...')}
+  </div>
+`;
+
+async function getNamesOfTemplates({templates}) {
+  return html`
+    <img width="19%" src="/static/app_install.jpg" />
+    <video
+      autoplay
+      width="19%"
+      src="/static/multiple-image-template.mp4"
+    ></video>
+    <video autoplay width="19%" src="/static/single_video.mp4"></video>
+    <video autoplay width="19%" src="/static/single-image-template.mp4"></video>
+    <img width="19%" src="/static/text.png" />
+  `;
+}
 
 /**
  * Renders content panel toolbar.
@@ -236,6 +276,7 @@ const ContentPanel = ({
 const ContentToolbar = ({isFilesPanelDisplayed}) => html`
   <div class="${`${g('flex-center')} ${n('content-toolbar')} ${n('toolbar')}`}">
     ${ToggleButton({isOpen: isFilesPanelDisplayed})} ${FileUploadButton()}
+    ${ChooseTemplatesButton()}
   </div>
 `;
 
@@ -348,6 +389,8 @@ class Editor {
       isFullPreview: false,
       previewElement,
       viewportId: viewportIdDefault,
+      isTemplateLightboxDisplayed: false,
+      templates: fetch('/templates.json').then(r => r.json()),
     });
 
     batchedRender();
@@ -367,6 +410,8 @@ class Editor {
       [g('upload-files')]: this.uploadFiles_,
       [g('insert-file-ref')]: this.insertFileRef_,
       [g('select-viewport')]: this.selectViewport_,
+      [g('show-templates')]: this.showTemplates_,
+      [g('load-html')]: this.loadHtml_,
     };
 
     for (const eventType of Object.keys(topLevelHandlers)) {
@@ -390,6 +435,25 @@ class Editor {
     );
   }
 
+  async loadHtml_() {
+    const assets = (await this.state_.templates)[0].assets;
+    for (let i = 0; i < assets.length; i++) {
+      assets[i] = {
+        name: assets[i],
+        url: '/static/templates/app-install-ads/' + assets[i],
+      };
+    }
+    debugger;
+    this.state_.files = assets;
+    const contentResponse = await fetch(
+      '/static/templates/app-install-ads/app-install.html'
+    );
+    assert(contentResponse.status == 200);
+    this.codeMirror_.setValue(await contentResponse.text());
+    this.state_.isFilesPanelDisplayed = true;
+    // this.updatePreview_();
+  }
+
   uploadFiles_({target: {files}}) {
     this.state_.isFilesPanelDisplayed = true;
 
@@ -398,6 +462,11 @@ class Editor {
         .map(f => attachBlobUrl(this.win, f))
         .sort(fileSortCompare)
     );
+  }
+
+  showTemplates_() {
+    this.state_.isTemplateLightboxDisplayed = !this.state_
+      .isTemplateLightboxDisplayed;
   }
 
   selectViewport_({target}) {
@@ -454,6 +523,7 @@ class Editor {
   }
 
   replaceFileRefs_(str) {
+    // debugger;
     for (const {name, url} of this.state_.files) {
       str = str.replace(new RegExp(`/${name}`, 'g'), url);
     }
