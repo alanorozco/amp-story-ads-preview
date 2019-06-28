@@ -586,7 +586,7 @@ class Editor {
     const {promise, reject, resolve} = new Deferred();
     this.win.requestIdleCallback(async () => {
       try {
-        const response = await fetch(hintsUrl);
+        const response = await this.win.fetch(hintsUrl);
         assert(response.status === 200, `fetch got ${response.status}`);
         resolve(response.json());
       } catch (err) {
