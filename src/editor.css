@@ -13,7 +13,6 @@
   flex: 1;
   overflow: hidden;
   z-index: 0;
-  border-right: 1px solid #ccc;
 }
 
 .preview-wrap {
@@ -107,11 +106,11 @@
 }
 
 .files-panel {
-  flex: 0 0 200px;
-  border-right: 1px solid #ccc;
+  --file-item-width: 220px;
+  --file-item-x-padding: 14px;
+  flex: 0 0 var(--file-item-width);
   overflow: visible;
   flex-direction: column;
-  --file-item-x-padding: 14px;
 }
 
 .files-panel:not([hidden]) {
@@ -136,7 +135,7 @@
 .file-list-item .file-list-item-clipped {
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 199px; /* .files-panel width - 1px for border */
+  width: var(--file-item-width);
 }
 
 .file-list-item .file-list-item-unclipped {
