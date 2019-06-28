@@ -430,23 +430,6 @@ class Editor {
     }
   }
 
-  /**
-   * Toggles something on ToggleButton click.
-   * (Figures out what to toggle from `data-name` attribute.)
-   * @param {Event} e
-   * @private
-   */
-  toggle_({target: {dataset}}) {
-    const name = assert(dataset.name);
-    if (name == 'full-preview') {
-      return this.toggleFullPreview_();
-    }
-    if (name == 'files-panel') {
-      return this.toggleFilesPanel_();
-    }
-    assert(false, `I don't know how to toggle "${name}".`);
-  }
-
   attachCodeMirrorEvents_() {
     this.codeMirror_.on('change', () => this.updatePreview_());
 
@@ -478,11 +461,21 @@ class Editor {
     });
   }
 
-  async attachEventListenerBySelector_(selector, eventType, listener) {
-    (await untilAttached(this.parent_, selector)).addEventListener(
-      eventType,
-      listener
-    );
+  /**
+   * Toggles something on ToggleButton click.
+   * (Figures out what to toggle from `data-name` attribute.)
+   * @param {Event} e
+   * @private
+   */
+  toggle_({target: {dataset}}) {
+    const name = assert(dataset.name);
+    if (name == 'full-preview') {
+      return this.toggleFullPreview_();
+    }
+    if (name == 'files-panel') {
+      return this.toggleFilesPanel_();
+    }
+    assert(false, `I don't know how to toggle "${name}".`);
   }
 
   uploadFiles_({target: {files}}) {
