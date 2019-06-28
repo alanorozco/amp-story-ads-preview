@@ -564,11 +564,12 @@ class Editor {
    * @private
    */
   async setHints_(format) {
+    const {htmlSchema} = codemirror;
     const hints = await this.amphtmlHints_;
-    for (const key of Object.keys(codemirror.htmlSchema)) {
-      delete codemirror.htmlSchema[key];
+    for (const key of Object.keys(htmlSchema)) {
+      delete htmlSchema[key];
     }
-    Object.assign(codemirror.htmlSchema, hints[format.toLowerCase()]);
+    Object.assign(htmlSchema, hints[format.toLowerCase()]);
 
     // Below, ours, in case of race:
     this.updateFileHints_();
