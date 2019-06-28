@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import './editor.css';
-import './monokai.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {attachBlobUrl, fileSortCompare} from './file-upload';
@@ -234,7 +233,9 @@ const ContentPanel = ({
  * @return {lit-html/TemplateResult}
  */
 const ContentToolbar = ({isFilesPanelDisplayed}) => html`
-  <div class="${`${g('flex-center')} ${n('content-toolbar')} ${n('toolbar')}`}">
+  <div
+    class="${[g('flex-center'), n('content-toolbar'), n('toolbar')].join(' ')}"
+  >
     ${ToggleButton({
       isOpen: isFilesPanelDisplayed,
       name: 'files-panel',

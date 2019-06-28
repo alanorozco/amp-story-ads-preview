@@ -1,15 +1,21 @@
 @component;
 
 .button {
-  flex: 0 0 44px;
-  height: 44px;
+  flex: 0 0 40px;
+  height: 40px;
   cursor: pointer;
 
   /* Using <, > symbols in place of svgs: */
   text-align: center;
-  font-weight: 500;
-  font-size: 16px;
+  font-weight: 300;
+  font-size: 20px;
   color: #888;
+}
+
+.button:active {
+  background: var(--blueishgray-semiopaque);
+  color: var(--amp-blue);
+  border-radius: 50%;
 }
 
 .fake-icon {

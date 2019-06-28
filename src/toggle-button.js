@@ -31,9 +31,9 @@ const dispatchToggle = redispatchAs(g('toggle'));
  * @param {string} data.name
  * @return {lit-html/TemplateResult}
  */
-export const ToggleButton = ({isOpen, name, className = []}) => html`
+export const ToggleButton = ({isOpen, name}) => html`
   <div
-    class=${[g('flex-center'), n('button'), ...className].join(' ')}
+    class=${[g('flex-center'), n('button')].join(' ')}
     @click=${dispatchToggle}
     data-name=${name}
   >
