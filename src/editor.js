@@ -76,9 +76,6 @@ const attrFileHintTagAttrs = {
   'amp-anim': ['src'],
   'amp-video': ['src', 'poster'],
   'amp-audio': ['src'],
-  'amp-video-iframe': ['src', 'poster'],
-  'amp-iframe': ['src'],
-  'amp-ima-video': ['poster'],
   'source': ['src'],
   'track': ['src'],
 };
@@ -612,16 +609,20 @@ class Editor {
    * @private
    */
   updateFileHints_() {
-    const readableUrls = this.state_.files.map(({name}) => `/${name}`);
+    const {files} = this.state_;
+    const {htmlSchema} = codemirror;
+
+    // CodeMirror HTML spec allows null for attributes without known values.
+    const readableUrlsValueSet =
+      files.length > 0 ? files.map(({name}) => `/${name}`) : null;
 
     for (const tagName of attrFileHintTagNames) {
-      if (!(tagName in codemirror.htmlSchema)) {
+      if (!(tagName in htmlSchema)) {
         // spec not populated yet, will exec again when fetched.
         return;
       }
-      const {attrs} = codemirror.htmlSchema[tagName];
       for (const attr of attrFileHintTagAttrs[tagName]) {
-        attrs[attr] = readableUrls.length > 0 ? [...readableUrls] : null;
+        htmlSchema[tagName].attrs[attr] = readableUrlsValueSet;
       }
     }
   }
