@@ -235,7 +235,11 @@ const ContentPanel = ({
  */
 const ContentToolbar = ({isFilesPanelDisplayed}) => html`
   <div class="${`${g('flex-center')} ${n('content-toolbar')} ${n('toolbar')}`}">
-    ${ToggleButton({isOpen: isFilesPanelDisplayed})} ${FileUploadButton()}
+    ${ToggleButton({
+      isOpen: isFilesPanelDisplayed,
+      name: 'files-panel',
+    })}
+    ${FileUploadButton()}
   </div>
 `;
 
@@ -286,7 +290,10 @@ const PreviewPanel = ({
  */
 const PreviewToolbar = ({isFullPreview, viewportId}) => html`
   <div class="${`${g('flex-center')} ${n('preview-toolbar')} ${n('toolbar')}`}">
-    ${ToggleButton({isOpen: !isFullPreview})}
+    ${ToggleButton({
+      isOpen: !isFullPreview,
+      name: 'full-preview',
+    })}
     ${ViewportSelector({
       className: [g('flex-center')],
       viewportId,
@@ -356,10 +363,7 @@ class Editor {
     this.updatePreview_();
     this.codeMirror_.on('change', () => this.updatePreview_());
 
-    // yield to first render... annoying.
-    this.win.requestAnimationFrame(() =>
-      setTimeout(() => this.attachEventHandlers_(), 0)
-    );
+    this.attachEventHandlers_();
   }
 
   attachEventHandlers_() {
@@ -367,20 +371,30 @@ class Editor {
       [g('upload-files')]: this.uploadFiles_,
       [g('insert-file-ref')]: this.insertFileRef_,
       [g('select-viewport')]: this.selectViewport_,
+      [g('toggle')]: this.toggle_,
     };
 
     for (const eventType of Object.keys(topLevelHandlers)) {
       const boundHandler = topLevelHandlers[eventType].bind(this);
       this.parent_.addEventListener(eventType, boundHandler);
     }
+  }
 
-    this.attachEventListenerBySelector_(s('.content-toolbar'), g('toggle'), e =>
-      this.toggleFilesPanel_(e)
-    );
-
-    this.attachEventListenerBySelector_(s('.preview-toolbar'), g('toggle'), e =>
-      this.toggleFullPreview_(e)
-    );
+  /**
+   * Toggles something on ToggleButton click.
+   * (Figures out what to toggle from `data-name` attribute.)
+   * @param {Event} e
+   * @private
+   */
+  toggle_({target: {dataset}}) {
+    const name = assert(dataset.name);
+    if (name == 'full-preview') {
+      return this.toggleFullPreview_();
+    }
+    if (name == 'files-panel') {
+      return this.toggleFilesPanel_();
+    }
+    assert(false, `I don't know how to toggle "${name}".`);
   }
 
   async attachEventListenerBySelector_(selector, eventType, listener) {

@@ -28,12 +28,14 @@ const dispatchToggle = redispatchAs(g('toggle'));
  * it renders "<" or ">" depending on whether it's open.
  * @param {Object} data
  * @param {boolean=} data.isOpen
+ * @param {string} data.name
  * @return {lit-html/TemplateResult}
  */
-export const ToggleButton = ({isOpen, className = []}) => html`
+export const ToggleButton = ({isOpen, name, className = []}) => html`
   <div
     class=${[g('flex-center'), n('button'), ...className].join(' ')}
     @click=${dispatchToggle}
+    data-name=${name}
   >
     <div class=${n('fake-icon')}>${isOpen ? '<' : '>'}</div>
   </div>
