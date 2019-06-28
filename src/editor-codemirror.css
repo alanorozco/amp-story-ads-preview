@@ -1,3 +1,4 @@
+@import './colors.css';
 @import './monokai.css';
 
 /* Stolen from @ampproject/docs/playground/src/editor/editor.scss */
@@ -6,11 +7,6 @@
   font-size: 14px;
   background: var(--content-bg);
   height: 100%;
-}
-
-/* like amp.dev (except this is flat cuz f* gradients) */
-.cm-s-monokai .CodeMirror-activeline-background {
-  background: rgb(55, 68, 80);
 }
 
 .CodeMirror-error-markers {
@@ -68,8 +64,9 @@ li.CodeMirror-hint-active {
   background: none !important;
 }
 
+/* like amp.dev (except this is flat cuz f* gradients) */
 .cm-s-monokai .CodeMirror-activeline-background {
-  background: var(--gradient-1);
+  background: rgb(55, 68, 80);
 }
 
 .gutter-warning,
