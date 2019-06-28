@@ -186,6 +186,7 @@ async function minifyBundle(filename) {
 
 export async function build() {
   await copyStaticAssets();
+  await buildJsonFile();
   await step('🚧 Building js', () =>
     withAllBundles(async name => {
       const bundle = await rollup(await inputConfig(name));
