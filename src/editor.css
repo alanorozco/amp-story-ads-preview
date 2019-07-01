@@ -128,3 +128,7 @@ $fileListItemHorizontalPadding: 14px;
 .file-list-empty > div {
   margin: 10px 0;
 }
+
+.delete-file-button {
+  position: absolute;
+}

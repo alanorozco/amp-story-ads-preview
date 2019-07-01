@@ -157,22 +157,28 @@ const FileList = ({files}) =>
       `;
 
 const dispatchInsertFileRef = redispatchAs(g('insert-file-ref'));
+const dispatchDeleteFile = redispatchAs(g('delete-file'));
 
 /**
  * @param {{name: string}} file
  * @return {lit-html/TemplateResult}
  */
-const FileListItem = ({name}) => html`
-  <div
-    class="${n('file-list-item')}"
-    @click="${dispatchInsertFileRef}"
-    data-name="${name}"
-  >
-    <div class="${n('file-list-item-clipped')}">
+const FileListItem = ({name}, index) => html`
+  <div class="${n('file-list-item')}" data-name="${name}" data-index="${index}">
+    <div
+      class="${n('file-list-item-clipped')}"
+      @click="${dispatchInsertFileRef}"
+    >
       ${name}
     </div>
-    <div class="${n('file-list-item-unclipped')}">
+    <div
+      class="${n('file-list-item-unclipped')}"
+      @click="${dispatchInsertFileRef}"
+    >
       ${name}
+    </div>
+    <div class=${g('delete-file-button')} @click=${dispatchDeleteFile}>
+      <span>×</span>
     </div>
   </div>
 `;
@@ -364,8 +370,9 @@ class Editor {
 
   attachEventHandlers_() {
     const topLevelHandlers = {
-      [g('upload-files')]: this.uploadFiles_,
+      [g('delete-file')]: this.deleteFile_,
       [g('insert-file-ref')]: this.insertFileRef_,
+      [g('upload-files')]: this.uploadFiles_,
       [g('select-viewport')]: this.selectViewport_,
     };
 
@@ -458,6 +465,21 @@ class Editor {
       str = str.replace(new RegExp(`/${name}`, 'g'), url);
     }
     return str;
+  }
+
+  deleteFile_({target}) {
+    const {dataset} = assert(target.closest('[data-index]'));
+    const deletedIndex = parseInt(assert(dataset.index), 10);
+    const [deleted] = this.state_.files.splice(deletedIndex, 1);
+    const {url: deletedUrl} = deleted;
+
+    // not all urls are blob urls
+    if (/^blob:/.test(deletedUrl)) {
+      this.win.URL.revokeObjectURL(deletedUrl);
+    }
+
+    // Force re-render
+    this.state_.files = this.state_.files;
   }
 }
 
