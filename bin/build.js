@@ -230,7 +230,14 @@ async function buildJson() {
       'assets': assets,
     });
   }
-  fs.writeFile('dist/templates.json', JSON.stringify(templateObjects), function(
+  let jsonObject = {
+    'app-install-ads': templateObjects[0],
+    'multi-image-ads': templateObjects[1],
+    'single-image-ads': templateObjects[2],
+    'single-video': templateObjects[3],
+    'text': templateObjects[4],
+  };
+  fs.writeFile('dist/templates.json', JSON.stringify(jsonObject), function(
     err
   ) {
     if (err) {

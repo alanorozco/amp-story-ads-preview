@@ -173,3 +173,7 @@
 .file-list-empty > div {
   margin: 10px 0;
 }
+
+.template {
+  width: 20%;
+}

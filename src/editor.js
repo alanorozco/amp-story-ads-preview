@@ -293,42 +293,56 @@ const TemplateLightbox = ({isTemplateLightboxDisplayed}) => html`
 function getNamesOfTemplates() {
   return html`
     <div class="${g('flex-center')}">
-      <img
-        width="20%"
-        src="/static/app_install.jpg"
+      <div
+        class="${n('template')}"
         @click=${dispatchLoadHtmlFile}
-        name="app-install-ads"
-      />
-      <video
-        autoplay
-        loop
-        width="20%"
-        src="/static/multiple-image-template.mp4"
+        data-name="app-install-ads"
+      >
+        <img width="100%" src="/static/app_install.jpg" />
+      </div>
+      <div
+        class="${n('template')}"
         @click=${dispatchLoadHtmlFile}
-        name="multiple-image-ads"
-      ></video>
-      <video
-        autoplay
-        loop
-        width="20%"
-        src="/static/single_video.mp4"
+        data-name="multi-image-ads"
+      >
+        <video
+          width="100%"
+          autoplay
+          loop
+          src="/static/multiple-image-template.mp4"
+        ></video>
+      </div>
+      <div
+        class="${n('template')}"
         @click=${dispatchLoadHtmlFile}
-        name="single-video"
-      ></video>
-      <video
-        autoplay
-        loop
-        width="20%"
-        src="/static/single-image-template.mp4"
+        data-name="single-video"
+      >
+        <video
+          width="100%"
+          autoplay
+          loop
+          src="/static/single_video.mp4"
+        ></video>
+      </div>
+      <div
+        class="${n('template')}"
         @click=${dispatchLoadHtmlFile}
-        name="single-image-ads"
-      ></video>
-      <img
-        width="20%"
-        src="/static/text.png"
+        data-name="single-image-ads"
+      >
+        <video
+          width="100%"
+          autoplay
+          loop
+          src="/static/single-image-template.mp4"
+        ></video>
+      </div>
+      <div
+        class="${n('template')}"
         @click=${dispatchLoadHtmlFile}
-        name="text"
-      />
+        data-name="text"
+      >
+        <img width="100%" src="/static/text.png" />
+      </div>
     </div>
   `;
 }
@@ -547,34 +561,19 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
-  async loadHtml_({target: {name}}) {
-    console.log(name);
+  async loadHtml_({target: {dataset}}) {
+    const name = assert(dataset.name);
     const contentResponse = await fetch(
-      '/static/templates/' + name + '/index.html'
+      (await this.state_.templates)[name].contentUrl
     );
     assert(contentResponse.status == 200);
     this.codeMirror_.setValue(await contentResponse.text());
-    let index;
-    if (name == 'app-install-ads') {
-      index = 0;
-    } else if (name == 'multi-image-ads') {
-      index = 1;
-    } else if (name == 'single-image-ads') {
-      index = 2;
-    } else if (name == 'single-video') {
-      index = 3;
-    } else {
-      index = 4;
-    }
-    const assets = (await this.state_.templates)[index].assets;
-    console.log(assets);
-    for (let i = 0; i < assets.length; i++) {
-      assets[i] = {
-        name: assets[i],
-        url: '/static/templates/' + name + '/' + assets[i],
-      };
-    }
-    this.state_.files = assets;
+    this.state_.files = (await this.state_.templates)[name].assets.map(
+      filename => ({
+        name: filename,
+        url: `/static/templates/${name}/${filename}`,
+      })
+    );
     this.state_.isFilesPanelDisplayed = true;
     this.state_.isTemplateLightboxDisplayed = false;
     this.updatePreview_();
