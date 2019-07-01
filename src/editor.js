@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import './editor.css';
-import './monokai.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {attachBlobUrl, fileSortCompare} from './file-upload';
@@ -40,6 +39,48 @@ import fs from 'fs-extra';
 import htmlMinifier from 'html-minifier';
 
 const {id, g, n, s} = getNamespace('editor');
+
+/**
+ * Holds CodeMirror HTML autocompletion specs for AMP formats.
+ * This is taken from amp.dev and is built from the AMP spec... somehow.
+ */
+const hintsUrl = '/static/hints/amphtml-hint.json';
+
+/**
+ * Hints ignored on typing when delimited by these chars.
+ * Stolen from @ampproject/docs/playground/src/editor/editor.js
+ */
+const hintIgnoreEnds = new Set([
+  ';',
+  ',',
+  ')',
+  '`',
+  '"',
+  "'",
+  '>',
+  '{',
+  '}',
+  '[',
+  ']',
+]);
+
+/**
+ * tagName-to-attributes for uploaded file autocomplete hints.
+ * (These only apply to the amp4ads validation set.)
+ *
+ * TODO(alanorozco): build this set dynamically
+ * TODO(alanorozco): set hints for tag context based on file extension
+ */
+const attrFileHintTagAttrs = {
+  'amp-img': ['src'],
+  'amp-anim': ['src'],
+  'amp-video': ['src', 'poster'],
+  'amp-audio': ['src'],
+  'source': ['src'],
+  'track': ['src'],
+};
+
+const attrFileHintTagNames = Object.keys(attrFileHintTagAttrs);
 
 const readFixtureHtml = async name =>
   (await fs.readFile(`src/fixtures/${name}.html`)).toString('utf-8');
@@ -239,8 +280,14 @@ const ContentPanel = ({
  * @return {lit-html/TemplateResult}
  */
 const ContentToolbar = ({isFilesPanelDisplayed}) => html`
-  <div class="${`${g('flex-center')} ${n('content-toolbar')} ${n('toolbar')}`}">
-    ${ToggleButton({isOpen: isFilesPanelDisplayed})} ${FileUploadButton()}
+  <div
+    class="${[g('flex-center'), n('content-toolbar'), n('toolbar')].join(' ')}"
+  >
+    ${ToggleButton({
+      isOpen: isFilesPanelDisplayed,
+      name: 'files-panel',
+    })}
+    ${FileUploadButton()}
   </div>
 `;
 
@@ -291,7 +338,10 @@ const PreviewPanel = ({
  */
 const PreviewToolbar = ({isFullPreview, viewportId}) => html`
   <div class="${`${g('flex-center')} ${n('preview-toolbar')} ${n('toolbar')}`}">
-    ${ToggleButton({isOpen: !isFullPreview})}
+    ${ToggleButton({
+      isOpen: !isFullPreview,
+      name: 'full-preview',
+    })}
     ${ViewportSelector({
       className: [g('flex-center')],
       viewportId,
@@ -318,6 +368,9 @@ class Editor {
     this.win = win;
 
     this.parent_ = element.parentElement;
+
+    this.hintTimeout_ = null;
+    this.amphtmlHints_ = this.fetchHintsData_();
 
     const {
       promise: codeMirrorElement,
@@ -358,13 +411,14 @@ class Editor {
     batchedRender();
 
     this.refreshCodeMirror_();
-    this.updatePreview_();
-    this.codeMirror_.on('change', () => this.updatePreview_());
+    this.attachCodeMirrorEvents_();
 
-    // yield to first render... annoying.
-    this.win.requestAnimationFrame(() =>
-      setTimeout(() => this.attachEventHandlers_(), 0)
-    );
+    // We only run amp4ads in this REPL.
+    this.setHints_('amp4ads');
+
+    this.updatePreview_();
+
+    this.attachEventHandlers_();
   }
 
   attachEventHandlers_() {
@@ -373,27 +427,61 @@ class Editor {
       [g('insert-file-ref')]: this.insertFileRef_,
       [g('upload-files')]: this.uploadFiles_,
       [g('select-viewport')]: this.selectViewport_,
+      [g('toggle')]: this.toggle_,
     };
 
     for (const eventType of Object.keys(topLevelHandlers)) {
       const boundHandler = topLevelHandlers[eventType].bind(this);
       this.parent_.addEventListener(eventType, boundHandler);
     }
-
-    this.attachEventListenerBySelector_(s('.content-toolbar'), g('toggle'), e =>
-      this.toggleFilesPanel_(e)
-    );
-
-    this.attachEventListenerBySelector_(s('.preview-toolbar'), g('toggle'), e =>
-      this.toggleFullPreview_(e)
-    );
   }
 
-  async attachEventListenerBySelector_(selector, eventType, listener) {
-    (await untilAttached(this.parent_, selector)).addEventListener(
-      eventType,
-      listener
-    );
+  attachCodeMirrorEvents_() {
+    this.codeMirror_.on('change', () => this.updatePreview_());
+
+    // Below stolen from @ampproject/docs/playground/src/editor/editor.js
+    // (Editor#createCodeMirror)
+    this.codeMirror_.on('inputRead', (editor, change) => {
+      if (this.hintTimeout_) {
+        clearTimeout(this.hintTimeout_);
+      }
+      if (change.origin !== '+input') {
+        return;
+      }
+      if (change && change.text && hintIgnoreEnds.has(change.text.join(''))) {
+        return;
+      }
+      this.hintTimeout_ = setTimeout(() => {
+        if (editor.state.completionActive) {
+          return;
+        }
+        const cur = editor.getCursor();
+        const token = editor.getTokenAt(cur);
+        const isCss = token.state.htmlState.context.tagName === 'style';
+        const isTagDeclaration = token.state.htmlState.tagName;
+        const isTagStart = token.string === '<';
+        if (isCss || isTagDeclaration || isTagStart) {
+          codemirror.commands.autocomplete(editor);
+        }
+      }, 150);
+    });
+  }
+
+  /**
+   * Toggles something on ToggleButton click.
+   * (Figures out what to toggle from `data-name` attribute.)
+   * @param {Event} e
+   * @private
+   */
+  toggle_({target: {dataset}}) {
+    const name = assert(dataset.name);
+    if (name == 'full-preview') {
+      return this.toggleFullPreview_();
+    }
+    if (name == 'files-panel') {
+      return this.toggleFilesPanel_();
+    }
+    assert(false, `I don't know how to toggle "${name}".`);
   }
 
   uploadFiles_({target: {files}}) {
@@ -404,6 +492,8 @@ class Editor {
         .map(f => attachBlobUrl(this.win, f))
         .sort(fileSortCompare)
     );
+
+    this.updateFileHints_();
   }
 
   selectViewport_({target}) {
@@ -479,6 +569,77 @@ class Editor {
 
     // Force re-render
     this.state_.files = this.state_.files;
+    this.updateFileHints_();
+  }
+  /**
+   * Replaces CodeMirror hints with the AMP spec.
+   *
+   * Kinda stolen from @ampproject/docs/playground/src/editor.js
+   * (Editor#loadHints).
+   *
+   * Additionally sets uploaded file name hints for attrs like "src".
+   *
+   * @param {string} format
+   *    Should always be "amp4ads" for our use case, see top-level keys of
+   *    amphtml-hint.json for possible values.
+   * @private
+   */
+  async setHints_(format) {
+    const {htmlSchema} = codemirror;
+    const hints = await this.amphtmlHints_;
+    for (const key of Object.keys(htmlSchema)) {
+      delete htmlSchema[key];
+    }
+    Object.assign(htmlSchema, hints[format.toLowerCase()]);
+
+    // Below, ours, in case of race:
+    this.updateFileHints_();
+  }
+
+  /**
+   * Loads a JSON file containing the CodeMirror HTML Schema to be consumed for
+   * AMP formats.
+   *
+   * Kinda stolen from @ampproject/docs/playground/src/editor.js
+   * (Editor#fetchHintsData).
+   * @private
+   */
+  fetchHintsData_() {
+    const {promise, reject, resolve} = new Deferred();
+    this.win.requestIdleCallback(async () => {
+      try {
+        const response = await this.win.fetch(hintsUrl);
+        assert(response.status === 200, `fetch got ${response.status}`);
+        resolve(response.json());
+      } catch (err) {
+        reject(err);
+      }
+    });
+    return promise;
+  }
+
+  /**
+   * Sets attr hints like for "src" and "poster" for the tags in the spec that
+   * allow it, so that they show uploaded files.
+   * @private
+   */
+  updateFileHints_() {
+    const {files} = this.state_;
+    const {htmlSchema} = codemirror;
+
+    // CodeMirror HTML spec allows null for attributes without known values.
+    const readableUrlsValueSet =
+      files.length > 0 ? files.map(({name}) => `/${name}`) : null;
+
+    for (const tagName of attrFileHintTagNames) {
+      if (!(tagName in htmlSchema)) {
+        // spec not populated yet, will exec again when fetched.
+        return;
+      }
+      for (const attr of attrFileHintTagAttrs[tagName]) {
+        htmlSchema[tagName].attrs[attr] = readableUrlsValueSet;
+      }
+    }
   }
 }
 

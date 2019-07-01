@@ -1,27 +1,22 @@
-.CodeMirror {
-  height: 100% !important;
-}
-
-$ampBlue: #005af0;
-$blueishgray: rgb(238, 240, 245);
+@import './colors.css';
+@import './editor-codemirror.css';
 
 @component;
 
 .wrap {
   display: flex;
   height: 100%;
+  --content-bg: #29323c;
 }
 
 .content {
   flex: 1;
   overflow: hidden;
   z-index: 0;
-  border-right: 1px solid #ccc;
 }
 
 .preview-wrap {
   flex-direction: column;
-  background: #ddd;
 }
 
 .toolbar {
@@ -29,9 +24,63 @@ $blueishgray: rgb(238, 240, 245);
   flex-direction: row;
   justify-self: start;
   justify-content: start;
-  flex: 0 0 45px;
+  flex: 0 0 48px;
+  padding: 4px; /* buttons are 40px, so 48px - 40px = 4px on each axis */
   width: 100%;
-  border-bottom: 1px solid #ccc;
+}
+
+.toolbar select {
+  padding: 16px 36px 16px 16px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'%3E%3Cpath d='M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z'/%3E%3Cpath fill='none' d='M0 0h24v24H0V0z'/%3E%3C/svg%3E");
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  display: inline-block;
+  font: inherit;
+  line-height: 1em;
+  margin: 0;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-repeat: no-repeat;
+  background-position-y: 50%;
+  background-position-x: 100%;
+  font-weight: bold;
+  outline: none;
+}
+
+.toolbar select:focus,
+.toolbar select:active {
+  background-color: var(--blueishgray-semiopaque);
+}
+
+.content-toolbar {
+  background: var(--content-bg);
+  color: white;
+}
+
+.content-toolbar .upload-button,
+.content-toolbar .content-toolbar-toggle {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.content-toolbar .upload-button {
+  background: none;
+  border: 1px solid var(--blueishgray-transparent);
+  margin: 0 8px;
+}
+
+.content-toolbar {
+  /* 😍 css prop override hacks 😍 */
+  /* TODO(alanorozco): Safety with semantic "active-bg" "active-color" */
+
+  /* used for active background */
+  --blueishgray-semiopaque: var(--blueishgray-transparent);
+
+  /* used for active color */
+  --amp-blue: white;
 }
 
 .preview {
@@ -40,28 +89,26 @@ $blueishgray: rgb(238, 240, 245);
   contain: strict;
 }
 
-.upload-button-container {
-  margin: 5px;
-}
-
 .upload-button {
   text-align: center;
   cursor: pointer;
-  padding: 8px 10px;
-  background: $blueishgray;
-  border-radius: 2px;
+  padding: 0 12px;
+  line-height: 36px;
+  background: var(--blueishgray-semiopaque);
+  border-radius: 4px;
   font-weight: bold;
-  font-size: 12px;
+  font-size: 13px;
   text-transform: uppercase;
 }
 
 .upload-button:hover {
-  color: $ampBlue;
+  color: var(--amp-blue);
 }
 
 .files-panel {
-  flex: 0 0 200px;
-  border-right: 1px solid #ccc;
+  --file-item-width: 220px;
+  --file-item-x-padding: 14px;
+  flex: 0 0 var(--file-item-width);
   overflow: visible;
   flex-direction: column;
 }
@@ -75,23 +122,21 @@ $blueishgray: rgb(238, 240, 245);
   cursor: pointer;
 }
 
-$fileListItemHorizontalPadding: 14px;
-
 .files-panel-header {
-  padding: 0 $fileListItemHorizontalPadding;
+  padding: 0 var(--file-item-x-padding);
   font-weight: bold;
 }
 
 .file-list-item > div {
-  padding: 8px $fileListItemHorizontalPadding;
+  padding: 8px var(--file-item-x-padding);
   white-space: nowrap;
 }
 
 .file-list-item .file-list-item-clipped {
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 199px; /* .files-panel width - 1px for border */
   padding-left: 30px;
+  width: var(--file-item-width);
 }
 
 .file-list-item .file-list-item-unclipped {
@@ -100,8 +145,8 @@ $fileListItemHorizontalPadding: 14px;
   position: absolute;
   left: 0;
   top: 0;
-  background: $blueishgray;
-  color: $ampBlue;
+  background: var(--blueishgray-semiopaque);
+  color: var(--amp-blue);
   min-width: 100%;
   padding-left: 30px;
 }
