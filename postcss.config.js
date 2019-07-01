@@ -17,11 +17,9 @@ import {whenMinified} from './lib/cli';
 import atImport from 'postcss-import';
 import cssnano from 'cssnano';
 import internalNamespace from './lib/postcss/internal-namespace';
-import vars from 'postcss-simple-vars';
 
 export const postcssPlugins = () => [
   atImport({from: 'src'}),
   internalNamespace(),
-  vars(),
   ...whenMinified(cssnano),
 ];

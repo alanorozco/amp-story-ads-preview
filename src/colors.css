@@ -1,0 +1,59 @@
+:root {
+  --amp-blue: #005af0;
+  --blueishgray-raw: 238, 240, 245;
+  --blueishgray-semiopaque: rgba(var(--blueishgray-raw), 0.75);
+  --blueishgray-transparent: rgba(var(--blueishgray-raw), 0.18);
+
+  /* From amp.dev's */
+  /* A lot of these may be redundant. */
+  --black: #000000;
+  --mirage: #1a2129;
+  --charade: #20202a;
+  --ebony-clay: #29323c;
+  --bright-gray: #3d444d;
+  --mine-shaft: #3e3e3e;
+  --river-bed: #48525c;
+  --limed-spruce: #333d47;
+  --oslo-gray: #91979d;
+  --gray-chateau: #a3a8ad;
+  --silver: #cccccc;
+  --alto: #dfdfdf;
+  --gallery: #eaeaea;
+  --athens-gray: #ebebf0;
+  --wild-sand: #f4f4f4;
+  --whisper: #fafafc;
+  --white: #ffffff;
+  --blue-ribbon: #005af0;
+  --doger-blue: #21c1fa;
+  --mariner: #2980b9;
+  --robins-egg: #00dcc0;
+  --reef: #b6ff92;
+  --emerald: #38ca71;
+  --malachite: #00cd3c;
+  --forest-green: #2db932;
+  --shamrock: #2ecc71;
+  --mountain-meadow: #1db395;
+  --hawkes-blue: #cee8fc;
+  --confetti: #e1eb64;
+  --apple: #64bf46;
+  --yellow: #fff300;
+  --turbo: #ffe100;
+  --school-bus: #ffdc00;
+  --manz: #f1f068;
+  --pizazz: #ff8f00;
+  --zest: #e67e22;
+  --buttercup: #f39c12;
+  --carnation: #f56c64;
+  --persimmon: #ff5757;
+  --cinnabar: #e74c3c;
+  --red: #ef0000;
+  --crimson: #c8114d;
+  --pink-flamingo: #ff52e1;
+  --lavender-magenta: #eb49e1;
+  --studio: #943fb5;
+  --lavender: #b75dde;
+  --pigment-indigo: #4c038c;
+  --electric-violet: #5500d7;
+  --ultramarine: #180ca4;
+  --pickled-bluewood: #2c3e50;
+}
