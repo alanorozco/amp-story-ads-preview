@@ -164,21 +164,20 @@ const dispatchDeleteFile = redispatchAs(g('delete-file'));
  * @return {lit-html/TemplateResult}
  */
 const FileListItem = ({name}, index) => html`
-  <div class="${n('file-list-item')}" data-name="${name}" data-index="${index}">
-    <div
-      class="${n('file-list-item-clipped')}"
-      @click="${dispatchInsertFileRef}"
-    >
-      ${name}
-    </div>
-    <div
-      class="${n('file-list-item-unclipped')}"
-      @click="${dispatchInsertFileRef}"
-    >
-      ${name}
-    </div>
-    <div class=${g('delete-file-button')} @click=${dispatchDeleteFile}>
+  <div
+    class="${n('file-list-item')}"
+    data-name="${name}"
+    data-index="${index}"
+    @click="${dispatchInsertFileRef}"
+  >
+    <div class=${n('delete-file-button')} @click=${dispatchDeleteFile}>
       <span>×</span>
+    </div>
+    <div class="${n('file-list-item-clipped')}">
+      ${name}
+    </div>
+    <div class="${n('file-list-item-unclipped')}">
+      ${name}
     </div>
   </div>
 `;

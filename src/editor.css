@@ -91,6 +91,7 @@ $fileListItemHorizontalPadding: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   width: 199px; /* .files-panel width - 1px for border */
+  padding-left: 30px;
 }
 
 .file-list-item .file-list-item-unclipped {
@@ -102,6 +103,7 @@ $fileListItemHorizontalPadding: 14px;
   background: $blueishgray;
   color: $ampBlue;
   min-width: 100%;
+  padding-left: 30px;
 }
 
 .file-list-item:hover .file-list-item-clipped {
@@ -130,5 +132,6 @@ $fileListItemHorizontalPadding: 14px;
 }
 
 .delete-file-button {
+  z-index:2;
   position: absolute;
 }
