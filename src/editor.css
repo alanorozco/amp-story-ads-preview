@@ -132,6 +132,10 @@
   white-space: nowrap;
 }
 
+.file-list-item > div:not(.delete-file-button){
+  padding-left: 30px;
+}
+
 .file-list-item .file-list-item-clipped {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -172,4 +176,10 @@
 
 .file-list-empty > div {
   margin: 10px 0;
+}
+
+.delete-file-button {
+  z-index:2;
+  position: absolute;
+  cursor: pointer;
 }

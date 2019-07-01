@@ -198,17 +198,24 @@ const FileList = ({files}) =>
       `;
 
 const dispatchInsertFileRef = redispatchAs(g('insert-file-ref'));
+const dispatchDeleteFile = redispatchAs(g('delete-file'));
 
 /**
  * @param {{name: string}} file
+ * @param {{name: string}} file
+ * @param {number} index
  * @return {lit-html/TemplateResult}
  */
-const FileListItem = ({name}) => html`
+const FileListItem = ({name}, index) => html`
   <div
     class="${n('file-list-item')}"
-    @click="${dispatchInsertFileRef}"
     data-name="${name}"
+    data-index="${index}"
+    @click="${dispatchInsertFileRef}"
   >
+    <div class=${n('delete-file-button')} @click=${dispatchDeleteFile}>
+      <span>×</span>
+    </div>
     <div class="${n('file-list-item-clipped')}">
       ${name}
     </div>
@@ -418,8 +425,9 @@ class Editor {
 
   attachEventHandlers_() {
     const topLevelHandlers = {
-      [g('upload-files')]: this.uploadFiles_,
+      [g('delete-file')]: this.deleteFile_,
       [g('insert-file-ref')]: this.insertFileRef_,
+      [g('upload-files')]: this.uploadFiles_,
       [g('select-viewport')]: this.selectViewport_,
       [g('toggle')]: this.toggle_,
     };
@@ -550,6 +558,21 @@ class Editor {
     return str;
   }
 
+  deleteFile_({target}) {
+    const {dataset} = assert(target.closest('[data-index]'));
+    const deletedIndex = parseInt(assert(dataset.index), 10);
+    const [deleted] = this.state_.files.splice(deletedIndex, 1);
+    const {url: deletedUrl} = deleted;
+
+    // not all urls are blob urls
+    if (/^blob:/.test(deletedUrl)) {
+      this.win.URL.revokeObjectURL(deletedUrl);
+    }
+
+    // Force re-render
+    this.state_.files = this.state_.files;
+    this.updateFileHints_();
+  }
   /**
    * Replaces CodeMirror hints with the AMP spec.
    *
