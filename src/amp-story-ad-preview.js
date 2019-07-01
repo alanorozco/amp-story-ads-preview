@@ -62,8 +62,14 @@ const httpsCircumventionPatch = minifyInlineJs(`
   })();
 `);
 
+const setBodyAmpStoryVisible = docStr =>
+  docStr.replace(/<(body[^>]*)>/, '<$1 amp-story-visible>');
+
 const insertHttpsCircumventionPatch = docStr =>
   docStr.replace('<head>', `<head><script>${httpsCircumventionPatch}</script>`);
+
+const insertPatches = docStr =>
+  setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
 
 export default class AmpStoryAdPreview {
   constructor(win, element) {
@@ -94,7 +100,8 @@ export default class AmpStoryAdPreview {
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
     const {Blob, URL} = this.win;
-    const adDocBlob = new Blob([insertHttpsCircumventionPatch(dirty)], {
+    const patched = insertPatches(dirty);
+    const adDocBlob = new Blob([patched], {
       type: 'text/html',
     });
     const adUrl = URL.createObjectURL(adDocBlob);
