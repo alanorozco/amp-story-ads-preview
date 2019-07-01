@@ -132,10 +132,13 @@
   white-space: nowrap;
 }
 
+.file-list-item > div:not(.delete-file-button){
+  padding-left: 30px;
+}
+
 .file-list-item .file-list-item-clipped {
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-left: 30px;
   width: var(--file-item-width);
 }
 
@@ -148,7 +151,6 @@
   background: var(--blueishgray-semiopaque);
   color: var(--amp-blue);
   min-width: 100%;
-  padding-left: 30px;
 }
 
 .file-list-item:hover .file-list-item-clipped {
@@ -179,4 +181,5 @@
 .delete-file-button {
   z-index:2;
   position: absolute;
+  cursor: pointer;
 }

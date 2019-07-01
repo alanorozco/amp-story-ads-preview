@@ -202,6 +202,8 @@ const dispatchDeleteFile = redispatchAs(g('delete-file'));
 
 /**
  * @param {{name: string}} file
+ * @param {{name: string}} file
+ * @param {number} index
  * @return {lit-html/TemplateResult}
  */
 const FileListItem = ({name}, index) => html`
