@@ -446,6 +446,12 @@ class Editor {
     this.hintTimeout_ = null;
     this.amphtmlHints_ = this.fetchHintsData_();
 
+    let anchor = this.win.document.createElement('a');
+    anchor.href = '/';
+    const {hostname, protocol, port} = anchor;
+    anchor = null;
+    this.baseUrlPrefix_ = `${protocol}//${hostname}:${port}`;
+
     const {
       promise: codeMirrorElement,
       resolve: codeMirrorElementResolve,
@@ -571,7 +577,7 @@ class Editor {
     this.state_.files = (await this.state_.templates)[name].assets.map(
       filename => ({
         name: filename,
-        url: `/static/templates/${name}/${filename}`,
+        url: `${this.baseUrlPrefix_}/static/templates/${name}/${filename}`,
       })
     );
     this.state_.isFilesPanelDisplayed = true;
