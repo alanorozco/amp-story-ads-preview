@@ -16,5 +16,6 @@
 
 export const redispatchAs = eventType => e => {
   e.preventDefault();
+  e.stopPropagation();
   e.currentTarget.dispatchEvent(new CustomEvent(eventType, {bubbles: true}));
 };

@@ -50,20 +50,26 @@ const WrappedIframe = () => html`
 `;
 
 const httpsCircumventionPatch = minifyInlineJs(`
-  (() => {
-    const createElement = document.createElement.bind(document);
-    document.createElement = function(tagName) {
-      const el = createElement(...arguments);
-      if (tagName.toLowerCase() == 'a') {
+  (doc => {
+    const createElement = doc.createElement;
+    doc.createElement = function(tagName) {
+      const el = createElement.apply(doc, arguments);
+      if (/^a$/i.test(tagName)) {
         Object.defineProperty(el, 'protocol', {value: 'https:'});
       }
       return el;
     };
-  })();
+  })(document);
 `);
+
+const setBodyAmpStoryVisible = docStr =>
+  docStr.replace(/<(body[^>]*)>/, '<$1 amp-story-visible>');
 
 const insertHttpsCircumventionPatch = docStr =>
   docStr.replace('<head>', `<head><script>${httpsCircumventionPatch}</script>`);
+
+const insertPatches = docStr =>
+  setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
 
 export default class AmpStoryAdPreview {
   constructor(win, element) {
@@ -94,9 +100,8 @@ export default class AmpStoryAdPreview {
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
     const {Blob, URL} = this.win;
-    const adDocBlob = new Blob([insertHttpsCircumventionPatch(dirty)], {
-      type: 'text/html',
-    });
+    const patched = insertPatches(dirty);
+    const adDocBlob = new Blob([patched], {type: 'text/html'});
     const adUrl = URL.createObjectURL(adDocBlob);
     const storyDoc = this.storyTemplate_.replace('{{ adUrl }}', adUrl);
     return restartIframeWithDocument(await this.iframePromise_, storyDoc);
