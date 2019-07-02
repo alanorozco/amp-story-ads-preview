@@ -262,6 +262,7 @@ const FileUploadButton = () => html`
  * @param {Promise<Element>=} data.codeMirrorElement
  * @param {string=} data.content
  * @param {boolean} data.isDisplayed
+ * @param {boolean} data.isFilesDragHintDisplayed
  * @param {boolean} data.isFilesPanelDisplayed
  * @return {lit-html/TemplateResult}
  */
@@ -269,18 +270,18 @@ const ContentPanel = ({
   codeMirrorElement,
   content,
   isDisplayed,
-  isFilesPanelDisplayed,
   isFilesDragHintDisplayed,
+  isFilesPanelDisplayed,
 }) => html`
   <div class=${n('content')} ?hidden=${!isDisplayed}>
     ${FilesDragHint({isDisplayed: isFilesDragHintDisplayed})}
     ${ContentToolbar({isFilesPanelDisplayed})}
     <!--
-        Default Content to load on the server and then populate codemirror on
-        the client.
-        codeMirrorElement is a promise resolved by codemirror(), hence the
-        until directive. Once resolved, content can be empty.
-      -->
+      Default Content to load on the server and then populate codemirror on
+      the client.
+      codeMirrorElement is a promise resolved by codemirror(), hence the
+      until directive. Once resolved, content can be empty.
+    -->
     ${until(codeMirrorElement || Textarea({content}))}
   </div>
 `;
