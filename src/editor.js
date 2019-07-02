@@ -16,7 +16,12 @@
 import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
-import {attachBlobUrl, FilesDragHint, fileSortCompare} from './file-upload';
+import {
+  attachBlobUrl,
+  FilesDragHint,
+  filesFromDataTransfer,
+  fileSortCompare,
+} from './file-upload';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
@@ -699,20 +704,9 @@ class Editor {
       return;
     }
 
-    const {items, files} = e.dataTransfer;
-
-    if (files && files.length > 0) {
-      return this.addFiles_(files);
-    }
-
-    if (items && items.length > 0) {
-      const files = [];
-      for (const item of items) {
-        if (item.kind == 'file') {
-          files.push(item.getAsFile());
-        }
-      }
-      return this.addFiles_(files);
+    const files = filesFromDataTransfer(e.dataTransfer);
+    if (files.length) {
+      this.addFiles_(files);
     }
   }
 }
