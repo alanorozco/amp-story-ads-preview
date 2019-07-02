@@ -109,6 +109,7 @@ const staticServerData = async () => ({
  *    Omitting this before populating will simply result in codemirror not
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
+ * @param {boolean=} data.isFilesDragHintDisplayed = false
  * @param {boolean=} data.isFilesPanelDisplayed = false
  * @param {boolean=} data.isFullPreview = false
  * @param {Element=} data.previewElement
@@ -130,8 +131,8 @@ const renderEditor = ({
   content = '',
   files = [],
   isFullPreview = false,
-  isFilesPanelDisplayed = false,
   isFilesDragHintDisplayed = false,
+  isFilesPanelDisplayed = false,
   previewElement,
   storyDocTemplate = '',
   viewportId = viewportIdDefault,
