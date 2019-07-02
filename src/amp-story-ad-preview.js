@@ -101,9 +101,7 @@ export default class AmpStoryAdPreview {
     // b) reject when invalid
     const {Blob, URL} = this.win;
     const patched = insertPatches(dirty);
-    const adDocBlob = new Blob([patched], {
-      type: 'text/html',
-    });
+    const adDocBlob = new Blob([patched], {type: 'text/html'});
     const adUrl = URL.createObjectURL(adDocBlob);
     const storyDoc = this.storyTemplate_.replace('{{ adUrl }}', adUrl);
     return restartIframeWithDocument(await this.iframePromise_, storyDoc);
