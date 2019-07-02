@@ -25,8 +25,9 @@
   font-size: 1.25em;
   font-family: monospace;
   white-space: nowrap;
-  padding: 2px 11px;
-  border-color: var(--content-bg);
+  padding: 4px 4px 4px 12px;
+  border: none;
+  overflow: auto;
 }
 
 .preview-wrap {
