@@ -51,10 +51,10 @@ const WrappedIframe = () => html`
 
 const httpsCircumventionPatch = minifyInlineJs(`
   (doc => {
-    const createElement = doc.createElement.bind(doc);
+    const createElement = doc.createElement;
     doc.createElement = function(tagName) {
-      const el = createElement(...arguments);
-      if (tagName.toLowerCase() == 'a') {
+      const el = createElement.apply(doc, arguments);
+      if (/^a$/i.test(tagName)) {
         Object.defineProperty(el, 'protocol', {value: 'https:'});
       }
       return el;
