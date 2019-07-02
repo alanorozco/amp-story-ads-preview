@@ -502,7 +502,7 @@ class Editor {
 
   /**
    * Uploads files from an `<input>` target.
-   * @param {!Event} e
+   * @param {Event} e
    */
   uploadFiles_({target: {files}}) {
     this.addFiles_(files);
@@ -688,7 +688,7 @@ class Editor {
 
   /**
    * Triggers when a file is dropped.
-   * @param {!Event} e
+   * @param {Event} e
    */
   drop_(e) {
     e.preventDefault();
@@ -699,7 +699,7 @@ class Editor {
       return;
     }
 
-    const {items, files} = assert(e.dataTransfer);
+    const {items, files} = e.dataTransfer;
 
     if (files && files.length > 0) {
       return this.addFiles_(files);
