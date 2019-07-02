@@ -706,14 +706,13 @@ class Editor {
     }
 
     if (items && items.length > 0) {
-      return this.addFiles_(
-        Array.from(items).reduce((acc, item) => {
-          if (item.kind == 'file') {
-            acc.push(item.getAsFile());
-          }
-          return acc;
-        }, [])
-      );
+      const files = [];
+      for (const item of items) {
+        if (item.kind == 'file') {
+          files.push(item.getAsFile());
+        }
+      }
+      return this.addFiles_(files);
     }
   }
 }
