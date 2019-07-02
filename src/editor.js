@@ -399,6 +399,8 @@ class Editor {
 
     this.preview_ = new AmpStoryAdPreview(win, previewElement);
 
+    this.viewportIdBeforeFullPreview_ = null;
+
     const batchedRender = batchedApplier(win, () => this.render_());
 
     this.state_ = appliedState(batchedRender, {
@@ -529,16 +531,15 @@ class Editor {
 
     // Set full viewport and keep previous for restoring later.
     if (this.state_.isFullPreview) {
-      this.state_.viewportIdBeforeFullPreview = this.state_.viewportId;
+      this.viewportIdBeforeFullPreview_ = this.state_.viewportId;
       this.state_.viewportId = viewportIdFull;
       return;
     }
 
     // Restore viewport as it was before toggling.
-    if (this.state_.viewportIdBeforeFullPreview) {
-      const {viewportIdBeforeFullPreview} = this.state_;
-      delete this.state_.viewportIdBeforeFullPreview;
-      this.state_.viewportId = viewportIdBeforeFullPreview;
+    if (this.viewportIdBeforeFullPreview_) {
+      this.state_.viewportId = this.viewportIdBeforeFullPreview_;
+      this.viewportIdBeforeFullPreview_ = null;
     }
   }
 

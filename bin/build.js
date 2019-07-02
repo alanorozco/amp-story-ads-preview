@@ -230,7 +230,7 @@ function routeToStaticPath(route) {
 
 const minifyHtml = async () =>
   Promise.all(
-    (await glob('dist/**/*.html')).map(async filename => {
+    (await glob(['dist/**/*.html', '!**/templates/**'])).map(async filename => {
       const unminified = (await fs.readFile(filename)).toString('utf-8');
       const minified = htmlMinify(unminified, htmlMinifyConfig);
       return fs.outputFile(filename, minified);
