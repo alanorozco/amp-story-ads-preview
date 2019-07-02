@@ -52,7 +52,7 @@ export const FilesDragHint = ({isDisplayed}) => html`
 /**
  * Gets files from an Event.dataTransfer object (typically from a drop.)
  * @param {DataTransfer} dataTransfer
- * @return {Array<File>}
+ * @return {IArrayLike<File>}
  */
 export function filesFromDataTransfer({files, items}) {
   if (files && files.length) {
