@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import './file-upload.css';
+import {classMap} from 'lit-html/directives/class-map';
+import {getNamespace} from '../lib/namespace';
+import {html} from 'lit-html';
+
+const {g, n} = getNamespace('file-upload');
 
 /**
  * @param {{name: string}} a
@@ -30,3 +36,15 @@ export const attachBlobUrl = (win, file) => ({
   name: file.name,
   url: win.URL.createObjectURL(file),
 });
+
+export const FilesDragHint = ({isDisplayed}) => html`
+  <div
+    class=${classMap({
+      [g('flex-center')]: true,
+      [n('drag-hint')]: true,
+      [n('displayed')]: isDisplayed,
+    })}
+  >
+    <span class=${n('drag-hint-arrow')}>⇐</span> Drop to add files
+  </div>
+`;
