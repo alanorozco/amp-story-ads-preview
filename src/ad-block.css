@@ -1,0 +1,8 @@
+@component;
+
+.warning {
+  background: #ffffa9;
+  width: 100%;
+  text-align: center;
+  padding: 12px 0;
+}

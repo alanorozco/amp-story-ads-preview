@@ -5,6 +5,9 @@
 .wrap {
   width: 100%;
   padding: 20px;
+
+  /* TODO(alanorozco): transform: scale() ? */
+  overflow: auto;
 }
 
 .wrap-full {

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import './editor.css';
+import {AdBlockWarning} from './ad-block';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {attachBlobUrl, fileSortCompare} from './file-upload';
@@ -134,6 +135,7 @@ const renderEditor = ({
   previewElement,
   storyDocTemplate = '',
   viewportId = viewportIdDefault,
+  win,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
@@ -151,6 +153,7 @@ const renderEditor = ({
       previewElement,
       storyDocTemplate,
       viewportId,
+      win,
     })}
   </div>
 `;
@@ -309,6 +312,7 @@ const Textarea = ({content}) => html`
  * @param {string} data.viewportId
  * @param {Element=} data.previewElement
  * @param {string=} data.storyDocTemplate
+ * @param {Window=} data.win
  * @return {lit-html/TemplateResult}
  */
 const PreviewPanel = ({
@@ -316,6 +320,7 @@ const PreviewPanel = ({
   viewportId,
   previewElement,
   storyDocTemplate,
+  win,
 }) => html`
   <div class="${g('flex-center')} ${n('preview-wrap')}">
     <!-- Toolbar for full preview toggle and viewport selector. -->
@@ -323,6 +328,7 @@ const PreviewPanel = ({
       isFullPreview,
       viewportId,
     })}
+    ${until(AdBlockWarning(win))}
     ${Viewport({
       viewportId,
       // Empty preview for SSR and inserted as data on the client.
@@ -408,6 +414,7 @@ class Editor {
       isFullPreview: false,
       previewElement,
       viewportId: viewportIdDefault,
+      win,
     });
 
     batchedRender();
