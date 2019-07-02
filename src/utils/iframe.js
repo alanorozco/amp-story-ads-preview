@@ -41,8 +41,6 @@ export function writeToIframe(iframe, content) {
   const childDoc = iframe.contentWindow.document;
   childDoc.open();
   childDoc.write(content);
-  // With document.write, `iframe.onload` arrives almost immediately, thus
-  // we need to wait for child's `window.onload`.
   childDoc.close();
   return whenIframeLoaded(iframe);
 }
