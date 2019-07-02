@@ -515,14 +515,14 @@ class Editor {
   }
 
   /**
-   * @param {Array<File>} files
+   * @param {IArrayLike<File>} files
    * @private
    */
   addFiles_(files) {
     this.state_.isFilesPanelDisplayed = true;
 
     this.state_.files = this.state_.files.concat(
-      Array.from(files)
+      (Array.isArray(files) ? files : Array.from(files))
         .map(f => attachBlobUrl(this.win, f))
         .sort(fileSortCompare)
     );
