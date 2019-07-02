@@ -17,6 +17,7 @@ import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {attachBlobUrl, fileSortCompare} from './file-upload';
+import {classMap} from 'lit-html/directives/class-map';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
@@ -256,8 +257,15 @@ const FileUploadButton = () => html`
   </div>
 `;
 
-const ChooseTemplatesButton = () => html`
-  <div class="${n('text-button')}" @click=${dispatchToggleTemplates}>
+const ChooseTemplatesButton = isTemplatePanelDisplayed => html`
+  <div
+    class="${classMap({
+      [n('text-button')]: true,
+      [n('choose-templates')]: true,
+      [n('selected')]: isTemplatePanelDisplayed,
+    })}"
+    @click=${dispatchToggleTemplates}
+  >
     Templates
   </div>
 `;
@@ -279,7 +287,7 @@ const ContentPanel = ({
   templates,
 }) => html`
   <div class=${n('content')} ?hidden=${!isDisplayed}>
-    ${ContentToolbar({isFilesPanelDisplayed})}
+    ${ContentToolbar({isFilesPanelDisplayed, isTemplatePanelDisplayed})}
     <!--
         Default Content to load on the server and then populate codemirror on
         the client.
@@ -325,7 +333,8 @@ const TemplateSelector = ({name, preview}) => html`
   </div>
 `;
 
-const TemplatePreview = ({type, url}) => TemplatePreviewGraphic[type](url);
+const TemplatePreview = ({type, url}) =>
+  assert(TemplatePreviewGraphic[type], `Unknown preview type "${type}"`)(url);
 
 const TemplatePreviewGraphic = {
   video: url => html`
@@ -342,7 +351,10 @@ const TemplatePreviewGraphic = {
  * @param {boolean=} data.isFilesPanelDisplayed
  * @return {lit-html/TemplateResult}
  */
-const ContentToolbar = ({isFilesPanelDisplayed}) => html`
+const ContentToolbar = ({
+  isFilesPanelDisplayed,
+  isTemplatePanelDisplayed,
+}) => html`
   <div
     class="${[g('flex-center'), n('content-toolbar'), n('toolbar')].join(' ')}"
   >
@@ -350,7 +362,7 @@ const ContentToolbar = ({isFilesPanelDisplayed}) => html`
       isOpen: isFilesPanelDisplayed,
       name: 'files-panel',
     })}
-    ${FileUploadButton()} ${ChooseTemplatesButton()}
+    ${FileUploadButton()} ${ChooseTemplatesButton(isTemplatePanelDisplayed)}
   </div>
 `;
 

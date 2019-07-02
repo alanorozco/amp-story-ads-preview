@@ -204,3 +204,11 @@
   display: block;
   z-index: 10;
 }
+
+.content-toolbar .choose-templates {
+  margin-left: auto;
+}
+
+.content-toolbar .selected {
+  opacity: 0.5;
+}
