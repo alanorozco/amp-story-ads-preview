@@ -50,16 +50,16 @@ const WrappedIframe = () => html`
 `;
 
 const httpsCircumventionPatch = minifyInlineJs(`
-  (() => {
-    const createElement = document.createElement.bind(document);
-    document.createElement = function(tagName) {
+  (doc => {
+    const createElement = doc.createElement.bind(doc);
+    doc.createElement = function(tagName) {
       const el = createElement(...arguments);
       if (tagName.toLowerCase() == 'a') {
         Object.defineProperty(el, 'protocol', {value: 'https:'});
       }
       return el;
     };
-  })();
+  })(document);
 `);
 
 const setBodyAmpStoryVisible = docStr =>
