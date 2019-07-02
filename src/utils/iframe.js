@@ -34,6 +34,7 @@ export function isSrcdocSupported() {
  * Writes content to given iframe using document.{open, write, close}
  * @param {!HTMLIFrameElement} iframe
  * @param {string} content
+ * @return {!Promise}
  */
 export function writeToIframe(iframe, content) {
   iframe.src = 'about:blank';
@@ -50,13 +51,20 @@ export function writeToIframe(iframe, content) {
  * Writes content to given iframe using srcdoc attribute.
  * @param {!HTMLIFrameElement} iframe
  * @param {string} content
+ * @return {!Promise}
  */
 export function writeToSrcdoc(iframe, content) {
   iframe.srcdoc = content;
   return whenIframeLoaded(iframe);
 }
 
-export async function whenIframeLoaded(iframe) {
+/**
+ * Returns a promise that resolves on the next `load`
+ * event from the given iframe.
+ * @param {!HTMLIFrameElement} iframe
+ * @return {!Promise}
+ */
+export function whenIframeLoaded(iframe) {
   const {promise, resolve} = new Deferred();
   iframe.addEventListener(
     'load',
