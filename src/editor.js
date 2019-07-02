@@ -21,8 +21,10 @@ import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
+import {identity} from './utils/function';
 import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
+import {successfulFetch} from './utils/xhr';
 import {ToggleButton} from './toggle-button';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
@@ -131,10 +133,11 @@ const renderEditor = ({
   files = [],
   isFullPreview = false,
   isFilesPanelDisplayed = false,
-  isTemplateLightboxDisplayed = false,
+  isTemplatePanelDisplayed = false,
   previewElement,
   storyDocTemplate = '',
   viewportId = viewportIdDefault,
+  templates,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
@@ -144,9 +147,10 @@ const renderEditor = ({
     ${ContentPanel({
       isDisplayed: !isFullPreview,
       isFilesPanelDisplayed,
-      isTemplateLightboxDisplayed,
+      isTemplatePanelDisplayed,
       codeMirrorElement,
       content,
+      templates,
     })}
     ${PreviewPanel({
       isFullPreview,
@@ -237,7 +241,7 @@ function cascadeInputClick({currentTarget}) {
 
 const dispatchUploadFiles = redispatchAs(g('upload-files'));
 
-const dispatchShowTemplates = redispatchAs(g('show-templates'));
+const dispatchToggleTemplates = redispatchAs(g('toggle-templates'));
 
 /**
  * Renders a button to "upload" files--that is, set Blob URLs so they're
@@ -245,7 +249,7 @@ const dispatchShowTemplates = redispatchAs(g('show-templates'));
  */
 const FileUploadButton = () => html`
   <div class="${n('upload-button-container')}" @click="${cascadeInputClick}">
-    <div class="${n('upload-button')}">
+    <div class="${n('text-button')}">
       Add files
     </div>
     <input type="file" hidden multiple @change="${dispatchUploadFiles}" />
@@ -253,8 +257,8 @@ const FileUploadButton = () => html`
 `;
 
 const ChooseTemplatesButton = () => html`
-  <div class="${n('upload-button')}" @click=${dispatchShowTemplates}>
-    Choose Template
+  <div class="${n('text-button')}" @click=${dispatchToggleTemplates}>
+    Templates
   </div>
 `;
 
@@ -271,7 +275,8 @@ const ContentPanel = ({
   content,
   isDisplayed,
   isFilesPanelDisplayed,
-  isTemplateLightboxDisplayed,
+  isTemplatePanelDisplayed,
+  templates,
 }) => html`
   <div class=${n('content')} ?hidden=${!isDisplayed}>
     ${ContentToolbar({isFilesPanelDisplayed})}
@@ -281,77 +286,55 @@ const ContentPanel = ({
         codeMirrorElement is a promise resolved by codemirror(), hence the
         until directive. Once resolved, content can be empty.
       -->
-    ${TemplateLightbox({isTemplateLightboxDisplayed})}
+    ${TemplatesPanel({isTemplatePanelDisplayed, templates})}
     ${until(codeMirrorElement || Textarea({content}))}
   </div>
 `;
-const dispatchLoadHtmlFile = redispatchAs(g('load-html'));
+const dispatchSelectTemplate = redispatchAs(g('select-template'));
 
-const TemplateLightbox = ({isTemplateLightboxDisplayed}) => html`
+const TemplatesPanel = ({isTemplatePanelDisplayed, templates}) =>
+  isTemplatePanelDisplayed
+    ? html`
+        <div
+          class="${n('templates-panel')}"
+          ?hidden=${!isTemplatePanelDisplayed}
+        >
+          <div class="${g('flex-center')}">
+            ${until(TemplateSelectors(templates), 'Loading...')}
+          </div>
+        </div>
+      `
+    : '';
+
+async function TemplateSelectors(templatesPromise) {
+  const templates = await templatesPromise;
+  return html`
+    ${repeat(Object.keys(templates), identity, name =>
+      TemplateSelector({name, ...templates[name]})
+    )}
+  `;
+}
+
+const TemplateSelector = ({name, preview}) => html`
   <div
-    class="${n('template-lightbox')}"
-    ?hidden=${!isTemplateLightboxDisplayed}
+    class="${n('template')}"
+    @click=${dispatchSelectTemplate}
+    data-name=${name}
   >
-    ${getNamesOfTemplates()}
+    ${TemplatePreview(preview)}
   </div>
 `;
 
-function getNamesOfTemplates() {
-  return html`
-    <div class="${g('flex-center')}">
-      <div
-        class="${n('template')}"
-        @click=${dispatchLoadHtmlFile}
-        data-name="app-install-ads"
-      >
-        <img width="100%" src="/static/app_install.jpg" />
-      </div>
-      <div
-        class="${n('template')}"
-        @click=${dispatchLoadHtmlFile}
-        data-name="multi-image-ads"
-      >
-        <video
-          width="100%"
-          autoplay
-          loop
-          src="/static/multiple-image-template.mp4"
-        ></video>
-      </div>
-      <div
-        class="${n('template')}"
-        @click=${dispatchLoadHtmlFile}
-        data-name="single-video"
-      >
-        <video
-          width="100%"
-          autoplay
-          loop
-          src="/static/single_video.mp4"
-        ></video>
-      </div>
-      <div
-        class="${n('template')}"
-        @click=${dispatchLoadHtmlFile}
-        data-name="single-image-ads"
-      >
-        <video
-          width="100%"
-          autoplay
-          loop
-          src="/static/single-image-template.mp4"
-        ></video>
-      </div>
-      <div
-        class="${n('template')}"
-        @click=${dispatchLoadHtmlFile}
-        data-name="text"
-      >
-        <img width="100%" src="/static/text.png" />
-      </div>
-    </div>
-  `;
-}
+const TemplatePreview = ({type, url}) => TemplatePreviewGraphic[type](url);
+
+const TemplatePreviewGraphic = {
+  video: url => html`
+    <video autoplay loop muted src=${url}></video>
+  `,
+  image: url => html`
+    <img src=${url} />
+  `,
+};
 
 /**
  * Renders content panel toolbar.
@@ -440,6 +423,14 @@ const EmptyPreview = ({storyDocTemplate}) => html`
   <div class=${n('preview')} data-template=${storyDocTemplate}></div>
 `;
 
+function getBaseUrlPrefix(win) {
+  let anchor = win.document.createElement('a');
+  anchor.href = '/';
+  const {hostname, protocol, port} = anchor;
+  anchor = null;
+  return `${protocol}//${hostname}:${port}`;
+}
+
 class Editor {
   constructor(win, element) {
     const {value} = element.querySelector('textarea');
@@ -451,12 +442,6 @@ class Editor {
 
     this.hintTimeout_ = null;
     this.amphtmlHints_ = this.fetchHintsData_();
-
-    let anchor = this.win.document.createElement('a');
-    anchor.href = '/';
-    const {hostname, protocol, port} = anchor;
-    anchor = null;
-    this.baseUrlPrefix_ = `${protocol}//${hostname}:${port}`;
 
     const {
       promise: codeMirrorElement,
@@ -494,8 +479,10 @@ class Editor {
       isFullPreview: false,
       previewElement,
       viewportId: viewportIdDefault,
-      isTemplateLightboxDisplayed: false,
-      templates: fetch('/templates.json').then(r => r.json()),
+      isTemplatePanelDisplayed: false,
+      templates: successfulFetch(this.win, '/templates.json').then(r =>
+        r.json()
+      ),
     });
 
     batchedRender();
@@ -517,8 +504,8 @@ class Editor {
       [g('insert-file-ref')]: this.insertFileRef_,
       [g('upload-files')]: this.uploadFiles_,
       [g('select-viewport')]: this.selectViewport_,
-      [g('show-templates')]: this.showTemplates_,
-      [g('load-html')]: this.loadHtml_,
+      [g('toggle-templates')]: this.toggleTemplates_,
+      [g('select-template')]: this.selectTemplates_,
       [g('toggle')]: this.toggle_,
     };
 
@@ -576,22 +563,27 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
-  async loadHtml_({target: {dataset}}) {
-    const name = assert(dataset.name);
-    const contentResponse = await fetch(
-      (await this.state_.templates)[name].contentUrl
-    );
-    assert(contentResponse.status == 200);
+  async selectTemplates_({target: {dataset}}) {
+    const templateName = assert(dataset.name);
+    const {contentUrl, files} = (await this.state_.templates)[templateName];
+    const contentResponse = await successfulFetch(this.win, contentUrl);
     this.codeMirror_.setValue(await contentResponse.text());
-    this.state_.files = (await this.state_.templates)[name].assets.map(
-      filename => ({
-        name: filename,
-        url: `${this.baseUrlPrefix_}/static/templates/${name}/${filename}`,
-      })
-    );
+    this.state_.files = files.map(name => ({
+      name,
+      url: this.getTemplateFileUrl_(templateName, name),
+    }));
     this.state_.isFilesPanelDisplayed = true;
-    this.state_.isTemplateLightboxDisplayed = false;
+    this.state_.isTemplatePanelDisplayed = false;
     this.updatePreview_();
+  }
+
+  getTemplateFileUrl_(templateName, filename, fullyQualified = true) {
+    return [
+      fullyQualified ? getBaseUrlPrefix(this.win) : '',
+      'static/templates',
+      templateName,
+      filename,
+    ].join('/');
   }
 
   uploadFiles_({target: {files}}) {
@@ -606,9 +598,9 @@ class Editor {
     this.updateFileHints_();
   }
 
-  showTemplates_() {
-    this.state_.isTemplateLightboxDisplayed = !this.state_
-      .isTemplateLightboxDisplayed;
+  toggleTemplates_() {
+    this.state_.isTemplatePanelDisplayed = !this.state_
+      .isTemplatePanelDisplayed;
   }
 
   selectViewport_({target}) {
@@ -617,8 +609,10 @@ class Editor {
     // If viewport is changed to 'full', the view will display an error message
     // instead of the preview.
     // TODO: Make 'full' special and add custom sizing
+    // When changing viewport to a smaller viewport, elements may get
+    // cut off.
+    // TODO: fix this
     this.state_.viewportId = validViewportId(value);
-    this.updatePreview_();
   }
 
   render_() {
@@ -723,8 +717,7 @@ class Editor {
     const {promise, reject, resolve} = new Deferred();
     this.win.requestIdleCallback(async () => {
       try {
-        const response = await this.win.fetch(hintsUrl);
-        assert(response.status === 200, `fetch got ${response.status}`);
+        const response = await successfulFetch(this.win, hintsUrl);
         resolve(response.json());
       } catch (err) {
         reject(err);

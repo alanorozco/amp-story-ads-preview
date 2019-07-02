@@ -109,7 +109,7 @@ const inputConfig = async name => ({
   ],
 });
 
-const outputConfigs = [{format: 'iife', sourcemap: true}];
+const outputConfigs = [{format: 'iife', sourcemap: !argv.minify}];
 
 /**
  * Magic below.
@@ -186,7 +186,7 @@ async function minifyBundle(filename) {
 
 export async function build() {
   await copyStaticAssets();
-  await buildJsonFile();
+  await buildTemplatesJson();
   await step('🚧 Building js', () =>
     withAllBundles(async name => {
       const bundle = await rollup(await inputConfig(name));
@@ -197,54 +197,49 @@ export async function build() {
       );
     })
   );
-  await buildJsonFile();
   await freezeStaticHtml();
 }
 
 const copyStaticAssets = () =>
   step('📋 Copying static assets', () => fs.copy('static', 'dist/static'));
 
-const buildJsonFile = () => step('Building json file', () => buildJson());
+const buildTemplatesJson = () =>
+  step('Generating templates json', async () => {
+    const root = 'static/templates';
+    const result = {};
 
-async function buildJson() {
-  let templateFolders = await fs.readdir('static/templates');
-  let templateContents = new Array();
-  for (let templateFolder of templateFolders) {
-    templateContents.push(
-      await fs.readdir('static/templates/' + templateFolder)
-    );
-  }
-  let templateObjects = new Array();
-  for (let i = 0; i < templateContents.length; i++) {
-    let assets = new Array();
-    let contentUrl = '';
-    for (let file of templateContents[i]) {
-      if (file.includes('.html')) {
-        contentUrl = file;
-      } else if (!file.includes('.txt')) {
-        assets.push(file);
+    for (const name of await fs.readdir(root)) {
+      const fileUrl = file => `${root}/${name}/${file}`;
+      const preview = {type: 'image'};
+      let contentUrl;
+      let files;
+
+      const shouldIncludeFile = file => {
+        if (file.endsWith('.html')) {
+          contentUrl = fileUrl(file);
+          return false;
+        }
+        if (file.startsWith('_preview.')) {
+          preview.url = fileUrl(file);
+          if (file.endsWith('.mp4')) {
+            preview.type = 'video';
+          }
+          return false;
+        }
+        return !(file.startsWith('.') || file.endsWith('.txt'));
+      };
+
+      try {
+        files = (await fs.readdir(`${root}/${name}`)).filter(shouldIncludeFile);
+      } catch (_) {
+        continue;
       }
+
+      result[name] = {contentUrl, files, preview};
     }
-    templateObjects.push({
-      'contentUrl': 'static/templates/' + templateFolders[i] + '/' + contentUrl,
-      'assets': assets,
-    });
-  }
-  let jsonObject = {
-    'app-install-ads': templateObjects[0],
-    'multi-image-ads': templateObjects[1],
-    'single-image-ads': templateObjects[2],
-    'single-video': templateObjects[3],
-    'text': templateObjects[4],
-  };
-  fs.writeFile('dist/templates.json', JSON.stringify(jsonObject), function(
-    err
-  ) {
-    if (err) {
-      console.log(err);
-    }
+
+    return fs.outputJson('dist/templates.json', result).catch(fatal);
   });
-}
 
 const freezeStaticHtml = (opts = {}) =>
   step('❄️ Freezing static html', () =>
@@ -312,7 +307,7 @@ async function incrementalBuild() {
     },
     START: async () => {
       await copyStaticAssets();
-      await buildJsonFile();
+      await buildTemplatesJson();
       log(yellow('🚧 Starting incremental build...'));
     },
     BUNDLE_START: ({output}) => {
