@@ -99,7 +99,7 @@ export default class AmpStoryAdPreview {
     this.adIframe_ = promise;
 
     /** @private {string} */
-    this.storyTemplate = element
+    this.storyTemplate_ = element
       .getAttribute('data-template')
       .replace('{{ adSandbox }}', defaultIframeSandbox);
 
@@ -114,7 +114,7 @@ export default class AmpStoryAdPreview {
 
     render(
       WrappedIframe({
-        storyTemplate: this.storyTemplate,
+        storyTemplate: this.storyTemplate_,
         useSourcedoc: this.useSourcedoc_,
       }),
       this.element
