@@ -41,7 +41,7 @@ const defaultIframeSandbox = [
  * Renders a wrapped iframe that loads an empty document.
  * @return {lit-html/TemplateResult}
  */
-const WrappedIframe = ({storyTemplate, useSourcedoc}) => html`
+const WrappedIframe = ({srcdoc}) => html`
   <div class="${n('wrap')}">
     <iframe
       allowpaymentrequest
@@ -49,8 +49,9 @@ const WrappedIframe = ({storyTemplate, useSourcedoc}) => html`
       class=${n('iframe')}
       sandbox=${defaultIframeSandbox}
       title="AMP Story Ad Preview"
-      srcdoc=${useSourcedoc ? storyTemplate : ''}
+      srcdoc=${srcdoc}
     >
+      <p>Loading...</p>
     </iframe>
   </div>
 `;
@@ -112,13 +113,8 @@ export default class AmpStoryAdPreview {
     // clear memory.
     element.removeAttribute('data-template');
 
-    render(
-      WrappedIframe({
-        storyTemplate: this.storyTemplate_,
-        useSourcedoc: this.useSourcedoc_,
-      }),
-      this.element
-    );
+    const srcdoc = this.useSourcedoc_ ? this.storyTemplate_ : '';
+    render(WrappedIframe({srcdoc}), this.element);
   }
 
   /**
