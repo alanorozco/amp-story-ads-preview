@@ -105,7 +105,7 @@ export default class AmpStoryAdPreview {
     this.writeToIframe_ = writer;
 
     /** @private {!Promise<HTMLIFrameElement>} */
-    this.adIframePromise_ = iframeReady.then(
+    this.adIframe_ = iframeReady.then(
       iframe => iframe.contentDocument.querySelector('iframe') // xzibit.png
     );
 
@@ -122,9 +122,6 @@ export default class AmpStoryAdPreview {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    return this.writeToIframe_(
-      await this.adIframePromise_,
-      insertPatches(dirty)
-    );
+    return this.writeToIframe_(await this.adIframe_, insertPatches(dirty));
   }
 }
