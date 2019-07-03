@@ -49,8 +49,11 @@ export function whenIframeLoaded(iframe) {
 }
 
 /**
- * Waits for and writes to an iframe when srcdoc is unsupported.
- * Otherwise, passes srcdoc through.
+ * Passes `srcdoc` through when supported, otherwise waits for and writes to the
+ * iframe.
+ *
+ * Result properties are for the callee to handle the iframe based on `srcdoc`
+ * support.
  *
  * @param {Window} win
  * @param {Promise<HTMLIframeElement>} iframeReady
