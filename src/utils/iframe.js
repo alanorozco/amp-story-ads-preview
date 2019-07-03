@@ -61,7 +61,7 @@ export function whenIframeLoaded(iframe) {
  *   Should resolve when the iframe is attached and loaded.
  *   When `document.write()`ing, the frame will load once more and this will
  *   be chain-resolved into the `iframeReady` result property.
- *   Otherwise said property simply passes through.
+ *   Otherwise this simply passes through as the `iframeReady` property.
  * @param {string} srcdoc Document string to set.
  * @return {{
  *   iframeReady: Promise<HTMLIframeElement>,
