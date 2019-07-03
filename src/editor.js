@@ -701,7 +701,7 @@ class Editor {
     }
 
     const {files} = e.dataTransfer;
-    if (files.length) {
+    if (files && files.length) {
       this.addFiles_(files);
     }
   }
