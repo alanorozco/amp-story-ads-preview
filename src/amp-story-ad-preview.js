@@ -94,12 +94,9 @@ function getDataTemplate(element) {
 }
 
 export default class AmpStoryAdPreview {
-  constructor(win, element) {
-    this.win = win;
-    this.element = element;
-
+  constructor(_, element) {
     const {iframeReady, writer, srcdoc} = writeIframeMultiStrategy(
-      untilAttached(this.element, s('.iframe')).then(whenIframeLoaded),
+      untilAttached(element, s('.iframe')).then(whenIframeLoaded),
       getDataTemplate(element).replace('{{ adSandbox }}', defaultIframeSandbox)
     );
 
