@@ -1,0 +1,36 @@
+@component;
+
+.drag-hint {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(30, 30, 30, 0.6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: bold;
+  font-size: 1.6em;
+}
+
+.drag-hint.displayed {
+  opacity: 1;
+}
+
+.drag-hint-arrow {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.drag-hint.displayed .drag-hint-arrow {
+  animation: -drag-hint-arrow-bounce 1s linear infinite;
+}
+
+@keyframes -drag-hint-arrow-bounce {
+  0% {transform: translate(0)}
+  50% {transform: translate(-8px)}
+  100% {transform: translate(0)}
+}
