@@ -309,12 +309,6 @@ const RefreshIcon = () => svg`
   </svg>
 `;
 
-// const htmlRefreshIcon = () => html`
-//   <div>
-//     ${RefreshIcon}
-//   </div>
-// `;
-
 /**
  * Renders preview panel toolbar.
  * @param {Object} data
