@@ -62,7 +62,8 @@ export function whenIframeLoaded(iframe) {
  *   into the homonymous property. Otherwise passed through as a result prop.
  * @param {string} srcdoc
  *   Set on <iframe> when resolved if the browser lacks `srcdoc` support.
- *   Otherwise passed through as a result prop to set on the rendered <iframe>.
+ *   Otherwise passed through as a result prop to set as attribute on the
+ *   rendered <iframe>.
  * @return {{
  *   iframeReady: Promise<HTMLIframeElement>,
  *   srcdoc: (string|undefined),
