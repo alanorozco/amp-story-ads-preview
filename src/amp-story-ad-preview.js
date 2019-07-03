@@ -115,7 +115,7 @@ export default class AmpStoryAdPreview {
       iframe => iframe.contentDocument.querySelector('iframe') // xzibit.png
     );
 
-    render(WrappedIframe({srcdoc}), this.element);
+    render(WrappedIframe({srcdoc}), element);
   }
 
   /**
