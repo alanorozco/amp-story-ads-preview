@@ -17,8 +17,8 @@ import {assert} from '../lib/assert';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {minifyInlineJs} from './utils/minify-inline-js';
+import {setSrcdocAsyncMultiStrategy, whenIframeLoaded} from './utils/iframe';
 import {untilAttached} from './utils/until-attached';
-import {setSrcdocMultiStrategy, whenIframeLoaded} from './utils/iframe';
 
 const {n, s} = getNamespace('amp-story-ad-preview');
 
@@ -95,7 +95,7 @@ function getDataTemplate(element) {
 
 export default class AmpStoryAdPreview {
   constructor(unusedWin, element) {
-    const {iframeReady, writer, srcdoc} = setSrcdocMultiStrategy(
+    const {iframeReady, writer, srcdoc} = setSrcdocAsyncMultiStrategy(
       untilAttached(element, s('.iframe')).then(whenIframeLoaded),
       getDataTemplate(element).replace('{{ adSandbox }}', defaultIframeSandbox)
     );
