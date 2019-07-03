@@ -16,6 +16,7 @@ import './amp-story-ad-preview.css';
 import {assert} from '../lib/assert';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
+import {ifDefined} from 'lit-html/directives/if-defined';
 import {minifyInlineJs} from './utils/minify-inline-js';
 import {setSrcdocAsyncMultiStrategy, whenIframeLoaded} from './utils/iframe';
 import {untilAttached} from './utils/until-attached';
@@ -37,7 +38,7 @@ const defaultIframeSandbox = [
  * @param {string=} srcdoc
  * @return {lit-html/TemplateResult}
  */
-const WrappedIframe = ({srcdoc = ''}) => html`
+const WrappedIframe = ({srcdoc}) => html`
   <div class="${n('wrap')}">
     <iframe
       allowpaymentrequest
@@ -45,7 +46,7 @@ const WrappedIframe = ({srcdoc = ''}) => html`
       class=${n('iframe')}
       sandbox=${defaultIframeSandbox}
       title="AMP Story Ad Preview"
-      srcdoc=${srcdoc}
+      srcdoc=${ifDefined(srcdoc)}
     >
       <p>Loading…</p>
     </iframe>
