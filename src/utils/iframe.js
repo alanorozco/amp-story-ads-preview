@@ -93,7 +93,7 @@ export const writeIframeMultiStrategy = (iframeReady, srcdoc) =>
         writer: writeSrcdoc,
       }
     : {
-        // Writing after attachment, no need to pass srcdoc through.
+        // Writing after attachment, no need to set srcdoc.
         iframeReady: iframeReady.then(iframe => writeDocWrite(iframe, srcdoc)),
         writer: writeDocWrite,
       };
