@@ -16,7 +16,7 @@
 import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
-import {attachBlobUrl, fileSortCompare} from './file-upload';
+import {attachBlobUrl, FilesDragHint, fileSortCompare} from './file-upload';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
@@ -109,6 +109,7 @@ const staticServerData = async () => ({
  *    Omitting this before populating will simply result in codemirror not
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
+ * @param {boolean=} data.isFilesDragHintDisplayed = false
  * @param {boolean=} data.isFilesPanelDisplayed = false
  * @param {boolean=} data.isFullPreview = false
  * @param {Element=} data.previewElement
@@ -130,6 +131,7 @@ const renderEditor = ({
   content = '',
   files = [],
   isFullPreview = false,
+  isFilesDragHintDisplayed = false,
   isFilesPanelDisplayed = false,
   previewElement,
   storyDocTemplate = '',
@@ -142,6 +144,7 @@ const renderEditor = ({
     })}
     ${ContentPanel({
       isDisplayed: !isFullPreview,
+      isFilesDragHintDisplayed,
       isFilesPanelDisplayed,
       codeMirrorElement,
       content,
@@ -254,6 +257,7 @@ const FileUploadButton = () => html`
  * @param {Promise<Element>=} data.codeMirrorElement
  * @param {string=} data.content
  * @param {boolean} data.isDisplayed
+ * @param {boolean} data.isFilesDragHintDisplayed
  * @param {boolean} data.isFilesPanelDisplayed
  * @return {lit-html/TemplateResult}
  */
@@ -261,16 +265,18 @@ const ContentPanel = ({
   codeMirrorElement,
   content,
   isDisplayed,
+  isFilesDragHintDisplayed,
   isFilesPanelDisplayed,
 }) => html`
   <div class=${n('content')} ?hidden=${!isDisplayed}>
+    ${FilesDragHint({isDisplayed: isFilesDragHintDisplayed})}
     ${ContentToolbar({isFilesPanelDisplayed})}
     <!--
-        Default Content to load on the server and then populate codemirror on
-        the client.
-        codeMirrorElement is a promise resolved by codemirror(), hence the
-        until directive. Once resolved, content can be empty.
-      -->
+      Default Content to load on the server and then populate codemirror on
+      the client.
+      codeMirrorElement is a promise resolved by codemirror(), hence the
+      until directive. Once resolved, content can be empty.
+    -->
     ${until(codeMirrorElement || Textarea({content}))}
   </div>
 `;
@@ -427,6 +433,10 @@ class Editor {
 
   attachEventHandlers_() {
     const topLevelHandlers = {
+      dragend: this.dragleaveOrDragend_,
+      dragleave: this.dragleaveOrDragend_,
+      dragover: this.dragover_,
+      drop: this.drop_,
       [g('delete-file')]: this.deleteFile_,
       [g('insert-file-ref')]: this.insertFileRef_,
       [g('upload-files')]: this.uploadFiles_,
@@ -442,6 +452,9 @@ class Editor {
 
   attachCodeMirrorEvents_() {
     this.codeMirror_.on('change', () => this.updatePreview_());
+
+    this.codeMirror_.on('dragover', () => this.dragover_());
+    this.codeMirror_.on('dragleave', () => this.dragleave_());
 
     // Below stolen from @ampproject/docs/playground/src/editor/editor.js
     // (Editor#createCodeMirror)
@@ -488,7 +501,19 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
+  /**
+   * Uploads files from an `<input>` target.
+   * @param {Event} e
+   */
   uploadFiles_({target: {files}}) {
+    this.addFiles_(files);
+  }
+
+  /**
+   * @param {IArrayLike<File>} files
+   * @private
+   */
+  addFiles_(files) {
     this.state_.isFilesPanelDisplayed = true;
 
     this.state_.files = this.state_.files.concat(
@@ -642,6 +667,42 @@ class Editor {
       for (const attr of attrFileHintTagAttrs[tagName]) {
         htmlSchema[tagName].attrs[attr] = readableUrlsValueSet;
       }
+    }
+  }
+
+  /**
+   * Triggers when dragging files over the entire page.
+   * @private
+   */
+  dragover_() {
+    this.state_.isFilesDragHintDisplayed = true;
+  }
+
+  /**
+   * Triggers when dragging has left, or when it was cancelled (by ESC key or
+   * otherwise.)
+   * @private
+   */
+  dragleaveOrDragend_() {
+    this.state_.isFilesDragHintDisplayed = false;
+  }
+
+  /**
+   * Triggers when a file is dropped.
+   * @param {Event} e
+   */
+  drop_(e) {
+    e.preventDefault();
+
+    this.state_.isFilesDragHintDisplayed = false;
+
+    if (!e.dataTransfer) {
+      return;
+    }
+
+    const {files} = e.dataTransfer;
+    if (files && files.length) {
+      this.addFiles_(files);
     }
   }
 }
