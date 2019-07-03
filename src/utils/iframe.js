@@ -94,6 +94,6 @@ export const writeIframeMultiStrategy = (iframeReady, srcdoc) =>
       }
     : {
         // Writing after attachment, no need to pass srcdoc through.
-        iframeReady: (async () => writeDocWrite(await iframeReady, srcdoc))(),
+        iframeReady: iframeReady.then(iframe => writeDocWrite(iframe, srcdoc)),
         writer: writeDocWrite,
       };
