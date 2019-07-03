@@ -63,7 +63,7 @@ export function whenIframeLoaded(iframe) {
  *  - `srcdoc` to set on template (undefined if unnecessary.)
  *  - `writer` is meant for further updates.
  */
-export const writeIframeMultiStrategy = (iframeReady, srcdoc) =>
+export const setSrcdocMultiStrategy = (iframeReady, srcdoc) =>
   // https://caniuse.com/#search=srcdoc
   'srcdoc' in HTMLIFrameElement.prototype
     ? {
