@@ -99,7 +99,7 @@ async function awaitDocWrite(iframePromise, srcdoc) {
  *  - `srcdoc` to set on template (undefined if unnecessary.)
  *  - `writer` is meant for further updates.
  */
-export const awaitWriteIframeMultiStrategy = (outerIframePromise, srcdoc) =>
+export const writeIframeMultiStrategy = (outerIframePromise, srcdoc) =>
   isSrcdocSupported()
     ? {
         srcdoc,

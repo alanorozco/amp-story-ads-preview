@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 import './amp-story-ad-preview.css';
-import {awaitWriteIframeMultiStrategy, whenIframeLoaded} from './utils/iframe';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {minifyInlineJs} from './utils/minify-inline-js';
 import {untilAttached} from './utils/until-attached';
+import {whenIframeLoaded, writeIframeMultiStrategy} from './utils/iframe';
 
 const {n, s} = getNamespace('amp-story-ad-preview');
 
@@ -90,7 +90,7 @@ export default class AmpStoryAdPreview {
     this.win = win;
     this.element = element;
 
-    const {iframeReady, writer, srcdoc} = awaitWriteIframeMultiStrategy(
+    const {iframeReady, writer, srcdoc} = writeIframeMultiStrategy(
       untilAttached(this.element, s('.iframe')).then(whenIframeLoaded),
       getDataTemplate(element).replace('{{ adSandbox }}', defaultIframeSandbox)
     );
