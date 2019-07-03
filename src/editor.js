@@ -19,6 +19,7 @@ import {assert} from '../lib/assert';
 import {attachBlobUrl, FilesDragHint, fileSortCompare} from './file-upload';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
+import {hintIgnoreEnds, hintsUrl, setAttrFileHints} from './hints';
 import {html, render} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {redispatchAs} from './utils/events';
@@ -39,48 +40,6 @@ import fs from 'fs-extra';
 import htmlMinifier from 'html-minifier';
 
 const {id, g, n, s} = getNamespace('editor');
-
-/**
- * Holds CodeMirror HTML autocompletion specs for AMP formats.
- * This is taken from amp.dev and is built from the AMP spec... somehow.
- */
-const hintsUrl = '/static/hints/amphtml-hint.json';
-
-/**
- * Hints ignored on typing when delimited by these chars.
- * Stolen from @ampproject/docs/playground/src/editor/editor.js
- */
-const hintIgnoreEnds = new Set([
-  ';',
-  ',',
-  ')',
-  '`',
-  '"',
-  "'",
-  '>',
-  '{',
-  '}',
-  '[',
-  ']',
-]);
-
-/**
- * tagName-to-attributes for uploaded file autocomplete hints.
- * (These only apply to the amp4ads validation set.)
- *
- * TODO(alanorozco): build this set dynamically
- * TODO(alanorozco): set hints for tag context based on file extension
- */
-const attrFileHintTagAttrs = {
-  'amp-img': ['src'],
-  'amp-anim': ['src'],
-  'amp-video': ['src', 'poster'],
-  'amp-audio': ['src'],
-  'source': ['src'],
-  'track': ['src'],
-};
-
-const attrFileHintTagNames = Object.keys(attrFileHintTagAttrs);
 
 const readFixtureHtml = async name =>
   (await fs.readFile(`src/fixtures/${name}.html`)).toString('utf-8');
@@ -652,22 +611,10 @@ class Editor {
    * @private
    */
   updateFileHints_() {
-    const {files} = this.state_;
-    const {htmlSchema} = codemirror;
-
-    // CodeMirror HTML spec allows null for attributes without known values.
-    const readableUrlsValueSet =
-      files.length > 0 ? files.map(({name}) => `/${name}`) : null;
-
-    for (const tagName of attrFileHintTagNames) {
-      if (!(tagName in htmlSchema)) {
-        // spec not populated yet, will exec again when fetched.
-        return;
-      }
-      for (const attr of attrFileHintTagAttrs[tagName]) {
-        htmlSchema[tagName].attrs[attr] = readableUrlsValueSet;
-      }
-    }
+    setAttrFileHints(
+      codemirror.htmlSchema,
+      this.state_.files.map(({name}) => `/${name}`)
+    );
   }
 
   /**
