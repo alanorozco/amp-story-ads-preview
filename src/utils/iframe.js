@@ -49,8 +49,8 @@ export function whenIframeLoaded(iframe) {
 }
 
 /**
- * Writes to an iframe when dynamic `srcdoc` is unsupported, and stablishes
- * dynamic writing support.
+ * Writes to an async iframe when dynamic `srcdoc` is unsupported, and
+ * stablishes dynamic iframe writing support regardless.
  *
  * Result properties are for the callee to handle the iframe based on `srcdoc`
  * support. If the `srcdoc` is returned as a property, it should be set as an
