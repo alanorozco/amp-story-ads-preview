@@ -72,7 +72,7 @@ export const writeIframeMultiStrategy = (iframeReady, srcdoc) =>
         writer: (iframe, srcdoc) => (iframe.srcdoc = srcdoc),
       }
     : {
-        // Writing after attachment, no need to set actual srcdoc attribute.
+        // Writing after attachment, shouldn't set actual srcdoc attribute.
         iframeReady: iframeReady.then(iframe => {
           writeToIframe(iframe, srcdoc);
           return whenIframeLoaded(iframe);
