@@ -13,54 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
-
-/** @private {?boolean} */
-let srcdocSupported = null;
-
-/**
- * Returns `true` if srcdoc is supported. https://caniuse.com/#search=srcdoc
- * @return {boolean}
- */
-export function isSrcdocSupported() {
-  if (srcdocSupported === null) {
-    srcdocSupported = 'srcdoc' in HTMLIFrameElement.prototype;
-  }
-  return srcdocSupported;
-}
 
 /**
  * Writes content to given iframe using document.{open, write, close}
  * @param {!HTMLIFrameElement} iframe
- * @param {string} content
- * @return {!Promise}
+ * @param {string} srcdoc
+ * @return {string} (for compatibility with srcdoc writer, not important atm.)
  */
-export function writeToIframe(iframe, content) {
+function writeToIframe(iframe, srcdoc) {
   iframe.src = 'about:blank';
   const childDoc = iframe.contentWindow.document;
   childDoc.open();
-  childDoc.write(content);
+  childDoc.write(srcdoc);
   childDoc.close();
-  return whenIframeLoaded(iframe);
-}
-
-/**
- * Writes content to given iframe using srcdoc attribute.
- * @param {!HTMLIFrameElement} iframe
- * @param {string} content
- * @return {!Promise}
- */
-export function writeToSrcdoc(iframe, content) {
-  iframe.srcdoc = content;
-  return whenIframeLoaded(iframe);
+  return srcdoc;
 }
 
 /**
  * Returns a promise that resolves on the next `load`
  * event from the given iframe.
  * @param {!HTMLIFrameElement} iframe
- * @return {!Promise}
+ * @return {Promise<HTMLIFrameElement>}
  */
 export function whenIframeLoaded(iframe) {
   const {promise, resolve} = new Deferred();
@@ -73,3 +47,46 @@ export function whenIframeLoaded(iframe) {
   );
   return promise;
 }
+
+/**
+ * Writes to an async iframe when dynamic `srcdoc` is unsupported, and
+ * establishes dynamic iframe writing support regardless.
+ *
+ * Result properties are for the callee to handle the iframe based on `srcdoc`
+ * support.
+ *
+ * @param {Window} win
+ * @param {Promise<HTMLIframeElement>} iframeReady
+ *   Should resolve when the iframe is attached and loaded.
+ *   When `document.write()`ing, the iframe will load once more and
+ *   chain-resolve into the homonymous property. Otherwise passed through.
+ * @param {string} srcdoc
+ *   Set on <iframe> once resolved if platform lacks `srcdoc` support.
+ *   Otherwise passed through as a result property in order to set as an
+ *   attribute on the rendered <iframe>.
+ * @return {{
+ *   iframeReady: Promise<HTMLIframeElement>,
+ *   srcdoc: (string|undefined),
+ *   writer: function(HTMLIframeElement, string):string
+ * }}
+ *  - `iframeReady` resolves when ready for further updates.
+ *  - `srcdoc` to set as attribute on `<iframe>` (undefined if unnecessary.)
+ *  - `writer` to be used for further updates.
+ *    Takes `(iframe, srcdoc)` and returns `srcdoc` for chaining.
+ */
+export const setSrcdocAsyncMultiStrategy = (win, iframeReady, srcdoc) =>
+  // https://caniuse.com/#search=srcdoc
+  'srcdoc' in win.HTMLIFrameElement.prototype
+    ? {
+        srcdoc,
+        iframeReady,
+        writer: (iframe, srcdoc) => (iframe.srcdoc = srcdoc),
+      }
+    : {
+        // Writing after attachment, shouldn't set actual srcdoc attribute.
+        iframeReady: iframeReady.then(iframe => {
+          writeToIframe(iframe, srcdoc);
+          return whenIframeLoaded(iframe);
+        }),
+        writer: writeToIframe,
+      };
