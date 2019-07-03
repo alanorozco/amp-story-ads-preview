@@ -105,7 +105,7 @@ export default class AmpStoryAdPreview {
      * Defaults to srcdoc writer, uses document.write() when unsupported.
      * TODO: A4A runtime throws replaceState error when using srcdoc.
      * Figure out how to fix, or always use document.write()
-     * @private {function(HTMLIframeElement, string):Promise<HTMLIFrameElement>}
+     * @private {function(HTMLIframeElement, string):string>}
      */
     this.writeToIframe_ = writer;
 
