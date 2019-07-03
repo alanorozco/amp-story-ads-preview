@@ -72,7 +72,7 @@ const insertHttpsCircumventionPatch = docStr =>
 
 /**
  * Patches an <amp-story> ad document string for REPL support:
- * - Sets `amp-story-visible` attribute for interop.
+ * - Sets `amp-story-visible` attribute on `<body>` for interop.
  * - Monkey-patches `document.createElement()` to circumvent AMP's HTTPS checks.
  * @param {string} docStr
  * @return {string}
