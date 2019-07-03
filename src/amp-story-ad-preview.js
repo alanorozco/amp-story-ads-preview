@@ -120,13 +120,11 @@ export default class AmpStoryAdPreview {
   /**
    * Updates the current preview with full document HTML.
    * @param {string} dirty Dirty document HTML.
-   * @return {!Promise<Document>}
-   *    Resolves with the preview iframe's document once updated.
    */
   async update(dirty) {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    return this.writeToIframe_(await this.adIframe_, patch(dirty));
+    this.writeToIframe_(await this.adIframe_, patch(dirty));
   }
 }

@@ -28,28 +28,13 @@ const isSrcdocSupported = once(() => 'srcdoc' in HTMLIFrameElement.prototype);
  * @param {string} content
  * @return {Promise<HTMLIFrameElement>}
  */
-function writeDocWrite(iframe, content) {
+function iframeDocWrite(iframe, content) {
   iframe.src = 'about:blank';
   const childDoc = iframe.contentWindow.document;
   childDoc.open();
   childDoc.write(content);
   childDoc.close();
-
-  // TODO(alanorozco): Reconsider whether to create deferreds for every update.
-  return whenIframeLoaded(iframe);
-}
-
-/**
- * Writes content to given iframe using srcdoc attribute.
- * @param {!HTMLIFrameElement} iframe
- * @param {string} content
- * @return {Promise<HTMLIFrameElement>}
- */
-function writeSrcdoc(iframe, content) {
-  iframe.srcdoc = content;
-
-  // TODO(alanorozco): Reconsider whether to create deferreds for every update.
-  return whenIframeLoaded(iframe);
+  return content;
 }
 
 /**
@@ -90,10 +75,13 @@ export const writeIframeMultiStrategy = (iframeReady, srcdoc) =>
     ? {
         srcdoc,
         iframeReady,
-        writer: writeSrcdoc,
+        writer: (iframe, content) => (iframe.srcdoc = content),
       }
     : {
         // Writing after attachment, no need to set srcdoc.
-        iframeReady: iframeReady.then(iframe => writeDocWrite(iframe, srcdoc)),
-        writer: writeDocWrite,
+        iframeReady: iframeReady.then(iframe => {
+          iframeDocWrite(iframe, srcdoc);
+          return whenIframeLoaded(iframe);
+        }),
+        writer: iframeDocWrite,
       };
