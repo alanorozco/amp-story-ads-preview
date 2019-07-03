@@ -69,7 +69,8 @@ export function whenIframeLoaded(iframe) {
  * }}
  *  - `iframeReady` resolves when ready for further updates.
  *  - `srcdoc` to set on `<iframe>` (undefined if unnecessary)
- *  - `writer` to be used for further updates. Takes `(iframe, srcdoc)`.
+ *  - `writer` to be used for further updates.
+ *    Takes `(iframe, srcdoc)` and returns `srcdoc` for chaining.
  */
 export const setSrcdocAsyncMultiStrategy = (win, iframeReady, srcdoc) =>
   // https://caniuse.com/#search=srcdoc
