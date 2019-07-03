@@ -16,12 +16,7 @@
 import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
-import {
-  attachBlobUrl,
-  FilesDragHint,
-  filesFromDataTransfer,
-  fileSortCompare,
-} from './file-upload';
+import {attachBlobUrl, FilesDragHint, fileSortCompare} from './file-upload';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
@@ -522,7 +517,7 @@ class Editor {
     this.state_.isFilesPanelDisplayed = true;
 
     this.state_.files = this.state_.files.concat(
-      (Array.isArray(files) ? files : Array.from(files))
+      Array.from(files)
         .map(f => attachBlobUrl(this.win, f))
         .sort(fileSortCompare)
     );
@@ -705,7 +700,7 @@ class Editor {
       return;
     }
 
-    const files = filesFromDataTransfer(e.dataTransfer);
+    const {files} = e.dataTransfer;
     if (files.length) {
       this.addFiles_(files);
     }
