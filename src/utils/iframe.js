@@ -19,7 +19,7 @@ import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
  * Writes content to given iframe using document.{open, write, close}
  * @param {!HTMLIFrameElement} iframe
  * @param {string} srcdoc
- * @return {string} (for compatibility with srcdoc writer, not important)
+ * @return {string} (for compatibility with srcdoc writer, not important atm.)
  */
 function writeToIframe(iframe, srcdoc) {
   iframe.src = 'about:blank';
