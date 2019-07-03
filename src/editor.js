@@ -58,6 +58,7 @@ const staticServerData = async () => ({
     await readFixtureHtml('story'),
     htmlMinifyConfig
   ),
+  templatesJson: (await fs.readFile('dist/templates.json')).toString('utf-8'),
 });
 
 /**
@@ -102,6 +103,7 @@ const renderEditor = ({
   storyDocTemplate = '',
   viewportId = viewportIdDefault,
   templates,
+  templatesJson,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
@@ -123,8 +125,18 @@ const renderEditor = ({
       storyDocTemplate,
       viewportId,
     })}
+    ${TemplatesJsonScriptOptional(templatesJson)}
   </div>
 `;
+
+const TemplatesJsonScriptOptional = json =>
+  !json
+    ? ''
+    : html`
+        <script type="application/json" class=${n('templates')}>
+          ${json}
+        </script>
+      `;
 
 /**
  * @param {Object} data
@@ -268,22 +280,20 @@ const ContentPanel = ({
 `;
 const dispatchSelectTemplate = redispatchAs(g('select-template'));
 
+// Panel does not render when it is not displayed to allow for video
+// autoplay without bad performance (see hooseTemplatesButton)
 const TemplatesPanel = ({isTemplatePanelDisplayed, templates}) =>
   isTemplatePanelDisplayed
     ? html`
-        <div
-          class="${n('templates-panel')}"
-          ?hidden=${!isTemplatePanelDisplayed}
-        >
+        <div class="${n('templates-panel')}">
           <div class="${g('flex-center')}">
-            ${until(TemplateSelectors(templates), 'Loading...')}
+            ${TemplateSelectors(templates)}
           </div>
         </div>
       `
     : '';
 
-async function TemplateSelectors(templatesPromise) {
-  const templates = await templatesPromise;
+function TemplateSelectors(templates) {
   return html`
     ${repeat(Object.keys(templates), identity, name =>
       TemplateSelector({name, ...templates[name]})
@@ -425,6 +435,13 @@ class Editor {
     this.hintTimeout_ = null;
     this.amphtmlHints_ = this.fetchHintsData_();
 
+    const templates = JSON.parse(
+      assert(element.querySelector(s('script.templates'))).textContent.replace(
+        /(&quot\;)/g,
+        '"'
+      )
+    );
+
     const {
       promise: codeMirrorElement,
       resolve: codeMirrorElementResolve,
@@ -462,9 +479,7 @@ class Editor {
       previewElement,
       viewportId: viewportIdDefault,
       isTemplatePanelDisplayed: false,
-      templates: successfulFetch(this.win, '/templates.json').then(r =>
-        r.json()
-      ),
+      templates,
     });
 
     batchedRender();
@@ -563,7 +578,7 @@ class Editor {
 
   async selectTemplates_({target: {dataset}}) {
     const templateName = assert(dataset.name);
-    const {contentUrl, files} = (await this.state_.templates)[templateName];
+    const {contentUrl, files} = this.state_.templates[templateName];
     const contentResponse = await successfulFetch(this.win, contentUrl);
     this.codeMirror_.setValue(await contentResponse.text());
     this.state_.files = files.map(name => ({
@@ -577,7 +592,7 @@ class Editor {
 
   getTemplateFileUrl_(templateName, filename, fullyQualified = true) {
     return [
-      //fullyQualified ? getBaseUrlPrefix(this.win) : '',
+      fullyQualified ? getBaseUrlPrefix(this.win) : '',
       'static/templates',
       templateName,
       filename,
