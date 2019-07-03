@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 import './amp-story-ad-preview.css';
+import {assert} from '../lib/assert';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {minifyInlineJs} from './utils/minify-inline-js';
@@ -89,7 +90,7 @@ const patch = docStr =>
 function getDataTemplate(element) {
   const {template} = element.dataset;
   element.removeAttribute('data-template');
-  return template;
+  return assert(template);
 }
 
 export default class AmpStoryAdPreview {
