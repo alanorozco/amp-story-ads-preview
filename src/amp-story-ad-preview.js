@@ -90,7 +90,7 @@ const patch = docStr =>
 function getDataTemplate(element) {
   const {template} = element.dataset;
   element.removeAttribute('data-template');
-  return assert(template);
+  return assert(template, `Expected [data-template] on ${element}`);
 }
 
 export default class AmpStoryAdPreview {
