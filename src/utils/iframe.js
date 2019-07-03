@@ -21,7 +21,7 @@ import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
  * @param {string} content
  * @return {string} (for compatibility with srcdoc writer, not important)
  */
-function iframeDocWrite(iframe, content) {
+function writeToIframe(iframe, content) {
   iframe.src = 'about:blank';
   const childDoc = iframe.contentWindow.document;
   childDoc.open();
@@ -74,8 +74,8 @@ export const writeIframeMultiStrategy = (iframeReady, srcdoc) =>
     : {
         // Writing after attachment, no need to set srcdoc.
         iframeReady: iframeReady.then(iframe => {
-          iframeDocWrite(iframe, srcdoc);
+          writeToIframe(iframe, srcdoc);
           return whenIframeLoaded(iframe);
         }),
-        writer: iframeDocWrite,
+        writer: writeToIframe,
       };
