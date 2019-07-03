@@ -203,6 +203,11 @@
   cursor: pointer;
 }
 
+.templates-panel {
+  padding: 20px;
+  background: var(--content-bg);
+}
+
 .template:hover {
   transform:scale(1.05);
   opacity: 1;
@@ -228,5 +233,5 @@
 }
 
 .content-toolbar .selected {
-  opacity: 0.5;
+  background-color: rgba(0, 0, 0, 0.4)
 }

@@ -204,29 +204,20 @@ const copyStaticAssets = () =>
   step('📋 Copying static assets', () => fs.copy('static', 'dist/static'));
 
 const buildTemplatesJson = () =>
-  step(' Generating templates json', async () => {
+  step('Generating templates json', async () => {
     const root = 'static/templates';
     const result = {};
 
     for (const name of await fs.readdir(root)) {
-      const fileUrl = file => `${root}/${name}/${file}`;
-      const preview = {type: 'image'};
-      let contentUrl;
+      let previewExt;
       let files;
 
       const shouldIncludeFile = file => {
-        if (file.endsWith('.html')) {
-          contentUrl = fileUrl(file);
-          return false;
-        }
         if (file.startsWith('_preview.')) {
-          preview.url = fileUrl(file);
-          if (file.endsWith('.mp4')) {
-            preview.type = 'video';
-          }
+          previewExt = file.split('.').pop();
           return false;
         }
-        return !(file.startsWith('.') || file.endsWith('.txt'));
+        return !/(^\.|\.(html|txt|md)$)/.test(file);
       };
 
       try {
@@ -235,7 +226,7 @@ const buildTemplatesJson = () =>
         continue;
       }
 
-      result[name] = {contentUrl, files, preview};
+      result[name] = {files, previewExt};
     }
 
     return fs.outputJson('dist/templates.json', result).catch(fatal);

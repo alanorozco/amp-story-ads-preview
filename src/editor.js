@@ -301,27 +301,30 @@ function TemplateSelectors(templates) {
   `;
 }
 
-const TemplateSelector = ({name, preview}) => html`
+const templateFileUrl = (templateName, filename) =>
+  `/static/templates/${templateName}/${filename}`;
+
+const TemplateSelector = ({name, previewExt}) => html`
   <div
     class="${n('template')}"
     @click=${dispatchSelectTemplate}
     data-name=${name}
   >
-    ${TemplatePreview(preview)}
+    ${TemplatePreview(name, previewExt)}
   </div>
 `;
 
-const TemplatePreview = ({type, url}) =>
-  assert(TemplatePreviewGraphic[type], `Unknown preview type "${type}"`)(url);
-
-const TemplatePreviewGraphic = {
-  video: url => html`
-    <video autoplay loop muted src=${url}></video>
-  `,
-  image: url => html`
+function TemplatePreview(name, ext) {
+  const url = templateFileUrl(name, `_preview.${ext}`);
+  if (ext == 'mp4' || ext == 'webm') {
+    return html`
+      <video autoplay loop muted src=${url}></video>
+    `;
+  }
+  return html`
     <img src=${url} />
-  `,
-};
+  `;
+}
 
 /**
  * Renders content panel toolbar.
@@ -412,14 +415,6 @@ const PreviewToolbar = ({isFullPreview, viewportId}) => html`
 const EmptyPreview = ({storyDocTemplate}) => html`
   <div class=${n('preview')} data-template=${storyDocTemplate}></div>
 `;
-
-function getBaseUrlPrefix(win) {
-  let anchor = win.document.createElement('a');
-  anchor.href = '/';
-  const {hostname, protocol, port} = anchor;
-  anchor = null;
-  return `${protocol}//${hostname}:${port}`;
-}
 
 class Editor {
   constructor(win, element) {
@@ -578,7 +573,8 @@ class Editor {
 
   async selectTemplates_({target: {dataset}}) {
     const templateName = assert(dataset.name);
-    const {contentUrl, files} = this.state_.templates[templateName];
+    const {files} = this.state_.templates[templateName];
+    const contentUrl = templateFileUrl(templateName, 'index.html');
     const contentResponse = await successfulFetch(this.win, contentUrl);
     this.codeMirror_.setValue(await contentResponse.text());
     this.state_.files = files.map(name => ({
@@ -587,16 +583,11 @@ class Editor {
     }));
     this.state_.isFilesPanelDisplayed = true;
     this.state_.isTemplatePanelDisplayed = false;
-    this.updatePreview_();
+    //this.updatePreview_();
   }
 
-  getTemplateFileUrl_(templateName, filename, fullyQualified = true) {
-    return [
-      fullyQualified ? getBaseUrlPrefix(this.win) : '',
-      'static/templates',
-      templateName,
-      filename,
-    ].join('/');
+  getTemplateFileUrl_(templateName, filename) {
+    return ['static/templates', templateName, filename].join('/');
   }
 
   /**
