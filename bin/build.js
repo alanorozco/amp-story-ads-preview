@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {argv, isRunningFrom, whenMinified} from '../lib/cli';
+import {argv, isDevBuild, isRunningFrom, whenMinified} from '../lib/cli';
 import {blue, cyan, magenta, yellow} from 'colors/safe';
 import {builtinModules} from 'module';
 import {bundles, routes} from '../src/bundles';
@@ -109,7 +109,7 @@ const inputConfig = async name => ({
   ],
 });
 
-const outputConfigs = [{format: 'iife', sourcemap: !argv.minify}];
+const outputConfigs = [{format: 'iife', sourcemap: isDevBuild()}];
 
 /**
  * Magic below.

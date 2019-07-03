@@ -78,10 +78,11 @@
   <link rel="canonical" href="/" />
   <style amp-custom>
     .i-amphtml-glass-pane {
-  height: 100% !important;
-  width: 100% !important;
-  z-index: 1 !important;
-}
+      height: 100% !important;
+      width: 100% !important;
+      z-index: 1 !important;
+    }
+
     .ad {
       border: none;
       width: 100% !important;
@@ -180,7 +181,7 @@
       padding: 0 !important;
       visibility: hidden !important;
     }
-  
+
     [dir=rtl] .i-amphtml-story-ad-attribution {
       margin-left: 0px !important;
       margin-right: 16px !important;
@@ -210,10 +211,9 @@
         <a class="i-amphtml-story-ad-link" href="https://google.com">Learn More</a>
       </div>
       <amp-story-grid-layer template="fill">
-        <iframe src="{{ adUrl }}" sandbox="{{ adSandbox }}" class="ad"></iframe>
+        <iframe scrolling="no" sandbox="{{ adSandbox }}" class="ad"></iframe>
       </amp-story-grid-layer>
     </amp-story-page>
   </amp-story>
 </body>
-
 </html>

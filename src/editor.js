@@ -16,10 +16,11 @@
 import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
-import {attachBlobUrl, fileSortCompare} from './file-upload';
+import {attachBlobUrl, FilesDragHint, fileSortCompare} from './file-upload';
 import {classMap} from 'lit-html/directives/class-map';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
+import {hintIgnoreEnds, hintsUrl, setAttrFileHints} from './hints';
 import {html, render} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {identity} from './utils/function';
@@ -43,47 +44,7 @@ import htmlMinifier from 'html-minifier';
 
 const {id, g, n, s} = getNamespace('editor');
 
-/**
- * Holds CodeMirror HTML autocompletion specs for AMP formats.
- * This is taken from amp.dev and is built from the AMP spec... somehow.
- */
-const hintsUrl = '/static/hints/amphtml-hint.json';
-
-/**
- * Hints ignored on typing when delimited by these chars.
- * Stolen from @ampproject/docs/playground/src/editor/editor.js
- */
-const hintIgnoreEnds = new Set([
-  ';',
-  ',',
-  ')',
-  '`',
-  '"',
-  "'",
-  '>',
-  '{',
-  '}',
-  '[',
-  ']',
-]);
-
-/**
- * tagName-to-attributes for uploaded file autocomplete hints.
- * (These only apply to the amp4ads validation set.)
- *
- * TODO(alanorozco): build this set dynamically
- * TODO(alanorozco): set hints for tag context based on file extension
- */
-const attrFileHintTagAttrs = {
-  'amp-img': ['src'],
-  'amp-anim': ['src'],
-  'amp-video': ['src', 'poster'],
-  'amp-audio': ['src'],
-  'source': ['src'],
-  'track': ['src'],
-};
-
-const attrFileHintTagNames = Object.keys(attrFileHintTagAttrs);
+const updateDebounceRate = 300;
 
 const readFixtureHtml = async name =>
   (await fs.readFile(`src/fixtures/${name}.html`)).toString('utf-8');
@@ -112,6 +73,7 @@ const staticServerData = async () => ({
  *    Omitting this before populating will simply result in codemirror not
  *    having any content.
  *    If already populated, omitting this has no effect for codemirror.
+ * @param {boolean=} data.isFilesDragHintDisplayed = false
  * @param {boolean=} data.isFilesPanelDisplayed = false
  * @param {boolean=} data.isFullPreview = false
  * @param {Element=} data.previewElement
@@ -133,6 +95,7 @@ const renderEditor = ({
   content = '',
   files = [],
   isFullPreview = false,
+  isFilesDragHintDisplayed = false,
   isFilesPanelDisplayed = false,
   isTemplatePanelDisplayed = false,
   previewElement,
@@ -147,6 +110,7 @@ const renderEditor = ({
     })}
     ${ContentPanel({
       isDisplayed: !isFullPreview,
+      isFilesDragHintDisplayed,
       isFilesPanelDisplayed,
       isTemplatePanelDisplayed,
       codeMirrorElement,
@@ -208,6 +172,7 @@ const dispatchInsertFileRef = redispatchAs(g('insert-file-ref'));
 const dispatchDeleteFile = redispatchAs(g('delete-file'));
 
 /**
+ * @param {{name: string}} file
  * @param {{name: string}} file
  * @param {number} index
  * @return {lit-html/TemplateResult}
@@ -275,6 +240,7 @@ const ChooseTemplatesButton = isTemplatePanelDisplayed => html`
  * @param {Promise<Element>=} data.codeMirrorElement
  * @param {string=} data.content
  * @param {boolean} data.isDisplayed
+ * @param {boolean} data.isFilesDragHintDisplayed
  * @param {boolean} data.isFilesPanelDisplayed
  * @return {lit-html/TemplateResult}
  */
@@ -282,19 +248,21 @@ const ContentPanel = ({
   codeMirrorElement,
   content,
   isDisplayed,
+  isFilesDragHintDisplayed,
   isFilesPanelDisplayed,
   isTemplatePanelDisplayed,
   templates,
 }) => html`
   <div class=${n('content')} ?hidden=${!isDisplayed}>
+    ${FilesDragHint({isDisplayed: isFilesDragHintDisplayed})}
     ${ContentToolbar({isFilesPanelDisplayed, isTemplatePanelDisplayed})}
+    ${TemplatesPanel({isTemplatePanelDisplayed, templates})}
     <!--
         Default Content to load on the server and then populate codemirror on
         the client.
         codeMirrorElement is a promise resolved by codemirror(), hence the
         until directive. Once resolved, content can be empty.
       -->
-    ${TemplatesPanel({isTemplatePanelDisplayed, templates})}
     ${until(codeMirrorElement || Textarea({content}))}
   </div>
 `;
@@ -452,6 +420,8 @@ class Editor {
 
     this.parent_ = element.parentElement;
 
+    this.updateOnChangesTimeout_ = null;
+
     this.hintTimeout_ = null;
     this.amphtmlHints_ = this.fetchHintsData_();
 
@@ -512,6 +482,10 @@ class Editor {
 
   attachEventHandlers_() {
     const topLevelHandlers = {
+      dragend: this.dragleaveOrDragend_,
+      dragleave: this.dragleaveOrDragend_,
+      dragover: this.dragover_,
+      drop: this.drop_,
       [g('delete-file')]: this.deleteFile_,
       [g('insert-file-ref')]: this.insertFileRef_,
       [g('upload-files')]: this.uploadFiles_,
@@ -528,7 +502,19 @@ class Editor {
   }
 
   attachCodeMirrorEvents_() {
-    this.codeMirror_.on('change', () => this.updatePreview_());
+    const {clearTimeout, setTimeout} = this.win;
+
+    this.codeMirror_.on('changes', () => {
+      if (this.updateOnChangesTimeout_) {
+        clearTimeout(this.updateOnChangesTimeout_);
+      }
+      this.updateOnChangesTimeout_ = setTimeout(() => {
+        this.updatePreview_();
+      }, updateDebounceRate);
+    });
+
+    this.codeMirror_.on('dragover', () => this.dragover_());
+    this.codeMirror_.on('dragleave', () => this.dragleave_());
 
     // Below stolen from @ampproject/docs/playground/src/editor/editor.js
     // (Editor#createCodeMirror)
@@ -591,14 +577,26 @@ class Editor {
 
   getTemplateFileUrl_(templateName, filename, fullyQualified = true) {
     return [
-      fullyQualified ? getBaseUrlPrefix(this.win) : '',
+      //fullyQualified ? getBaseUrlPrefix(this.win) : '',
       'static/templates',
       templateName,
       filename,
     ].join('/');
   }
 
+  /**
+   * Uploads files from an `<input>` target.
+   * @param {Event} e
+   */
   uploadFiles_({target: {files}}) {
+    this.addFiles_(files);
+  }
+
+  /**
+   * @param {IArrayLike<File>} files
+   * @private
+   */
+  addFiles_(files) {
     this.state_.isFilesPanelDisplayed = true;
 
     this.state_.files = this.state_.files.concat(
@@ -744,21 +742,45 @@ class Editor {
    * @private
    */
   updateFileHints_() {
-    const {files} = this.state_;
-    const {htmlSchema} = codemirror;
+    setAttrFileHints(
+      codemirror.htmlSchema,
+      this.state_.files.map(({name}) => `/${name}`)
+    );
+  }
 
-    // CodeMirror HTML spec allows null for attributes without known values.
-    const readableUrlsValueSet =
-      files.length > 0 ? files.map(({name}) => `/${name}`) : null;
+  /**
+   * Triggers when dragging files over the entire page.
+   * @private
+   */
+  dragover_() {
+    this.state_.isFilesDragHintDisplayed = true;
+  }
 
-    for (const tagName of attrFileHintTagNames) {
-      if (!(tagName in htmlSchema)) {
-        // spec not populated yet, will exec again when fetched.
-        return;
-      }
-      for (const attr of attrFileHintTagAttrs[tagName]) {
-        htmlSchema[tagName].attrs[attr] = readableUrlsValueSet;
-      }
+  /**
+   * Triggers when dragging has left, or when it was cancelled (by ESC key or
+   * otherwise.)
+   * @private
+   */
+  dragleaveOrDragend_() {
+    this.state_.isFilesDragHintDisplayed = false;
+  }
+
+  /**
+   * Triggers when a file is dropped.
+   * @param {Event} e
+   */
+  drop_(e) {
+    e.preventDefault();
+
+    this.state_.isFilesDragHintDisplayed = false;
+
+    if (!e.dataTransfer) {
+      return;
+    }
+
+    const {files} = e.dataTransfer;
+    if (files && files.length) {
+      this.addFiles_(files);
     }
   }
 }

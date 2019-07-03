@@ -13,6 +13,22 @@
   flex: 1;
   overflow: hidden;
   z-index: 0;
+  position: relative;
+}
+
+.content textarea {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--content-bg);
+  color: white;
+  line-height: 1.25em;
+  font-size: 1.25em;
+  font-family: monospace;
+  white-space: nowrap;
+  padding: 4px 4px 4px 12px;
+  border: none;
+  overflow: auto;
 }
 
 .preview-wrap {
@@ -87,6 +103,7 @@
   width: 100%;
   height: 100%;
   contain: strict;
+  overflow: hidden;
 }
 
 .text-button {
