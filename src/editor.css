@@ -1,6 +1,7 @@
 @import './colors.css';
 @import './editor-codemirror.css';
 
+@app;
 @component;
 
 .wrap {

@@ -204,7 +204,7 @@ const copyStaticAssets = () =>
   step('📋 Copying static assets', () => fs.copy('static', 'dist/static'));
 
 const buildTemplatesJson = () =>
-  step('Generating templates json', async () => {
+  step('💅 Generating templates json', async () => {
     const root = 'static/templates';
     const result = {};
 
