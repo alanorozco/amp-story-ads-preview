@@ -53,7 +53,7 @@ export function whenIframeLoaded(iframe) {
  * iframe.
  *
  * Result properties are for the callee to handle the iframe based on `srcdoc`
- * support. If the `srcdoc` property is returned, it should be set as an
+ * support. If the `srcdoc` is returned as a property, it should be set as an
  * attribute on the rendered <iframe>.
  *
  * @param {Window} win
