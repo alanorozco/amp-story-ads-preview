@@ -26,7 +26,7 @@ const isSrcdocSupported = once(() => 'srcdoc' in HTMLIFrameElement.prototype);
  * Writes content to given iframe using document.{open, write, close}
  * @param {!HTMLIFrameElement} iframe
  * @param {string} content
- * @return {Promise<HTMLIFrameElement>}
+ * @return {string} (for compatibility with srcdoc writer, not important)
  */
 function iframeDocWrite(iframe, content) {
   iframe.src = 'about:blank';
