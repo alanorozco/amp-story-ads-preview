@@ -57,7 +57,7 @@ export function whenIframeLoaded(iframe) {
  * @return {{
  *   iframeReady: Promise<HTMLIframeElement>,
  *   srcdoc: (string|undefined),
- *   writer: function(HTMLIframeElement, string):Promise<HTMLIFrameElement>
+ *   writer: function(HTMLIframeElement, string):string
  * }}
  *  - `iframeReady` resolves when ready for further updates.
  *  - `srcdoc` to set on template (undefined if unnecessary.)
