@@ -71,7 +71,7 @@ export function whenIframeLoaded(iframe) {
  *  - `iframeReady` resolves when ready for further updates.
  *  - `srcdoc` to set on template
  *    (undefined if unnecessary, since we're using `document.write()` instead.)
- *  - `writer` is meant for further updates.
+ *  - `writer` is to be used for further updates.
  */
 export const setSrcdocAsyncMultiStrategy = (win, iframeReady, srcdoc) =>
   // https://caniuse.com/#search=srcdoc
