@@ -59,7 +59,7 @@ export function whenIframeLoaded(iframe) {
  * @param {Promise<HTMLIframeElement>} iframeReady
  *   Should resolve when the iframe is attached and loaded.
  *   When `document.write()`ing, the frame will load once more and chain-resolve
- *   into the homonymous property. Otherwise passed through as a result prop.
+ *   into the homonymous property. Otherwise passed through.
  * @param {string} srcdoc
  *   Set on <iframe> when resolved if the browser lacks `srcdoc` support.
  *   Otherwise passed through as a result prop to set as attribute on the
