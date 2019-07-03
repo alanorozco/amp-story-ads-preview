@@ -52,6 +52,7 @@ export function whenIframeLoaded(iframe) {
  * Waits for and writes to an iframe when srcdoc is unsupported.
  * Otherwise, passes srcdoc through.
  *
+ * @param {Window} win
  * @param {Promise<HTMLIframeElement>} iframeReady
  * @param {string} srcdoc
  * @return {{
@@ -63,9 +64,9 @@ export function whenIframeLoaded(iframe) {
  *  - `srcdoc` to set on template (undefined if unnecessary.)
  *  - `writer` is meant for further updates.
  */
-export const setSrcdocAsyncMultiStrategy = (iframeReady, srcdoc) =>
+export const setSrcdocAsyncMultiStrategy = (win, iframeReady, srcdoc) =>
   // https://caniuse.com/#search=srcdoc
-  'srcdoc' in HTMLIFrameElement.prototype
+  'srcdoc' in win.HTMLIFrameElement.prototype
     ? {
         srcdoc,
         iframeReady,
