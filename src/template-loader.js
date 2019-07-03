@@ -32,11 +32,17 @@ export class TemplateLoader {
         '"'
       )
     );
+    this.content_ = {};
   }
 
   async fetchTemplateContent(name) {
-    const contentUrl = templateFileUrl(name, 'index.html');
-    const contentResponse = await successfulFetch(this.win, contentUrl);
-    return contentResponse.text();
+    if (name in this.content_) {
+    }
+    if (!(name in this.content_)) {
+      const contentUrl = templateFileUrl(name, 'index.html');
+      const contentResponse = await successfulFetch(this.win, contentUrl);
+      this.content_[name] = contentResponse.text();
+    }
+    return this.content_[name];
   }
 }
