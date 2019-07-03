@@ -17,6 +17,7 @@ import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {attachBlobUrl, fileSortCompare} from './file-upload';
+import {CTA_TYPES} from './utils/document-html';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
@@ -593,7 +594,7 @@ class Editor {
       delete htmlSchema[key];
     }
     Object.assign(htmlSchema, hints[format.toLowerCase()]);
-
+    htmlSchema.meta.attrs.content = [Object.keys(CTA_TYPES)];
     // Below, ours, in case of race:
     this.updateFileHints_();
   }

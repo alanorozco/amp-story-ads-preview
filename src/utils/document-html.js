@@ -18,6 +18,32 @@ import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
 const valueAttrRe = /[a-z_:][-a-z0-9_:.]+=("|')?[^"'\s]+("|')?/gim;
 const emptyAttrRe = /\s[a-z_:][-a-z0-9_:.]+(\s|>$)/gim;
 
+export const CTA_TYPES = {
+  APPLY_NOW: 'Apply Now',
+  BOOK_NOW: 'Book',
+  BUY_TICKETS: 'Buy Tickets',
+  DOWNLOAD: 'Download',
+  EXPLORE: 'Explore',
+  GET_NOW: 'Get Now',
+  INSTALL: 'Install Now',
+  LEARN_MORE: 'Learn More',
+  LISTEN: 'Listen',
+  MORE: 'More',
+  OPEN_APP: 'Open App',
+  ORDER_NOW: 'Order Now',
+  PLAY: 'Play',
+  READ: 'Read',
+  SHOP: 'Shop',
+  SHOW: 'Show',
+  SHOWTIMES: 'Showtimes',
+  SIGN_UP: 'Sign Up',
+  SUBSCRIBE: 'Subscribe Now',
+  USE_APP: 'Use App',
+  VIEW: 'View',
+  WATCH: 'Watch',
+  WATCH_EPISODE: 'Watch Episode',
+};
+
 /**
  * Parses attributes from an HTML string, and sets them into an element.
  * @param {string} tagWithInnerHtml
@@ -164,9 +190,21 @@ export function setDocumentHtml(doc, html) {
  */
 export function restartIframeWithDocument(iframe, html) {
   const {promise, resolve} = new Deferred();
-  const setContent = () => {
+  const setContent = async () => {
     setDocumentHtml(iframe.contentDocument, html);
     resolve(iframe.contentDocument);
+    const innerIframe = iframe.contentDocument.querySelector('iframe');
+    const ctaType = innerIframe.contentDocument.head.querySelector(
+      `meta[name="amp-cta-type"]`
+    );
+    const ctaUrl = innerIframe.contentDocument.head.querySelector(
+      `meta[name="amp-cta-url"]`
+    );
+    const cta = iframe.contentDocument.querySelector(
+      'div.amp-story-cta-layer a'
+    );
+    cta.setAttribute('href', ctaUrl.getAttribute('content'));
+    cta.innerText = CTA_TYPES[ctaType.getAttribute('content')];
     iframe.removeEventListener('load', setContent);
   };
   iframe.addEventListener('load', setContent);
