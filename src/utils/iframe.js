@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
-import once from 'lodash.once';
-
-/**
- * Returns `true` if srcdoc is supported. https://caniuse.com/#search=srcdoc
- * @return {boolean}
- */
-const isSrcdocSupported = once(() => 'srcdoc' in HTMLIFrameElement.prototype);
 
 /**
  * Writes content to given iframe using document.{open, write, close}
@@ -71,7 +64,8 @@ export function whenIframeLoaded(iframe) {
  *  - `writer` is meant for further updates.
  */
 export const writeIframeMultiStrategy = (iframeReady, srcdoc) =>
-  isSrcdocSupported()
+  // https://caniuse.com/#search=srcdoc
+  'srcdoc' in HTMLIFrameElement.prototype
     ? {
         srcdoc,
         iframeReady,

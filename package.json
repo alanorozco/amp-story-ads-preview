@@ -62,7 +62,6 @@
     "html-minifier": "4.0.0",
     "ignore-styles": "5.0.1",
     "lodash.memoize": "4.1.2",
-    "lodash.once": "4.1.1",
     "minimist": "1.2.0",
     "mocha": "6.1.4",
     "nodemon": "1.19.1",
