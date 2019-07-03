@@ -88,8 +88,8 @@ async function awaitDocWrite(iframePromise, srcdoc) {
  * Waits for and writes to an iframe when srcdoc is unsupported.
  * Otherwise, passes srcdoc through.
  *
- * @param {Promise<HTMLIframeElement>} outerIframePromise
- * @param {string} srcdoc Outer iframe srcdoc.
+ * @param {Promise<HTMLIframeElement>} iframeReady
+ * @param {string} srcdoc
  * @return {{
  *   iframeReady: Promise<HTMLIframeElement>,
  *   srcdoc: (string|undefined),
@@ -99,15 +99,15 @@ async function awaitDocWrite(iframePromise, srcdoc) {
  *  - `srcdoc` to set on template (undefined if unnecessary.)
  *  - `writer` is meant for further updates.
  */
-export const writeIframeMultiStrategy = (outerIframePromise, srcdoc) =>
+export const writeIframeMultiStrategy = (iframeReady, srcdoc) =>
   isSrcdocSupported()
     ? {
         srcdoc,
-        iframeReady: outerIframePromise,
+        iframeReady,
         writer: writeToSrcdoc,
       }
     : {
         // Writing after attachment, no need to pass srcdoc through.
-        iframeReady: awaitDocWrite(outerIframePromise, srcdoc),
+        iframeReady: awaitDocWrite(iframeReady, srcdoc),
         writer: writeWithDocWrite,
       };
