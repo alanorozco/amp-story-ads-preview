@@ -48,24 +48,3 @@ export const FilesDragHint = ({isDisplayed}) => html`
     <span class=${n('drag-hint-arrow')}>⇐</span> Drop to add files
   </div>
 `;
-
-/**
- * Gets files from an Event.dataTransfer object (typically from a drop.)
- * @param {DataTransfer} dataTransfer
- * @return {IArrayLike<File>}
- */
-export function filesFromDataTransfer({files, items}) {
-  if (files && files.length) {
-    return files;
-  }
-  if (items && items.length) {
-    const files = [];
-    for (const item of items) {
-      if (item.kind == 'file') {
-        files.push(item.getAsFile());
-      }
-    }
-    return files;
-  }
-  return [];
-}
