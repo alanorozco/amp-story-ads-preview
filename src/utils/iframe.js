@@ -28,7 +28,7 @@ const isSrcdocSupported = once(() => 'srcdoc' in HTMLIFrameElement.prototype);
  * @param {string} content
  * @return {Promise<HTMLIFrameElement>}
  */
-function writeWithDocWrite(iframe, content) {
+function writeDocWrite(iframe, content) {
   iframe.src = 'about:blank';
   const childDoc = iframe.contentWindow.document;
   childDoc.open();
@@ -45,7 +45,7 @@ function writeWithDocWrite(iframe, content) {
  * @param {string} content
  * @return {Promise<HTMLIFrameElement>}
  */
-function writeToSrcdoc(iframe, content) {
+function writeSrcdoc(iframe, content) {
   iframe.srcdoc = content;
 
   // TODO(alanorozco): Reconsider whether to create deferreds for every update.
@@ -71,20 +71,6 @@ export function whenIframeLoaded(iframe) {
 }
 
 /**
- * Writes frame through `document.write` when srcdoc is unsupported.
- * @param {Promise<HTMLIframeElement>} iframePromise
- *   Should be resolved when iframe is ready to be writen to.
- * @param {string} srcdoc
- * @return {Promise<HTMLIframeElement>}
- */
-async function awaitDocWrite(iframePromise, srcdoc) {
-  // Wait and set for non-srcdoc case in an empty iframe.
-  const iframe = await iframePromise;
-  writeWithDocWrite(iframe, srcdoc);
-  return iframe;
-}
-
-/**
  * Waits for and writes to an iframe when srcdoc is unsupported.
  * Otherwise, passes srcdoc through.
  *
@@ -104,10 +90,10 @@ export const writeIframeMultiStrategy = (iframeReady, srcdoc) =>
     ? {
         srcdoc,
         iframeReady,
-        writer: writeToSrcdoc,
+        writer: writeSrcdoc,
       }
     : {
         // Writing after attachment, no need to pass srcdoc through.
-        iframeReady: awaitDocWrite(iframeReady, srcdoc),
-        writer: writeWithDocWrite,
+        iframeReady: (async () => writeDocWrite(await iframeReady, srcdoc))(),
+        writer: writeDocWrite,
       };
