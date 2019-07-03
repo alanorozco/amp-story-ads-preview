@@ -70,7 +70,14 @@ const setBodyAmpStoryVisible = docStr =>
 const insertHttpsCircumventionPatch = docStr =>
   docStr.replace('<head>', `<head><script>${httpsCircumventionPatch}</script>`);
 
-const insertPatches = docStr =>
+/**
+ * Patches an <amp-story> ad document string for REPL support:
+ * - Sets `amp-story-visible` attribute for interop.
+ * - Monkey-patches `document.createElement()` to circumvent AMP's HTTPS checks.
+ * @param {string} docStr
+ * @return {string}
+ */
+const patch = docStr =>
   setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
 
 /**
@@ -122,6 +129,6 @@ export default class AmpStoryAdPreview {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    return this.writeToIframe_(await this.adIframe_, insertPatches(dirty));
+    return this.writeToIframe_(await this.adIframe_, patch(dirty));
   }
 }
