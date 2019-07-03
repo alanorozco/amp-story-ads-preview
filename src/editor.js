@@ -41,6 +41,8 @@ import htmlMinifier from 'html-minifier';
 
 const {id, g, n, s} = getNamespace('editor');
 
+const updateDebounceRate = 300;
+
 const readFixtureHtml = async name =>
   (await fs.readFile(`src/fixtures/${name}.html`)).toString('utf-8');
 
@@ -336,6 +338,8 @@ class Editor {
 
     this.parent_ = element.parentElement;
 
+    this.updateOnChangesTimeout_ = null;
+
     this.hintTimeout_ = null;
     this.amphtmlHints_ = this.fetchHintsData_();
 
@@ -410,7 +414,16 @@ class Editor {
   }
 
   attachCodeMirrorEvents_() {
-    this.codeMirror_.on('change', () => this.updatePreview_());
+    const {clearTimeout, setTimeout} = this.win;
+
+    this.codeMirror_.on('changes', () => {
+      if (this.updateOnChangesTimeout_) {
+        clearTimeout(this.updateOnChangesTimeout_);
+      }
+      this.updateOnChangesTimeout_ = setTimeout(() => {
+        this.updatePreview_();
+      }, updateDebounceRate);
+    });
 
     this.codeMirror_.on('dragover', () => this.dragover_());
     this.codeMirror_.on('dragleave', () => this.dragleave_());
