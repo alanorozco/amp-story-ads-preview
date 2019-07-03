@@ -62,7 +62,7 @@ export function whenIframeLoaded(iframe) {
  *   into the homonymous property. Otherwise passed through.
  * @param {string} srcdoc
  *   Set on <iframe> once resolved if platform lacks `srcdoc` support.
- *   Otherwise passed through as a esult property in order to set as an
+ *   Otherwise passed through as a result property in order to set as an
  *   attribute on the rendered <iframe>.
  * @return {{
  *   iframeReady: Promise<HTMLIframeElement>,
