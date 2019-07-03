@@ -68,7 +68,7 @@ export function whenIframeLoaded(iframe) {
  *   writer: function(HTMLIframeElement, string):string
  * }}
  *  - `iframeReady` resolves when ready for further updates.
- *  - `srcdoc` to set on template
+ *  - `srcdoc` to set on `<iframe>`
  *    (undefined if unnecessary, since we're using `document.write()` instead.)
  *  - `writer` is to be used for further updates. Takes `(iframe, srcdoc)`.
  */
