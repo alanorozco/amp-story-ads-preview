@@ -54,14 +54,19 @@ export function whenIframeLoaded(iframe) {
  *
  * @param {Window} win
  * @param {Promise<HTMLIframeElement>} iframeReady
- * @param {string} srcdoc
+ *   Should resolve when the iframe is attached and loaded.
+ *   When `document.write()`ing, the frame will load once more and this will
+ *   be chain-resolved.
+ *   Otherwise is passed through since the `srcdoc` attribute is set on render.
+ * @param {string} srcdoc Document string to set.
  * @return {{
  *   iframeReady: Promise<HTMLIframeElement>,
  *   srcdoc: (string|undefined),
  *   writer: function(HTMLIframeElement, string):string
  * }}
  *  - `iframeReady` resolves when ready for further updates.
- *  - `srcdoc` to set on template (undefined if unnecessary.)
+ *  - `srcdoc` to set on template
+ *    (undefined if unnecessary, since we're using `document.write()` instead.)
  *  - `writer` is meant for further updates.
  */
 export const setSrcdocAsyncMultiStrategy = (win, iframeReady, srcdoc) =>
