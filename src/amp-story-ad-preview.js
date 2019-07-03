@@ -127,7 +127,6 @@ export default class AmpStoryAdPreview {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    debugger;
     const patched = insertPatches(dirty);
     return this.renderer_(await this.adIframe_, patched);
   }

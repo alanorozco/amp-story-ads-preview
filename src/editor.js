@@ -27,6 +27,7 @@ import {identity} from './utils/function';
 import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
 import {successfulFetch} from './utils/xhr';
+import {templateFileUrl, TemplateLoader} from './template-loader';
 import {ToggleButton} from './toggle-button';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
@@ -301,9 +302,6 @@ function TemplateSelectors(templates) {
   `;
 }
 
-const templateFileUrl = (templateName, filename) =>
-  `/static/templates/${templateName}/${filename}`;
-
 const TemplateSelector = ({name, previewExt}) => html`
   <div
     class="${n('template')}"
@@ -430,12 +428,9 @@ class Editor {
     this.hintTimeout_ = null;
     this.amphtmlHints_ = this.fetchHintsData_();
 
-    const templates = JSON.parse(
-      assert(element.querySelector(s('script.templates'))).textContent.replace(
-        /(&quot\;)/g,
-        '"'
-      )
-    );
+    this.templateLoader_ = new TemplateLoader(this.win, element);
+
+    const {templates} = this.templateLoader_;
 
     const {
       promise: codeMirrorElement,
@@ -574,16 +569,15 @@ class Editor {
   async selectTemplates_({target: {dataset}}) {
     const templateName = assert(dataset.name);
     const {files} = this.state_.templates[templateName];
-    const contentUrl = templateFileUrl(templateName, 'index.html');
-    const contentResponse = await successfulFetch(this.win, contentUrl);
-    this.codeMirror_.setValue(await contentResponse.text());
+    this.codeMirror_.setValue(
+      await this.templateLoader_.fetchTemplateContent(templateName)
+    );
     this.state_.files = files.map(name => ({
       name,
       url: this.getTemplateFileUrl_(templateName, name),
     }));
     this.state_.isFilesPanelDisplayed = true;
     this.state_.isTemplatePanelDisplayed = false;
-    //this.updatePreview_();
   }
 
   getTemplateFileUrl_(templateName, filename) {
