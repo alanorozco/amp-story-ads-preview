@@ -70,7 +70,7 @@ export function whenIframeLoaded(iframe) {
  *   writer: function(HTMLIframeElement, string):string
  * }}
  *  - `iframeReady` resolves when ready for further updates.
- *  - `srcdoc` to set on `<iframe>` (undefined if unnecessary)
+ *  - `srcdoc` to set as attribute on `<iframe>` (undefined if unnecessary.)
  *  - `writer` to be used for further updates.
  *    Takes `(iframe, srcdoc)` and returns `srcdoc` for chaining.
  */
