@@ -13,15 +13,9 @@
  * limitations under the License.
  */
 import './amp-story-ad-preview.css';
-import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
+import {awaitWriteIframeMultiStrategy, whenIframeLoaded} from './utils/iframe';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
-import {
-  isSrcdocSupported,
-  whenIframeLoaded,
-  writeToIframe,
-  writeToSrcdoc,
-} from './utils/iframe';
 import {minifyInlineJs} from './utils/minify-inline-js';
 import {untilAttached} from './utils/until-attached';
 
@@ -38,10 +32,11 @@ const defaultIframeSandbox = [
 ].join(' ');
 
 /**
- * Renders a wrapped iframe that loads an empty document.
+ * Renders a wrapped iframe with optional srcdoc.
+ * @param {string=} srcdoc
  * @return {lit-html/TemplateResult}
  */
-const WrappedIframe = ({srcdoc}) => html`
+const WrappedIframe = ({srcdoc = ''}) => html`
   <div class="${n('wrap')}">
     <iframe
       allowpaymentrequest
@@ -51,7 +46,7 @@ const WrappedIframe = ({srcdoc}) => html`
       title="AMP Story Ad Preview"
       srcdoc=${srcdoc}
     >
-      <p>Loading...</p>
+      <p>Loading…</p>
     </iframe>
   </div>
 `;
@@ -78,42 +73,42 @@ const insertHttpsCircumventionPatch = docStr =>
 const insertPatches = docStr =>
   setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
 
+/**
+ * Gets amp-story document string from `data-template` attribute.
+ * (DESTRUCTIVE: Unsets `data-template` to clear memory.)
+ * @param {Element} element
+ * @return {string}
+ */
+function getDataTemplate(element) {
+  const {template} = element.dataset;
+  element.removeAttribute('data-template');
+  return template;
+}
+
 export default class AmpStoryAdPreview {
   constructor(win, element) {
     this.win = win;
     this.element = element;
 
-    /** @private {boolean} */
-    this.useSourcedoc_ = true;
+    const {iframeReady, writer, srcdoc} = awaitWriteIframeMultiStrategy(
+      untilAttached(this.element, s('.iframe')).then(whenIframeLoaded),
+      getDataTemplate(element).replace('{{ adSandbox }}', defaultIframeSandbox)
+    );
 
     /**
-     * Controls which method is used to render. Defaults to srcdoc, but
-     * is set to doc write when srcdoc is unsupported.
-     * @private {function}
+     * Writer for ad iframe content.
+     * Defaults to srcdoc writer, uses document.write() when unsupported.
+     * TODO: A4A runtime throws replaceState error when using srcdoc.
+     * Figure out how to fix, or always use document.write()
+     * @private {function(HTMLIframeElement, string):Promise<HTMLIFrameElement>}
      */
-    this.renderer_ = this.renderWithSrcdoc_;
+    this.writeToIframe_ = writer;
 
-    const {promise, resolve} = new Deferred();
-    /** @private {!function} */
-    this.adIframeResolver_ = resolve;
-    /** @private {!Promise} */
-    this.adIframe_ = promise;
+    /** @private {!Promise<HTMLIFrameElement>} */
+    this.adIframePromise_ = iframeReady.then(
+      iframe => iframe.contentDocument.querySelector('iframe') // xzibit.png
+    );
 
-    /** @private {string} */
-    this.storyTemplate_ = element
-      .getAttribute('data-template')
-      .replace('{{ adSandbox }}', defaultIframeSandbox);
-
-    /** @private {!Promise} */
-    this.iframePromise_ = untilAttached(this.element, s('.iframe'));
-
-    this.determineIframeStrategy_();
-
-    // We're already keeping this value, so let's just remove the attribute to
-    // clear memory.
-    element.removeAttribute('data-template');
-
-    const srcdoc = this.useSourcedoc_ ? this.storyTemplate_ : '';
     render(WrappedIframe({srcdoc}), this.element);
   }
 
@@ -127,67 +122,9 @@ export default class AmpStoryAdPreview {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    const patched = insertPatches(dirty);
-    return this.renderer_(await this.adIframe_, patched);
-  }
-
-  /**
-   * Checks to see if srcdoc is supported. If so, outer frame is rendered
-   * by lit, so we are ready to get ad frame. Else, we must manually
-   * render the outer frame first.
-   * @private
-   */
-  determineIframeStrategy_() {
-    if (isSrcdocSupported()) {
-      this.getAdIframe_();
-      return;
-    }
-
-    this.useSourcedoc_ = false;
-    this.writeOuterIframe();
-  }
-
-  /**
-   * Responsible for resolving the ad iframe promise with a ref to the
-   * iframe when ready. Must wait for outer frame (story) to render.
-   * @private
-   */
-  async getAdIframe_() {
-    const outerIframe = await whenIframeLoaded(await this.iframePromise_);
-    const adFrame = outerIframe.contentDocument.querySelector('iframe');
-    this.adIframeResolver_(adFrame);
-  }
-
-  /**
-   * When srcdoc is not supported we control rendering of outer frame
-   * without lit. Also sets the appropriate renderer for future use.
-   */
-  async writeOuterIframe() {
-    this.renderer_ = this.renderWithDocWrite_;
-    // First load in non-srcdoc case is an empty iframe.
-    const outerIframe = await whenIframeLoaded(await this.iframePromise_);
-    writeToIframe(outerIframe, this.storyTemplate);
-    // Now the ad iframe can wait for the right load event.
-    this.getAdIframe_();
-  }
-
-  /**
-   * Default rendering method. Uses srcdoc=content.
-   * @param {!HTMLIFrameElement} iframe
-   * @param {string} content
-   */
-  renderWithSrcdoc_(iframe, content) {
-    // TODO: A4A runtime throws replaceState error when using srcdoc.
-    // Figure out how to fix, or always use renderWithDocWrite.
-    writeToSrcdoc(iframe, content);
-  }
-
-  /**
-   * Used when srcdoc is not supported.
-   * @param {!HTMLIFrameElement} iframe
-   * @param {string} content
-   */
-  renderWithDocWrite_(iframe, content) {
-    writeToIframe(iframe, content);
+    return this.writeToIframe_(
+      await this.adIframePromise_,
+      insertPatches(dirty)
+    );
   }
 }
