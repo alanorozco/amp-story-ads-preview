@@ -78,12 +78,8 @@ const insertHttpsCircumventionPatch = docStr =>
  * @param {string} docStr
  * @return {string}
  */
-function patch(docStr) {
-  for (const fn of [insertHttpsCircumventionPatch, setBodyAmpStoryVisible]) {
-    docStr = fn(docStr);
-  }
-  return docStr;
-}
+const patch = docStr =>
+  setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
 
 /**
  * Gets amp-story document string from `data-template` attribute.
