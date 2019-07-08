@@ -186,6 +186,7 @@ async function minifyBundle(filename) {
 
 export async function build() {
   await copyStaticAssets();
+  await buildTemplatesJson();
   await step('🚧 Building js', () =>
     withAllBundles(async name => {
       const bundle = await rollup(await inputConfig(name));
@@ -201,6 +202,35 @@ export async function build() {
 
 const copyStaticAssets = () =>
   step('📋 Copying static assets', () => fs.copy('static', 'dist/static'));
+
+const buildTemplatesJson = () =>
+  step('💅 Generating templates json', async () => {
+    const root = 'static/templates';
+    const result = {};
+
+    for (const name of await fs.readdir(root)) {
+      let previewExt;
+      let files;
+
+      const shouldIncludeFile = file => {
+        if (file.startsWith('_preview.')) {
+          previewExt = file.split('.').pop();
+          return false;
+        }
+        return !/(^\.|\.(html|txt|md)$)/.test(file);
+      };
+
+      try {
+        files = (await fs.readdir(`${root}/${name}`)).filter(shouldIncludeFile);
+      } catch (_) {
+        continue;
+      }
+
+      result[name] = {files, previewExt};
+    }
+
+    return fs.outputJson('dist/templates.json', result).catch(fatal);
+  });
 
 const freezeStaticHtml = (opts = {}) =>
   step('❄️ Freezing static html', () =>
@@ -268,6 +298,7 @@ async function incrementalBuild() {
     },
     START: async () => {
       await copyStaticAssets();
+      await buildTemplatesJson();
       log(yellow('🚧 Starting incremental build...'));
     },
     BUNDLE_START: ({output}) => {
