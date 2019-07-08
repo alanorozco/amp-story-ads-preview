@@ -35,8 +35,13 @@ export const fetchTemplateContentFactory = win =>
     (await successfulFetch(win, templateFileUrl(name, 'index.html'))).text()
   );
 
-// Panel does not render when it is not displayed to allow for video
-// autoplay without bad performance (see hooseTemplatesButton)
+/**
+ * Does not render when not displayed for video autoplay.
+ * (See `TemplateSelector`)
+ * @param {boolean} isDisplayed
+ * @param {Object<string, {previewExt: string, files: Array}>} templates
+ * @return {lit-html/TemplateResult}
+ */
 export const TemplatesPanel = ({isDisplayed, templates}) =>
   isDisplayed
     ? html`
