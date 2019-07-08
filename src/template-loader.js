@@ -89,8 +89,6 @@ export const TemplatesJsonScriptOptional = json =>
         </script>
       `;
 
-const dispatchToggleTemplates = redispatchAs(g('toggle-templates'));
-
 export const parseTemplatesJsonScript = parent =>
   JSON.parse(
     assert(parent.querySelector(s('script.templates'))).textContent.replace(
@@ -98,6 +96,8 @@ export const parseTemplatesJsonScript = parent =>
       '"'
     )
   );
+
+const dispatchToggleTemplates = redispatchAs(g('toggle-templates'));
 
 export const ChooseTemplatesButton = (setClassMap = {}) => html`
   <div
