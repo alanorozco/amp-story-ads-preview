@@ -164,6 +164,15 @@ export default class AmpStoryAdPreview {
   }
 
   async setMetaCtaLabel_(dirty) {
+    const {ctaType, ctaUrl} = this.extractMetaCta_(dirty);
+    const storyCta = (await this.storyIframe_).contentDocument.querySelector(
+      '.i-amphtml-story-ad-link'
+    );
+    storyCta.textContent = CTA_TYPES[ctaType];
+    storyCta.setAttribute('href', ctaUrl);
+  }
+
+  extractMetaCta_(dirty) {
     const head = dirty.substring(0, dirty.lastIndexOf('</head>'));
     const components = head.split('<');
     let ctaType = defaultCtaType;
@@ -182,10 +191,9 @@ export default class AmpStoryAdPreview {
         );
       }
     }
-    const storyCta = (await this.storyIframe_).contentDocument.querySelector(
-      '.i-amphtml-story-ad-link'
-    );
-    storyCta.textContent = CTA_TYPES[ctaType];
-    storyCta.setAttribute('href', ctaUrl);
+    return {
+      'ctaType': ctaType,
+      'ctaUrl': ctaUrl,
+    };
   }
 }
