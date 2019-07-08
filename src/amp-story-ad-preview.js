@@ -14,6 +14,7 @@
  */
 import './amp-story-ad-preview.css';
 import {assert} from '../lib/assert';
+import {CTA_TYPES} from './cta-types';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {ifDefined} from 'lit-html/directives/if-defined';
@@ -23,34 +24,10 @@ import {untilAttached} from './utils/until-attached';
 
 const {n, s} = getNamespace('amp-story-ad-preview');
 
-export const CTA_TYPES = {
-  APPLY_NOW: 'Apply Now',
-  BOOK_NOW: 'Book',
-  BUY_TICKETS: 'Buy Tickets',
-  DOWNLOAD: 'Download',
-  EXPLORE: 'Explore',
-  GET_NOW: 'Get Now',
-  INSTALL: 'Install Now',
-  LEARN_MORE: 'Learn More',
-  LISTEN: 'Listen',
-  MORE: 'More',
-  OPEN_APP: 'Open App',
-  ORDER_NOW: 'Order Now',
-  PLAY: 'Play',
-  READ: 'Read',
-  SHOP: 'Shop',
-  SHOW: 'Show',
-  SHOWTIMES: 'Showtimes',
-  SIGN_UP: 'Sign Up',
-  SUBSCRIBE: 'Subscribe Now',
-  USE_APP: 'Use App',
-  VIEW: 'View',
-  WATCH: 'Watch',
-  WATCH_EPISODE: 'Watch Episode',
-};
-
 const defaultCtaType = 'LEARN_MORE';
 const defaultCtaUrl = 'https://amp.dev';
+
+const metaCtaRe = /<meta\s+[^>]*name=['"]?amp-cta-(type|url)['"]?[^>]*>/gi;
 
 const defaultIframeSandbox = [
   'allow-scripts',
@@ -125,6 +102,7 @@ function getDataTemplate(element) {
 
 export default class AmpStoryAdPreview {
   constructor(win, element) {
+    this.win = win;
     this.storyIframe_ = untilAttached(element, s('.iframe')).then(
       whenIframeLoaded
     );
@@ -149,6 +127,8 @@ export default class AmpStoryAdPreview {
       iframe => iframe.contentDocument.querySelector('iframe') // xzibit.png
     );
 
+    this.htmlParserEl_ = null;
+
     render(WrappedIframe({srcdoc}), element);
   }
 
@@ -161,39 +141,40 @@ export default class AmpStoryAdPreview {
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
     this.writeToIframe_(await this.adIframe_, patch(dirty));
+    this.setMetaCtaLabel_(dirty);
   }
 
   async setMetaCtaLabel_(dirty) {
-    const {ctaType, ctaUrl} = this.extractMetaCta_(dirty);
+    const {type, url} = this.extractMetaCta_(dirty);
     const storyCta = (await this.storyIframe_).contentDocument.querySelector(
       '.i-amphtml-story-ad-link'
     );
-    storyCta.textContent = CTA_TYPES[ctaType];
-    storyCta.setAttribute('href', ctaUrl);
+    storyCta.textContent = CTA_TYPES[type];
+    storyCta.setAttribute('href', url);
   }
 
   extractMetaCta_(dirty) {
-    const head = dirty.substring(0, dirty.lastIndexOf('</head>'));
-    const components = head.split('<');
-    let ctaType = defaultCtaType;
-    let ctaUrl = defaultCtaUrl;
-    for (let component of components) {
-      if (component.includes(`meta name="amp-cta-type"`)) {
-        ctaType = component.substring(
-          component.lastIndexOf('=') + 2,
-          component.lastIndexOf(`"`)
-        );
+    let type = defaultCtaType;
+    let url = defaultCtaUrl;
+    const matches = dirty.match(metaCtaRe);
+    if (matches && matches.length > 0) {
+      if (!this.htmlParserEl_) {
+        this.htmlParserEl_ = this.win.document.createElement('div');
       }
-      if (component.includes(`meta name="amp-cta-url"`)) {
-        ctaUrl = component.substring(
-          component.lastIndexOf('=') + 2,
-          component.lastIndexOf(`"`)
-        );
+      this.htmlParserEl_.innerHTML = matches.join('\n');
+      const metas = this.htmlParserEl_.querySelectorAll('meta');
+      this.htmlParserEl_.innerHTML = null;
+      for (const meta of metas) {
+        const name = meta.getAttribute('name');
+        const content = meta.getAttribute('content');
+        if (name == 'amp-cta-type') {
+          type = content;
+        }
+        if (name == 'amp-cta-url') {
+          url = content;
+        }
       }
     }
-    return {
-      'ctaType': ctaType,
-      'ctaUrl': ctaUrl,
-    };
+    return {type, url};
   }
 }
