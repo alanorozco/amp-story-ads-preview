@@ -49,6 +49,9 @@ export const CTA_TYPES = {
   WATCH_EPISODE: 'Watch Episode',
 };
 
+const defaultCtaType = 'LEARN_MORE';
+const defaultCtaUrl = 'https://amp.dev';
+
 const defaultIframeSandbox = [
   'allow-scripts',
   'allow-forms',
@@ -163,8 +166,8 @@ export default class AmpStoryAdPreview {
   async setMetaCtaLabel_(dirty) {
     const head = dirty.substring(0, dirty.lastIndexOf('</head>'));
     const components = head.split('<');
-    let ctaType = '';
-    let ctaUrl = '';
+    let ctaType = defaultCtaType;
+    let ctaUrl = defaultCtaUrl;
     for (let component of components) {
       if (component.includes(`meta name="amp-cta-type"`)) {
         ctaType = component.substring(
