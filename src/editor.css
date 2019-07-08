@@ -236,3 +236,7 @@
 .content-toolbar .selected {
   background-color: rgba(0, 0, 0, 0.4)
 }
+
+.update-preview-button {
+  cursor: pointer;
+}

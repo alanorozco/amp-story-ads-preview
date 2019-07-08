@@ -204,7 +204,17 @@
     <aside class="i-amphtml-ad-overlay-container">
       <p class="i-amphtml-story-ad-attribution">Ad</p>
     </aside>
-    <amp-story-page id="cover" ad>
+    <amp-story-page id="page-1" ad>
+      <div class="i-amphtml-glass-pane">
+      </div>
+      <div class="amp-story-cta-layer">
+        <a class="i-amphtml-story-ad-link" href="https://google.com">Learn More</a>
+      </div>
+      <amp-story-grid-layer template="fill">
+        <iframe scrolling="no" sandbox="{{ adSandbox }}" class="ad"></iframe>
+      </amp-story-grid-layer>
+    </amp-story-page>
+    <amp-story-page id="page-2" ad>
       <div class="i-amphtml-glass-pane">
       </div>
       <div class="amp-story-cta-layer">
