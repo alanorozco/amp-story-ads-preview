@@ -31,6 +31,9 @@ const {g, n, s} = getNamespace('template-loader');
 export const templateFileUrl = (templateName, filename) =>
   `/static/templates/${templateName}/${filename}`;
 
+const templatePreviewFileUrl = (name, ext) =>
+  templateFileUrl(name, `_preview.${ext}`);
+
 export const fetchTemplateContentFactory = win =>
   memoize(async name =>
     (await successfulFetch(win, templateFileUrl(name, 'index.html'))).text()
@@ -74,17 +77,19 @@ const TemplateSelector = ({name, previewExt}) => html`
   </div>
 `;
 
-function TemplatePreview(name, ext) {
-  const url = templateFileUrl(name, `_preview.${ext}`);
-  if (ext == 'mp4' || ext == 'webm') {
-    return html`
-      <video autoplay loop muted src=${url}></video>
-    `;
-  }
-  return html`
-    <img src=${url} />
-  `;
-}
+const TemplatePreview = (name, ext) =>
+  ext == 'mp4' || ext == 'webm'
+    ? html`
+        <video
+          autoplay
+          loop
+          muted
+          src=${templatePreviewFileUrl(name, ext)}
+        ></video>
+      `
+    : html`
+        <img src=${templatePreviewFileUrl(name, ext)} />
+      `;
 
 export const TemplatesJsonScriptOptional = json =>
   !json
