@@ -18,6 +18,7 @@ import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {attachBlobUrl, FilesDragHint, fileSortCompare} from './file-upload';
 import {classMap} from 'lit-html/directives/class-map';
+import {CTA_TYPES} from './cta-types';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {hintIgnoreEnds, hintsUrl, setAttrFileHints} from './hints';
@@ -718,7 +719,10 @@ class Editor {
     }
     Object.assign(htmlSchema, hints[format.toLowerCase()]);
 
-    // Below, ours, in case of race:
+    // Below, ours:
+    // - Sets attribute values for `meta[content]` to hint CTA
+    // - Sets uploaded file hints
+    htmlSchema.meta.attrs.content = Object.keys(CTA_TYPES);
     this.updateFileHints_();
   }
 
