@@ -236,3 +236,7 @@
 .content-toolbar .selected {
   background-color: rgba(0, 0, 0, 0.4)
 }
+
+.dispatchUpdatePreview {
+  cursor: pointer;
+}
