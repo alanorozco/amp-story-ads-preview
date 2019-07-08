@@ -75,7 +75,7 @@ const litHtmlMinifierBabelPlugin = [
       sortClassName: false,
       sortAttributes: false,
     },
-    modules: {'lit-html': ['html']},
+    modules: {'lit-html': ['html', 'svg']},
   },
 ];
 
