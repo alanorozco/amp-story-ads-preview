@@ -163,7 +163,7 @@ export default class AmpStoryAdPreview {
       }
       this.htmlParserEl_.innerHTML = matches.join('\n');
       const metas = this.htmlParserEl_.querySelectorAll('meta');
-      this.htmlParserEl_.innerHTML = null;
+      this.htmlParserEl_.innerHTML = '';
       for (const meta of metas) {
         const name = meta.getAttribute('name');
         const content = meta.getAttribute('content');
