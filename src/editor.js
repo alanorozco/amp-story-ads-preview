@@ -108,15 +108,15 @@ const renderEditor = ({
   codeMirrorElement,
   content = '',
   files = [],
-  isFullPreview = false,
   isFilesDragHintDisplayed = false,
   isFilesPanelDisplayed = false,
+  isFullPreview = false,
   isTemplatePanelDisplayed = false,
   previewElement,
   storyDocTemplate = '',
-  viewportId = viewportIdDefault,
   templates,
   templatesJson,
+  viewportId = viewportIdDefault,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
