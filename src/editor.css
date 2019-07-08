@@ -1,6 +1,7 @@
 @import './colors.css';
 @import './editor-codemirror.css';
 
+@app;
 @component;
 
 .wrap {
@@ -77,12 +78,12 @@
   color: white;
 }
 
-.content-toolbar .upload-button,
+.content-toolbar .text-button,
 .content-toolbar .content-toolbar-toggle {
   color: rgba(255, 255, 255, 0.6);
 }
 
-.content-toolbar .upload-button {
+.content-toolbar .text-button {
   background: none;
   border: 1px solid var(--blueishgray-transparent);
   margin: 0 8px;
@@ -106,7 +107,7 @@
   overflow: hidden;
 }
 
-.upload-button {
+.text-button {
   text-align: center;
   cursor: pointer;
   padding: 0 12px;
@@ -118,7 +119,7 @@
   text-transform: uppercase;
 }
 
-.upload-button:hover {
+.text-button:hover {
   color: var(--amp-blue);
 }
 
@@ -195,8 +196,43 @@
   margin: 10px 0;
 }
 
+.template {
+  flex: 1;
+  opacity: 0.9;
+  z-index: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.templates-panel {
+  padding: 20px;
+  background: var(--content-bg);
+}
+
+.template:hover {
+  transform:scale(1.05);
+  opacity: 1;
+  z-index: 1;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
 .delete-file-button {
   z-index:2;
   position: absolute;
   cursor: pointer;
+}
+
+.template video,
+.template img {
+  width: 100%;
+  display: block;
+  z-index: 10;
+}
+
+.content-toolbar .choose-templates {
+  margin-left: auto;
+}
+
+.content-toolbar .selected {
+  background-color: rgba(0, 0, 0, 0.4)
 }

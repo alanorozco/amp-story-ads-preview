@@ -17,13 +17,17 @@ import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {attachBlobUrl, FilesDragHint, fileSortCompare} from './file-upload';
+import {classMap} from 'lit-html/directives/class-map';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {hintIgnoreEnds, hintsUrl, setAttrFileHints} from './hints';
 import {html, render} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
+import {identity} from './utils/function';
 import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
+import {successfulFetch} from './utils/xhr';
+import {templateFileUrl, TemplateLoader} from './template-loader';
 import {ToggleButton} from './toggle-button';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
@@ -55,6 +59,7 @@ const staticServerData = async () => ({
     await readFixtureHtml('story'),
     htmlMinifyConfig
   ),
+  templatesJson: (await fs.readFile('dist/templates.json')).toString('utf-8'),
 });
 
 /**
@@ -94,9 +99,12 @@ const renderEditor = ({
   isFullPreview = false,
   isFilesDragHintDisplayed = false,
   isFilesPanelDisplayed = false,
+  isTemplatePanelDisplayed = false,
   previewElement,
   storyDocTemplate = '',
   viewportId = viewportIdDefault,
+  templates,
+  templatesJson,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
@@ -107,8 +115,10 @@ const renderEditor = ({
       isDisplayed: !isFullPreview,
       isFilesDragHintDisplayed,
       isFilesPanelDisplayed,
+      isTemplatePanelDisplayed,
       codeMirrorElement,
       content,
+      templates,
     })}
     ${PreviewPanel({
       isFullPreview,
@@ -116,8 +126,18 @@ const renderEditor = ({
       storyDocTemplate,
       viewportId,
     })}
+    ${TemplatesJsonScriptOptional(templatesJson)}
   </div>
 `;
+
+const TemplatesJsonScriptOptional = json =>
+  !json
+    ? ''
+    : html`
+        <script type="application/json" class=${n('templates')}>
+          ${json}
+        </script>
+      `;
 
 /**
  * @param {Object} data
@@ -194,22 +214,37 @@ const FileListItem = ({name}, index) => html`
  * of it, to propagate a click into a hidden `input[type=file]` element.
  * @param {Event} e
  */
-function cascasdeInputClick({currentTarget}) {
+function cascadeInputClick({currentTarget}) {
   assert(currentTarget.querySelector('input')).click();
 }
 
 const dispatchUploadFiles = redispatchAs(g('upload-files'));
+
+const dispatchToggleTemplates = redispatchAs(g('toggle-templates'));
 
 /**
  * Renders a button to "upload" files--that is, set Blob URLs so they're
  * accessible from the AMP Ad document.
  */
 const FileUploadButton = () => html`
-  <div class="${n('upload-button-container')}" @click="${cascasdeInputClick}">
-    <div class="${n('upload-button')}">
+  <div class="${n('upload-button-container')}" @click="${cascadeInputClick}">
+    <div class="${n('text-button')}">
       Add files
     </div>
     <input type="file" hidden multiple @change="${dispatchUploadFiles}" />
+  </div>
+`;
+
+const ChooseTemplatesButton = isTemplatePanelDisplayed => html`
+  <div
+    class="${classMap({
+      [n('text-button')]: true,
+      [n('choose-templates')]: true,
+      [n('selected')]: isTemplatePanelDisplayed,
+    })}"
+    @click=${dispatchToggleTemplates}
+  >
+    Templates
   </div>
 `;
 
@@ -228,19 +263,66 @@ const ContentPanel = ({
   isDisplayed,
   isFilesDragHintDisplayed,
   isFilesPanelDisplayed,
+  isTemplatePanelDisplayed,
+  templates,
 }) => html`
   <div class=${n('content')} ?hidden=${!isDisplayed}>
     ${FilesDragHint({isDisplayed: isFilesDragHintDisplayed})}
-    ${ContentToolbar({isFilesPanelDisplayed})}
+    ${ContentToolbar({isFilesPanelDisplayed, isTemplatePanelDisplayed})}
+    ${TemplatesPanel({isTemplatePanelDisplayed, templates})}
     <!--
-      Default Content to load on the server and then populate codemirror on
-      the client.
-      codeMirrorElement is a promise resolved by codemirror(), hence the
-      until directive. Once resolved, content can be empty.
-    -->
+        Default Content to load on the server and then populate codemirror on
+        the client.
+        codeMirrorElement is a promise resolved by codemirror(), hence the
+        until directive. Once resolved, content can be empty.
+      -->
     ${until(codeMirrorElement || Textarea({content}))}
   </div>
 `;
+const dispatchSelectTemplate = redispatchAs(g('select-template'));
+
+// Panel does not render when it is not displayed to allow for video
+// autoplay without bad performance (see hooseTemplatesButton)
+const TemplatesPanel = ({isTemplatePanelDisplayed, templates}) =>
+  isTemplatePanelDisplayed
+    ? html`
+        <div class="${n('templates-panel')}">
+          <div class="${g('flex-center')}">
+            ${TemplateSelectors(templates)}
+          </div>
+        </div>
+      `
+    : '';
+
+function TemplateSelectors(templates) {
+  return html`
+    ${repeat(Object.keys(templates), identity, name =>
+      TemplateSelector({name, ...templates[name]})
+    )}
+  `;
+}
+
+const TemplateSelector = ({name, previewExt}) => html`
+  <div
+    class="${n('template')}"
+    @click=${dispatchSelectTemplate}
+    data-name=${name}
+  >
+    ${TemplatePreview(name, previewExt)}
+  </div>
+`;
+
+function TemplatePreview(name, ext) {
+  const url = templateFileUrl(name, `_preview.${ext}`);
+  if (ext == 'mp4' || ext == 'webm') {
+    return html`
+      <video autoplay loop muted src=${url}></video>
+    `;
+  }
+  return html`
+    <img src=${url} />
+  `;
+}
 
 /**
  * Renders content panel toolbar.
@@ -248,7 +330,10 @@ const ContentPanel = ({
  * @param {boolean=} data.isFilesPanelDisplayed
  * @return {lit-html/TemplateResult}
  */
-const ContentToolbar = ({isFilesPanelDisplayed}) => html`
+const ContentToolbar = ({
+  isFilesPanelDisplayed,
+  isTemplatePanelDisplayed,
+}) => html`
   <div
     class="${[g('flex-center'), n('content-toolbar'), n('toolbar')].join(' ')}"
   >
@@ -256,7 +341,7 @@ const ContentToolbar = ({isFilesPanelDisplayed}) => html`
       isOpen: isFilesPanelDisplayed,
       name: 'files-panel',
     })}
-    ${FileUploadButton()}
+    ${FileUploadButton()} ${ChooseTemplatesButton(isTemplatePanelDisplayed)}
   </div>
 `;
 
@@ -343,6 +428,17 @@ class Editor {
     this.hintTimeout_ = null;
     this.amphtmlHints_ = this.fetchHintsData_();
 
+    const templateParse = JSON.parse(
+      assert(element.querySelector(s('script.templates'))).textContent.replace(
+        /(&quot\;)/g,
+        '"'
+      )
+    );
+
+    this.templateLoader_ = new TemplateLoader(this.win, element, templateParse);
+
+    const {templates} = this.templateLoader_;
+
     const {
       promise: codeMirrorElement,
       resolve: codeMirrorElementResolve,
@@ -379,6 +475,8 @@ class Editor {
       isFullPreview: false,
       previewElement,
       viewportId: viewportIdDefault,
+      isTemplatePanelDisplayed: false,
+      templates,
     });
 
     batchedRender();
@@ -404,6 +502,8 @@ class Editor {
       [g('insert-file-ref')]: this.insertFileRef_,
       [g('upload-files')]: this.uploadFiles_,
       [g('select-viewport')]: this.selectViewport_,
+      [g('toggle-templates')]: this.toggleTemplates_,
+      [g('select-template')]: this.selectTemplates_,
       [g('toggle')]: this.toggle_,
     };
 
@@ -473,6 +573,24 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
+  async selectTemplates_({target: {dataset}}) {
+    const templateName = assert(dataset.name);
+    const {files} = this.state_.templates[templateName];
+    this.codeMirror_.setValue(
+      await this.templateLoader_.fetchTemplateContent(templateName)
+    );
+    this.state_.files = files.map(name => ({
+      name,
+      url: this.getTemplateFileUrl_(templateName, name),
+    }));
+    this.state_.isFilesPanelDisplayed = true;
+    this.state_.isTemplatePanelDisplayed = false;
+  }
+
+  getTemplateFileUrl_(templateName, filename) {
+    return ['static/templates', templateName, filename].join('/');
+  }
+
   /**
    * Uploads files from an `<input>` target.
    * @param {Event} e
@@ -497,12 +615,20 @@ class Editor {
     this.updateFileHints_();
   }
 
+  toggleTemplates_() {
+    this.state_.isTemplatePanelDisplayed = !this.state_
+      .isTemplatePanelDisplayed;
+  }
+
   selectViewport_({target}) {
     const {value} = target;
 
     // If viewport is changed to 'full', the view will display an error message
     // instead of the preview.
     // TODO: Make 'full' special and add custom sizing
+    // When changing viewport to a smaller viewport, elements may get
+    // cut off.
+    // TODO: fix this
     this.state_.viewportId = validViewportId(value);
   }
 
@@ -608,8 +734,7 @@ class Editor {
     const {promise, reject, resolve} = new Deferred();
     this.win.requestIdleCallback(async () => {
       try {
-        const response = await this.win.fetch(hintsUrl);
-        assert(response.status === 200, `fetch got ${response.status}`);
+        const response = await successfulFetch(this.win, hintsUrl);
         resolve(response.json());
       } catch (err) {
         reject(err);
