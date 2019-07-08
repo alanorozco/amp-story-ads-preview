@@ -77,6 +77,12 @@
   <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1" />
   <link rel="canonical" href="/" />
   <style amp-custom>
+    .i-amphtml-glass-pane {
+      height: 100% !important;
+      width: 100% !important;
+      z-index: 1 !important;
+    }
+
     .ad {
       border: none;
       width: 100% !important;
@@ -199,6 +205,8 @@
       <p class="i-amphtml-story-ad-attribution">Ad</p>
     </aside>
     <amp-story-page id="cover" ad>
+      <div class="i-amphtml-glass-pane">
+      </div>
       <div class="amp-story-cta-layer">
         <a class="i-amphtml-story-ad-link" href="https://www.google.com">Learn More</a>
       </div>
