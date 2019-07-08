@@ -718,8 +718,6 @@ class Editor {
       delete htmlSchema[key];
     }
     Object.assign(htmlSchema, hints[format.toLowerCase()]);
-    // Must push one at a time; otherwise, it shows up as one big hint
-    // with every type option
     htmlSchema.meta.attrs.content = Object.keys(CTA_TYPES);
     this.updateFileHints_();
   }
