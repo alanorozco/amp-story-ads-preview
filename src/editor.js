@@ -90,10 +90,10 @@ const staticServerData = async () => ({
  *    (The SSR'd element is taken on runtime to manipulate independently, we
  *    bookkeep it so that it won't be overriden by the client-side rerender.)
  * @param {string=} data.storyDocTemplate
- * @param {Object<string, {previewExt: string, files: Array}>} templates
+ * @param {Object<string, {previewExt: string, files: Array}>} data.templates
  *    Templates definition.
  *    Displayed inside the `TemplatePanel`.
- * @param {string} templatesJson
+ * @param {string} data.templatesJson
  *    A definition of the above serialized as JSON.
  *    Used for inserting template definition by SSR. On the client, parsed
  *    value is passed as `templates`.
