@@ -196,40 +196,13 @@
   margin: 10px 0;
 }
 
-.template {
-  flex: 1;
-  opacity: 0.9;
-  z-index: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  cursor: pointer;
-}
-
-.templates-panel {
-  padding: 20px;
-  background: var(--content-bg);
-}
-
-.template:hover {
-  transform:scale(1.05);
-  opacity: 1;
-  z-index: 1;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-}
-
 .delete-file-button {
   z-index:2;
   position: absolute;
   cursor: pointer;
 }
 
-.template video,
-.template img {
-  width: 100%;
-  display: block;
-  z-index: 10;
-}
-
-.content-toolbar .choose-templates {
+.content-toolbar .templates-button {
   margin-left: auto;
 }
 

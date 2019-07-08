@@ -17,18 +17,23 @@ import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {attachBlobUrl, FilesDragHint, fileSortCompare} from './file-upload';
-import {classMap} from 'lit-html/directives/class-map';
+import {
+  ChooseTemplatesButton,
+  fetchTemplateContentFactory,
+  parseTemplatesJsonScript,
+  templateFileUrl,
+  TemplatesJsonScriptOptional,
+  TemplatesPanel,
+} from './template-loader';
 import {CTA_TYPES} from './cta-types';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {hintIgnoreEnds, hintsUrl, setAttrFileHints} from './hints';
 import {html, render, svg} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
-import {identity} from './utils/function';
 import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
 import {successfulFetch} from './utils/xhr';
-import {templateFileUrl, TemplateLoader} from './template-loader';
 import {ToggleButton} from './toggle-button';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
@@ -86,6 +91,13 @@ const staticServerData = async () => ({
  *    (The SSR'd element is taken on runtime to manipulate independently, we
  *    bookkeep it so that it won't be overriden by the client-side rerender.)
  * @param {string=} data.storyDocTemplate
+ * @param {Object<string, {previewExt: string, files: Array}>} data.templates
+ *    Templates definition.
+ *    Displayed inside the `TemplatePanel`.
+ * @param {string} data.templatesJson
+ *    A definition of the above serialized as JSON.
+ *    Used for inserting template definition by SSR. On the client, parsed
+ *    value is passed as `templates`.
  * @param {string=} data.viewportId = viewportIdDefault
  *    Viewport id as defined by the `viewports` object in `./viewport.js`.
  *    Defaults to exported `./viewport.viewportIdDefault`.
@@ -97,15 +109,15 @@ const renderEditor = ({
   codeMirrorElement,
   content = '',
   files = [],
-  isFullPreview = false,
   isFilesDragHintDisplayed = false,
   isFilesPanelDisplayed = false,
+  isFullPreview = false,
   isTemplatePanelDisplayed = false,
   previewElement,
   storyDocTemplate = '',
-  viewportId = viewportIdDefault,
   templates,
   templatesJson,
+  viewportId = viewportIdDefault,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
@@ -130,15 +142,6 @@ const renderEditor = ({
     ${TemplatesJsonScriptOptional(templatesJson)}
   </div>
 `;
-
-const TemplatesJsonScriptOptional = json =>
-  !json
-    ? ''
-    : html`
-        <script type="application/json" class=${n('templates')}>
-          ${json}
-        </script>
-      `;
 
 /**
  * @param {Object} data
@@ -221,8 +224,6 @@ function cascadeInputClick({currentTarget}) {
 
 const dispatchUploadFiles = redispatchAs(g('upload-files'));
 
-const dispatchToggleTemplates = redispatchAs(g('toggle-templates'));
-
 /**
  * Renders a button to "upload" files--that is, set Blob URLs so they're
  * accessible from the AMP Ad document.
@@ -233,19 +234,6 @@ const FileUploadButton = () => html`
       Add files
     </div>
     <input type="file" hidden multiple @change="${dispatchUploadFiles}" />
-  </div>
-`;
-
-const ChooseTemplatesButton = isTemplatePanelDisplayed => html`
-  <div
-    class="${classMap({
-      [n('text-button')]: true,
-      [n('choose-templates')]: true,
-      [n('selected')]: isTemplatePanelDisplayed,
-    })}"
-    @click=${dispatchToggleTemplates}
-  >
-    Templates
   </div>
 `;
 
@@ -270,7 +258,7 @@ const ContentPanel = ({
   <div class=${n('content')} ?hidden=${!isDisplayed}>
     ${FilesDragHint({isDisplayed: isFilesDragHintDisplayed})}
     ${ContentToolbar({isFilesPanelDisplayed, isTemplatePanelDisplayed})}
-    ${TemplatesPanel({isTemplatePanelDisplayed, templates})}
+    ${TemplatesPanel({isDisplayed: isTemplatePanelDisplayed, templates})}
     <!--
         Default Content to load on the server and then populate codemirror on
         the client.
@@ -280,50 +268,6 @@ const ContentPanel = ({
     ${until(codeMirrorElement || Textarea({content}))}
   </div>
 `;
-const dispatchSelectTemplate = redispatchAs(g('select-template'));
-
-// Panel does not render when it is not displayed to allow for video
-// autoplay without bad performance (see hooseTemplatesButton)
-const TemplatesPanel = ({isTemplatePanelDisplayed, templates}) =>
-  isTemplatePanelDisplayed
-    ? html`
-        <div class="${n('templates-panel')}">
-          <div class="${g('flex-center')}">
-            ${TemplateSelectors(templates)}
-          </div>
-        </div>
-      `
-    : '';
-
-function TemplateSelectors(templates) {
-  return html`
-    ${repeat(Object.keys(templates), identity, name =>
-      TemplateSelector({name, ...templates[name]})
-    )}
-  `;
-}
-
-const TemplateSelector = ({name, previewExt}) => html`
-  <div
-    class="${n('template')}"
-    @click=${dispatchSelectTemplate}
-    data-name=${name}
-  >
-    ${TemplatePreview(name, previewExt)}
-  </div>
-`;
-
-function TemplatePreview(name, ext) {
-  const url = templateFileUrl(name, `_preview.${ext}`);
-  if (ext == 'mp4' || ext == 'webm') {
-    return html`
-      <video autoplay loop muted src=${url}></video>
-    `;
-  }
-  return html`
-    <img src=${url} />
-  `;
-}
 
 /**
  * Renders content panel toolbar.
@@ -342,7 +286,12 @@ const ContentToolbar = ({
       isOpen: isFilesPanelDisplayed,
       name: 'files-panel',
     })}
-    ${FileUploadButton()} ${ChooseTemplatesButton(isTemplatePanelDisplayed)}
+    ${FileUploadButton()}
+    ${ChooseTemplatesButton({
+      [n('text-button')]: true,
+      [n('templates-button')]: true,
+      [n('selected')]: isTemplatePanelDisplayed,
+    })}
   </div>
 `;
 
@@ -453,16 +402,9 @@ class Editor {
     this.hintTimeout_ = null;
     this.amphtmlHints_ = this.fetchHintsData_();
 
-    const templateParse = JSON.parse(
-      assert(element.querySelector(s('script.templates'))).textContent.replace(
-        /(&quot\;)/g,
-        '"'
-      )
-    );
+    const templates = parseTemplatesJsonScript(element);
 
-    this.templateLoader_ = new TemplateLoader(this.win, element, templateParse);
-
-    const {templates} = this.templateLoader_;
+    this.fetchTemplateContent_ = fetchTemplateContentFactory(win);
 
     const {
       promise: codeMirrorElement,
@@ -552,7 +494,7 @@ class Editor {
     });
 
     this.codeMirror_.on('dragover', () => this.dragover_());
-    this.codeMirror_.on('dragleave', () => this.dragleave_());
+    this.codeMirror_.on('dragleave', () => this.dragleaveOrDragEnd_());
 
     // Below stolen from @ampproject/docs/playground/src/editor/editor.js
     // (Editor#createCodeMirror)
@@ -602,19 +544,13 @@ class Editor {
   async selectTemplates_({target: {dataset}}) {
     const templateName = assert(dataset.name);
     const {files} = this.state_.templates[templateName];
-    this.codeMirror_.setValue(
-      await this.templateLoader_.fetchTemplateContent(templateName)
-    );
+    this.codeMirror_.setValue(await this.fetchTemplateContent_(templateName));
     this.state_.files = files.map(name => ({
       name,
-      url: this.getTemplateFileUrl_(templateName, name),
+      url: templateFileUrl(templateName, name),
     }));
     this.state_.isFilesPanelDisplayed = true;
     this.state_.isTemplatePanelDisplayed = false;
-  }
-
-  getTemplateFileUrl_(templateName, filename) {
-    return ['static/templates', templateName, filename].join('/');
   }
 
   /**
