@@ -38,7 +38,7 @@ import {
   viewportIdFull,
   ViewportSelector,
 } from './viewport';
-import AmpStoryAdPreview from './amp-story-ad-preview';
+import AmpStoryAdPreview, {CTA_TYPES} from './amp-story-ad-preview';
 import codemirror from '../lib/runtime-deps/codemirror';
 import fs from 'fs-extra';
 import htmlMinifier from 'html-minifier';
@@ -718,7 +718,7 @@ class Editor {
       delete htmlSchema[key];
     }
     Object.assign(htmlSchema, hints[format.toLowerCase()]);
-    //htmlSchema.meta.attrs.content = [Object.keys(CTA_TYPES)];
+    htmlSchema.meta.attrs.content = [Object.keys(CTA_TYPES)];
     // Below, ours, in case of race:
     this.updateFileHints_();
   }

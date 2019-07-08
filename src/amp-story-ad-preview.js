@@ -23,7 +23,7 @@ import {untilAttached} from './utils/until-attached';
 
 const {n, s} = getNamespace('amp-story-ad-preview');
 
-const CTA_TYPES = {
+export const CTA_TYPES = {
   APPLY_NOW: 'Apply Now',
   BOOK_NOW: 'Book',
   BUY_TICKETS: 'Buy Tickets',
