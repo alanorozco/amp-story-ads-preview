@@ -428,7 +428,14 @@ class Editor {
     this.hintTimeout_ = null;
     this.amphtmlHints_ = this.fetchHintsData_();
 
-    this.templateLoader_ = new TemplateLoader(this.win, element);
+    const templateParse = JSON.parse(
+      assert(element.querySelector(s('script.templates'))).textContent.replace(
+        /(&quot\;)/g,
+        '"'
+      )
+    );
+
+    this.templateLoader_ = new TemplateLoader(this.win, element, templateParse);
 
     const {templates} = this.templateLoader_;
 

@@ -13,31 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {assert} from '../lib/assert';
-import {getNamespace} from '../lib/namespace';
 import {successfulFetch} from './utils/xhr';
 
 export const templateFileUrl = (templateName, filename) =>
   `/static/templates/${templateName}/${filename}`;
 
-const {s} = getNamespace('editor');
-
 export class TemplateLoader {
-  constructor(win, element) {
+  constructor(win, element, templates) {
     this.win = win;
     this.element = element;
-    this.templates = JSON.parse(
-      assert(element.querySelector(s('script.templates'))).textContent.replace(
-        /(&quot\;)/g,
-        '"'
-      )
-    );
+    this.templates = templates;
     this.content_ = {};
   }
 
   async fetchTemplateContent(name) {
-    if (name in this.content_) {
-    }
     if (!(name in this.content_)) {
       const contentUrl = templateFileUrl(name, 'index.html');
       const contentResponse = await successfulFetch(this.win, contentUrl);
