@@ -21,6 +21,7 @@ import {identity} from './utils/function';
 import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
 import {successfulFetch} from './utils/xhr';
+import {unsafeHTML} from 'lit-html/directives/unsafe-html';
 import memoize from 'lodash.memoize';
 
 import {getNamespace} from '../lib/namespace';
@@ -90,17 +91,12 @@ export const TemplatesJsonScriptOptional = json =>
     ? ''
     : html`
         <script type="application/json" class=${n('templates')}>
-          ${json}
+          ${unsafeHTML(json)}
         </script>
       `;
 
 export const parseTemplatesJsonScript = parent =>
-  JSON.parse(
-    assert(parent.querySelector(s('script.templates'))).textContent.replace(
-      /(&quot\;)/g,
-      '"'
-    )
-  );
+  JSON.parse(assert(parent.querySelector(s('script.templates'))).textContent);
 
 const dispatchToggleTemplates = redispatchAs(g('toggle-templates'));
 
