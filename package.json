@@ -6,10 +6,10 @@
   "scripts": {
     "clean": "rm -Rf dist",
     "build": "yarn run --silent x bin/build.js",
-    "lint": "`yarn bin`/eslint bin lib test src *.js",
+    "lint": "eslint bin lib test src *.js",
     "postinstall": "./bin/postinstall.sh",
     "serve": "yarn run --silent x bin/serve.js",
-    "test": "`yarn bin`/mocha --require ignore-styles --require esm",
+    "test": "mocha --require ignore-styles --require esm",
     "watch": "yarn run --silent x bin/build.js --watch",
     "watch-slow": "yarn run --silent x bin/watch.js",
     "x": "node -r ignore-styles -r esm"
