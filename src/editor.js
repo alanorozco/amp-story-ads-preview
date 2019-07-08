@@ -647,6 +647,7 @@ class Editor {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = this.replaceFileRefs_(doc);
     this.preview_.update(docWithFileRefs);
+    this.preview_.setMetaCtaLabel_(docWithFileRefs);
   }
 
   toggleFullPreview_() {

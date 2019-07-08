@@ -23,6 +23,32 @@ import {untilAttached} from './utils/until-attached';
 
 const {n, s} = getNamespace('amp-story-ad-preview');
 
+const CTA_TYPES = {
+  APPLY_NOW: 'Apply Now',
+  BOOK_NOW: 'Book',
+  BUY_TICKETS: 'Buy Tickets',
+  DOWNLOAD: 'Download',
+  EXPLORE: 'Explore',
+  GET_NOW: 'Get Now',
+  INSTALL: 'Install Now',
+  LEARN_MORE: 'Learn More',
+  LISTEN: 'Listen',
+  MORE: 'More',
+  OPEN_APP: 'Open App',
+  ORDER_NOW: 'Order Now',
+  PLAY: 'Play',
+  READ: 'Read',
+  SHOP: 'Shop',
+  SHOW: 'Show',
+  SHOWTIMES: 'Showtimes',
+  SIGN_UP: 'Sign Up',
+  SUBSCRIBE: 'Subscribe Now',
+  USE_APP: 'Use App',
+  VIEW: 'View',
+  WATCH: 'Watch',
+  WATCH_EPISODE: 'Watch Episode',
+};
+
 const defaultIframeSandbox = [
   'allow-scripts',
   'allow-forms',
@@ -96,9 +122,13 @@ function getDataTemplate(element) {
 
 export default class AmpStoryAdPreview {
   constructor(win, element) {
+    this.storyIframe_ = untilAttached(element, s('.iframe')).then(
+      whenIframeLoaded
+    );
+
     const {iframeReady, writer, srcdoc} = setSrcdocAsyncMultiStrategy(
       win,
-      untilAttached(element, s('.iframe')).then(whenIframeLoaded),
+      this.storyIframe_,
       getDataTemplate(element).replace('{{ adSandbox }}', defaultIframeSandbox)
     );
 
@@ -128,5 +158,31 @@ export default class AmpStoryAdPreview {
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
     this.writeToIframe_(await this.adIframe_, patch(dirty));
+  }
+
+  async setMetaCtaLabel_(dirty) {
+    const head = dirty.substring(0, dirty.lastIndexOf('</head>'));
+    const components = head.split('<');
+    let ctaType = '';
+    let ctaUrl = '';
+    for (let component of components) {
+      if (component.includes(`meta name="amp-cta-type"`)) {
+        ctaType = component.substring(
+          component.lastIndexOf('=') + 2,
+          component.lastIndexOf(`"`)
+        );
+      }
+      if (component.includes(`meta name="amp-cta-url"`)) {
+        ctaUrl = component.substring(
+          component.lastIndexOf('=') + 2,
+          component.lastIndexOf(`"`)
+        );
+      }
+    }
+    const storyCta = (await this.storyIframe_).contentDocument.querySelector(
+      '.i-amphtml-story-ad-link'
+    );
+    storyCta.textContent = CTA_TYPES[ctaType];
+    storyCta.setAttribute('href', ctaUrl);
   }
 }
