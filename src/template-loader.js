@@ -13,25 +13,100 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import './template-loader.css';
+import {assert} from '../lib/assert';
+import {classMap} from 'lit-html/directives/class-map';
+import {html} from 'lit-html';
+import {identity} from './utils/function';
+import {redispatchAs} from './utils/events';
+import {repeat} from 'lit-html/directives/repeat';
 import {successfulFetch} from './utils/xhr';
+import memoize from 'lodash.memoize';
+
+import {getNamespace} from '../lib/namespace';
+
+const {g, n, s} = getNamespace('template-loader');
 
 export const templateFileUrl = (templateName, filename) =>
   `/static/templates/${templateName}/${filename}`;
 
-export class TemplateLoader {
-  constructor(win, element, templates) {
-    this.win = win;
-    this.element = element;
-    this.templates = templates;
-    this.content_ = {};
-  }
+export const fetchTemplateContentFactory = win =>
+  memoize(async name =>
+    (await successfulFetch(win, templateFileUrl(name, 'index.html'))).text()
+  );
 
-  async fetchTemplateContent(name) {
-    if (!(name in this.content_)) {
-      const contentUrl = templateFileUrl(name, 'index.html');
-      const contentResponse = await successfulFetch(this.win, contentUrl);
-      this.content_[name] = contentResponse.text();
-    }
-    return this.content_[name];
-  }
+// Panel does not render when it is not displayed to allow for video
+// autoplay without bad performance (see hooseTemplatesButton)
+export const TemplatesPanel = ({isDisplayed, templates}) =>
+  isDisplayed
+    ? html`
+        <div class="${n('panel')}">
+          <div class="${g('flex-center')}">
+            ${TemplateSelectors(templates)}
+          </div>
+        </div>
+      `
+    : '';
+
+function TemplateSelectors(templates) {
+  return html`
+    ${repeat(Object.keys(templates), identity, name =>
+      TemplateSelector({name, ...templates[name]})
+    )}
+  `;
 }
+
+const dispatchSelectTemplate = redispatchAs(g('select-template'));
+
+const TemplateSelector = ({name, previewExt}) => html`
+  <div
+    class="${n('template')}"
+    @click=${dispatchSelectTemplate}
+    data-name=${name}
+  >
+    ${TemplatePreview(name, previewExt)}
+  </div>
+`;
+
+function TemplatePreview(name, ext) {
+  const url = templateFileUrl(name, `_preview.${ext}`);
+  if (ext == 'mp4' || ext == 'webm') {
+    return html`
+      <video autoplay loop muted src=${url}></video>
+    `;
+  }
+  return html`
+    <img src=${url} />
+  `;
+}
+
+export const TemplatesJsonScriptOptional = json =>
+  !json
+    ? ''
+    : html`
+        <script type="application/json" class=${n('templates')}>
+          ${json}
+        </script>
+      `;
+
+const dispatchToggleTemplates = redispatchAs(g('toggle-templates'));
+
+export const parseTemplatesJsonScript = parent =>
+  JSON.parse(
+    assert(parent.querySelector(s('script.templates'))).textContent.replace(
+      /(&quot\;)/g,
+      '"'
+    )
+  );
+
+export const ChooseTemplatesButton = (setClassMap = {}) => html`
+  <div
+    class="${classMap({
+      [n('choose-templates')]: true,
+      ...setClassMap,
+    })}"
+    @click=${dispatchToggleTemplates}
+  >
+    Templates
+  </div>
+`;
