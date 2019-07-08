@@ -386,7 +386,7 @@ const PreviewPanel = ({
 const dispatchUpdatePreview = redispatchAs(g('update-preview'));
 
 const RefreshIcon = () => html`
-  <div @click=${dispatchUpdatePreview}>
+  <div class="${n('update-preview-button')}" @click=${dispatchUpdatePreview}>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="24px"
