@@ -25,8 +25,8 @@
   position: relative; /* all children should be position: absolute */
 }
 
-.template video,
-.template img {
+.preview > video,
+.preview > img {
   width: 100%;
   display: block;
   position: absolute;
@@ -34,12 +34,9 @@
   left: 0;
   bottom: 0;
   right: 0;
-}
-
-.template video {
   z-index: 10;
 }
 
-.template img {
+.preview > img {
   z-index: 9; /* videos go over */
 }
