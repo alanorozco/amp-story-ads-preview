@@ -4,7 +4,9 @@
 
 ## 🌎 Production Build
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/bbdb54c0-4dbd-41c6-aff1-fa0ccae7f290/deploy-status)](https://app.netlify.com/sites/amp-story-ads-preview/deploys) 👉 [here](https://amp-story-ads-preview.netlify.com/).
+[![Netlify Status](https://api.netlify.com/api/v1/badges/bbdb54c0-4dbd-41c6-aff1-fa0ccae7f290/deploy-status)](https://app.netlify.com/sites/amp-story-ads-preview/deploys)
+
+👉 [here](https://amp-story-ads-preview.netlify.com/).
 
 ## 🚧 Building
 
