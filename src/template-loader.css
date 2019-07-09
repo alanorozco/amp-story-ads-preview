@@ -1,16 +1,16 @@
 @component;
 
+.panel {
+  padding: 20px;
+  background: var(--content-bg);
+}
+
 .template {
   flex: 1;
   opacity: 0.9;
   z-index: 0;
   transition: opacity 0.2s ease, transform 0.2s ease;
   cursor: pointer;
-}
-
-.panel {
-  padding: 20px;
-  background: var(--content-bg);
 }
 
 .template:hover {
@@ -20,9 +20,26 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
+.preview {
+  padding-top: 178%; /* ratio = 16/9 */
+  position: relative; /* all children should be position: absolute */
+}
+
 .template video,
 .template img {
   width: 100%;
   display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+.template video {
   z-index: 10;
+}
+
+.template img {
+  z-index: 9; /* videos go over */
 }

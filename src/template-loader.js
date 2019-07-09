@@ -73,7 +73,9 @@ const TemplateSelector = ({name, previewExt}) => html`
     @click=${dispatchSelectTemplate}
     data-name=${name}
   >
-    ${TemplatePreview(name, previewExt)}
+    <div class=${n('preview')}>
+      ${TemplatePreview(name, previewExt)}
+    </div>
   </div>
 `;
 
@@ -86,10 +88,14 @@ const TemplatePreview = (name, ext) =>
           muted
           src=${templatePreviewFileUrl(name, ext)}
         ></video>
+        <!-- Generated from first frame: 'yarn templates-ff' -->
+        ${Img(templateFileUrl(name, '_preview_ff.jpg'))}
       `
-    : html`
-        <img src=${templatePreviewFileUrl(name, ext)} />
-      `;
+    : Img(templatePreviewFileUrl(name, ext));
+
+const Img = src => html`
+  <img src=${src} />
+`;
 
 export const TemplatesJsonScriptOptional = json =>
   !json
