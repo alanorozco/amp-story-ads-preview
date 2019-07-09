@@ -37,6 +37,8 @@ Tasks on [`pkg.scripts`](./package.json) run with `yarn TASK_NAME`:
 - `yarn clean` removes a previous build.
 - `yarn lint` lints the project.
 - `yarn serve` serves the build.
+- `yarn templates-ff` extracts the first frame from every `_preview.mp4` video
+  in [`static/templates`](./static/templates) as `_preview_ff.jpg`.
 - `yarn watch-slow` for a slow full-restart watch.
 - `yarn x` e\[**x**\]ecutes a `node` binary in the project's context (see `yarn xr`).
 - `yarn xr` returns an `-r [DEPENDENCY]` string for runnable dependencies (`ignore-styles` and `esm`).
