@@ -34,3 +34,82 @@
   50% {transform: translate(-8px)}
   100% {transform: translate(0)}
 }
+
+.files-panel {
+  --file-item-width: 220px;
+  --file-item-x-padding: 14px;
+  flex: 0 0 var(--file-item-width);
+  overflow: visible;
+  flex-direction: column;
+}
+
+.files-panel:not([hidden]) {
+  display: flex;
+}
+
+.file-list-item {
+  position: relative;
+  cursor: pointer;
+}
+
+.files-panel-header {
+  padding: 0 var(--file-item-x-padding);
+  font-weight: bold;
+}
+
+.file-list-item > div {
+  padding: 8px var(--file-item-x-padding);
+  white-space: nowrap;
+}
+
+.file-list-item > div:not(.delete-file-button){
+  padding-left: 30px;
+}
+
+.file-list-item .file-list-item-clipped {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: var(--file-item-width);
+}
+
+.file-list-item .file-list-item-unclipped {
+  pointer-events: none;
+  opacity: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: var(--blueishgray-semiopaque);
+  color: var(--amp-blue);
+  min-width: 100%;
+}
+
+.file-list-item:hover .file-list-item-clipped {
+  opacity: 0;
+}
+
+.file-list-item:hover .file-list-item-unclipped {
+  opacity: 1;
+  z-index: 1;
+}
+
+.uploaded-files-title {
+  text-align: center;
+  text-decoration: underline;
+}
+
+.file-list-empty {
+  flex: 0;
+  margin: 20px 0;
+  flex-direction: column;
+  justify-self: start;
+}
+
+.file-list-empty > div {
+  margin: 10px 0;
+}
+
+.delete-file-button {
+  z-index:2;
+  position: absolute;
+  cursor: pointer;
+}

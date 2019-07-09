@@ -16,7 +16,13 @@
 import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
-import {attachBlobUrl, FilesDragHint, fileSortCompare} from './file-upload';
+import {
+  attachBlobUrl,
+  FilesDragHint,
+  fileSortCompare,
+  FilesPanel,
+  FileUploadButton,
+} from './file-upload';
 import {
   ChooseTemplatesButton,
   fetchTemplateContentFactory,
@@ -32,7 +38,8 @@ import {hintIgnoreEnds, hintsUrl, setAttrFileHints} from './hints';
 import {html, render, svg} from 'lit-html';
 import {htmlMinifyConfig} from '../lib/html-minify-config';
 import {redispatchAs} from './utils/events';
-import {repeat} from 'lit-html/directives/repeat';
+import {Toolbar} from './toolbar';
+// import {repeat} from 'lit-html/directives/repeat';
 import {successfulFetch} from './utils/xhr';
 import {ToggleButton} from './toggle-button';
 import {until} from 'lit-html/directives/until';
@@ -145,100 +152,6 @@ const renderEditor = ({
 
 /**
  * @param {Object} data
- * @param {boolean} isDisplayed
- * @param {Array<{name: string}>} data.files
- * @return {lit-html/TemplateResult}
- */
-const FilesPanel = ({isDisplayed, files}) => html`
-  <div class="${n('files-panel')}" ?hidden=${!isDisplayed}>
-    <div
-      class="${[g('flex-center'), n('toolbar'), n('files-panel-header')].join(
-        ' '
-      )}"
-    >
-      Files
-    </div>
-    ${FileList({files})}
-  </div>
-`;
-
-const fileRepeatKey = ({url}) => url;
-
-/**
- * When `data.files` is empty, renders a "No files" message.
- * Otherwise renders the file list.
- * @param {Object} data
- * @param {Array<{name: string}>} data.files
- * @return {lit-html/TemplateResult}
- */
-const FileList = ({files}) =>
-  files.length < 1
-    ? html`
-        <div class="${g('flex-center')} ${n('file-list-empty')}">
-          <div>No files uploaded.</div>
-          ${FileUploadButton()}
-        </div>
-      `
-    : html`
-        <div class="${n('file-list')}">
-          ${repeat(files, fileRepeatKey, FileListItem)}
-        </div>
-      `;
-
-const dispatchInsertFileRef = redispatchAs(g('insert-file-ref'));
-const dispatchDeleteFile = redispatchAs(g('delete-file'));
-
-/**
- * @param {{name: string}} file
- * @param {{name: string}} file
- * @param {number} index
- * @return {lit-html/TemplateResult}
- */
-const FileListItem = ({name}, index) => html`
-  <div
-    class="${n('file-list-item')}"
-    data-name="${name}"
-    data-index="${index}"
-    @click="${dispatchInsertFileRef}"
-  >
-    <div class=${n('delete-file-button')} @click=${dispatchDeleteFile}>
-      <span>×</span>
-    </div>
-    <div class="${n('file-list-item-clipped')}">
-      ${name}
-    </div>
-    <div class="${n('file-list-item-unclipped')}">
-      ${name}
-    </div>
-  </div>
-`;
-
-/**
- * Cascades a click from a parent so it programatically clicks an <input> inside
- * of it, to propagate a click into a hidden `input[type=file]` element.
- * @param {Event} e
- */
-function cascadeInputClick({currentTarget}) {
-  assert(currentTarget.querySelector('input')).click();
-}
-
-const dispatchUploadFiles = redispatchAs(g('upload-files'));
-
-/**
- * Renders a button to "upload" files--that is, set Blob URLs so they're
- * accessible from the AMP Ad document.
- */
-const FileUploadButton = () => html`
-  <div class="${n('upload-button-container')}" @click="${cascadeInputClick}">
-    <div class="${n('text-button')}">
-      Add files
-    </div>
-    <input type="file" hidden multiple @change="${dispatchUploadFiles}" />
-  </div>
-`;
-
-/**
- * @param {Object} data
  * @param {Promise<Element>=} data.codeMirrorElement
  * @param {string=} data.content
  * @param {boolean} data.isDisplayed
@@ -275,25 +188,22 @@ const ContentPanel = ({
  * @param {boolean=} data.isFilesPanelDisplayed
  * @return {lit-html/TemplateResult}
  */
-const ContentToolbar = ({
-  isFilesPanelDisplayed,
-  isTemplatePanelDisplayed,
-}) => html`
-  <div
-    class="${[g('flex-center'), n('content-toolbar'), n('toolbar')].join(' ')}"
-  >
-    ${ToggleButton({
-      isOpen: isFilesPanelDisplayed,
-      name: 'files-panel',
-    })}
-    ${FileUploadButton()}
-    ${ChooseTemplatesButton({
-      [n('text-button')]: true,
-      [n('templates-button')]: true,
-      [n('selected')]: isTemplatePanelDisplayed,
-    })}
-  </div>
-`;
+const ContentToolbar = ({isFilesPanelDisplayed, isTemplatePanelDisplayed}) =>
+  Toolbar({
+    classNames: [n('content-toolbar')],
+    children: [
+      ToggleButton({
+        isOpen: isFilesPanelDisplayed,
+        name: 'files-panel',
+      }),
+      FileUploadButton(),
+      ChooseTemplatesButton({
+        [g('text-button')]: true,
+        [n('templates-button')]: true,
+        [n('selected')]: isTemplatePanelDisplayed,
+      }),
+    ],
+  });
 
 /**
  * Renders default editor content to hydrate on runtime.
@@ -363,20 +273,21 @@ const RefreshIcon = () => html`
  * @param {string=} data.viewportId
  * @return {lit-html/TemplateResult}
  */
-const PreviewToolbar = ({isFullPreview, viewportId}) => html`
-  <div class="${`${g('flex-center')} ${n('preview-toolbar')} ${n('toolbar')}`}">
-    ${ToggleButton({
-      isOpen: !isFullPreview,
-      name: 'full-preview',
-    })}
-    ${ViewportSelector({
-      className: [g('flex-center')],
-      viewportId,
-    })}
-    ${RefreshIcon()}
-  </div>
-`;
-
+const PreviewToolbar = ({isFullPreview, viewportId}) =>
+  Toolbar({
+    classNames: [n('preview-toolbar')],
+    children: [
+      ToggleButton({
+        isOpen: !isFullPreview,
+        name: 'full-preview',
+      }),
+      ViewportSelector({
+        className: [g('flex-center')],
+        viewportId,
+      }),
+      RefreshIcon(),
+    ],
+  });
 /**
  * Renders preview element.
  * This is then managed independently by AmpStoryAdPreview after hydration.

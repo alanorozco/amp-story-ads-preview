@@ -1,0 +1,38 @@
+@component;
+
+.toolbar {
+    background: white;
+    flex-direction: row;
+    justify-self: start;
+    justify-content: start;
+    flex: 0 0 48px;
+    padding: 4px; /* buttons are 40px, so 48px - 40px = 4px on each axis */
+    width: 100%;
+}
+  
+.toolbar select {
+    padding: 16px 36px 16px 16px;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'%3E%3Cpath d='M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z'/%3E%3Cpath fill='none' d='M0 0h24v24H0V0z'/%3E%3C/svg%3E");
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    display: inline-block;
+    font: inherit;
+    line-height: 1em;
+    margin: 0;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-repeat: no-repeat;
+    background-position-y: 50%;
+    background-position-x: 100%;
+    font-weight: bold;
+    outline: none;
+}
+
+.toolbar select:focus,
+.toolbar select:active {
+    background-color: var(--blueishgray-semiopaque);
+}

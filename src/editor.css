@@ -36,44 +36,7 @@
   flex-direction: column;
 }
 
-.toolbar {
-  background: white;
-  flex-direction: row;
-  justify-self: start;
-  justify-content: start;
-  flex: 0 0 48px;
-  padding: 4px; /* buttons are 40px, so 48px - 40px = 4px on each axis */
-  width: 100%;
-}
-
-.toolbar select {
-  padding: 16px 36px 16px 16px;
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'%3E%3Cpath d='M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z'/%3E%3Cpath fill='none' d='M0 0h24v24H0V0z'/%3E%3C/svg%3E");
-  background-color: transparent;
-  border: none;
-  border-radius: 4px;
-  display: inline-block;
-  font: inherit;
-  line-height: 1em;
-  margin: 0;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-repeat: no-repeat;
-  background-position-y: 50%;
-  background-position-x: 100%;
-  font-weight: bold;
-  outline: none;
-}
-
-.toolbar select:focus,
-.toolbar select:active {
-  background-color: var(--blueishgray-semiopaque);
-}
-
-.content-toolbar {
+.content .content-toolbar {
   background: var(--content-bg);
   color: white;
 }
@@ -81,12 +44,6 @@
 .content-toolbar .text-button,
 .content-toolbar .content-toolbar-toggle {
   color: rgba(255, 255, 255, 0.6);
-}
-
-.content-toolbar .text-button {
-  background: none;
-  border: 1px solid var(--blueishgray-transparent);
-  margin: 0 8px;
 }
 
 .content-toolbar {
@@ -105,101 +62,6 @@
   height: 100%;
   contain: strict;
   overflow: hidden;
-}
-
-.text-button {
-  text-align: center;
-  cursor: pointer;
-  padding: 0 12px;
-  line-height: 36px;
-  background: var(--blueishgray-semiopaque);
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 13px;
-  text-transform: uppercase;
-}
-
-.text-button:hover {
-  color: var(--amp-blue);
-}
-
-.files-panel {
-  --file-item-width: 220px;
-  --file-item-x-padding: 14px;
-  flex: 0 0 var(--file-item-width);
-  overflow: visible;
-  flex-direction: column;
-}
-
-.files-panel:not([hidden]) {
-  display: flex;
-}
-
-.file-list-item {
-  position: relative;
-  cursor: pointer;
-}
-
-.files-panel-header {
-  padding: 0 var(--file-item-x-padding);
-  font-weight: bold;
-}
-
-.file-list-item > div {
-  padding: 8px var(--file-item-x-padding);
-  white-space: nowrap;
-}
-
-.file-list-item > div:not(.delete-file-button){
-  padding-left: 30px;
-}
-
-.file-list-item .file-list-item-clipped {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: var(--file-item-width);
-}
-
-.file-list-item .file-list-item-unclipped {
-  pointer-events: none;
-  opacity: 0;
-  position: absolute;
-  left: 0;
-  top: 0;
-  background: var(--blueishgray-semiopaque);
-  color: var(--amp-blue);
-  min-width: 100%;
-}
-
-.file-list-item:hover .file-list-item-clipped {
-  opacity: 0;
-}
-
-.file-list-item:hover .file-list-item-unclipped {
-  opacity: 1;
-  z-index: 1;
-}
-
-.uploaded-files-title {
-  text-align: center;
-  text-decoration: underline;
-}
-
-.file-list-empty {
-  flex: 0;
-  margin: 20px 0;
-  flex-direction: column;
-  justify-self: start;
-}
-
-.file-list-empty > div {
-  margin: 10px 0;
-}
-
-.delete-file-button {
-  z-index:2;
-  position: absolute;
-  cursor: pointer;
 }
 
 .content-toolbar .templates-button {
