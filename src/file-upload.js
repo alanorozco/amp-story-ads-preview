@@ -48,3 +48,27 @@ export const FilesDragHint = ({isDisplayed}) => html`
     <span class=${n('drag-hint-arrow')}>⇐</span> Drop to add files
   </div>
 `;
+
+export function removeFileRevokeUrl(win, files, index) {
+  const [deleted] = files.splice(index, 1);
+  const {url} = deleted;
+
+  // not all urls are blob urls
+  if (/^blob:/.test(url)) {
+    win.URL.revokeObjectURL(url);
+  }
+
+  return files;
+}
+
+export function replaceFileRefs(docStr, files) {
+  for (const {name, url} of files) {
+    docStr = docStr.replace(new RegExp(`/${name}`, 'g'), url);
+  }
+  return docStr;
+}
+
+export const concatAttachBlobUrl = (win, source, files) =>
+  source
+    .concat(Array.from(files).map(f => attachBlobUrl(win, f)))
+    .sort(fileSortCompare);

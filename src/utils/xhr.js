@@ -14,9 +14,18 @@
  * limitations under the License.
  */
 import {assert} from '../../lib/assert';
+import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
 
 export async function successfulFetch(win, ...args) {
   const response = await win.fetch(...args);
   assert(response.status == 200, `Expected 200, got ${response.status}`);
   return response;
+}
+
+export function idleSuccessfulFetch(win, ...args) {
+  const {promise, reject, resolve} = new Deferred();
+  win.requestIdleCallback(() => {
+    successfulFetch(win, ...args).then(resolve, reject);
+  });
+  return promise;
 }
