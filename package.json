@@ -9,6 +9,7 @@
     "lint": "eslint bin lib test src *.js",
     "postinstall": "./bin/postinstall.sh",
     "serve": "yarn -s x bin/serve.js",
+    "templates-ff": "yarn -s x bin/templates-ff.js --watch",
     "test": "mocha `yarn -s xr`",
     "watch": "yarn -s x bin/build.js --watch",
     "watch-slow": "yarn -s x bin/watch.js",
