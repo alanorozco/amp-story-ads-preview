@@ -16,7 +16,6 @@
 import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
-import {attachBlobUrl, FilesDragHint, fileSortCompare} from './file-upload';
 import {
   ChooseTemplatesButton,
   fetchTemplateContentFactory,
@@ -25,15 +24,22 @@ import {
   TemplatesJsonScriptOptional,
   TemplatesPanel,
 } from './template-loader';
+import {
+  concatAttachBlobUrl,
+  FilesDragHint,
+  removeFileRevokeUrl,
+  replaceFileRefs,
+} from './file-upload';
 import {CTA_TYPES} from './cta-types';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
-import {hintIgnoreEnds, hintsUrl, setAttrFileHints} from './hints';
-import {html, render, svg} from 'lit-html';
-import {htmlMinifyConfig} from '../lib/html-minify-config';
-import {redispatchAs} from './utils/events';
+import {hintsUrl, setAttrFileHints} from './hints';
+import {html, render} from 'lit-html';
+import {idleSuccessfulFetch} from './utils/xhr';
+import {listenAllBound, redispatchAs} from './utils/events';
+import {minifyHtml, readFileString, readFixtureHtml} from './static-data';
+import {RefreshIcon} from './icons';
 import {repeat} from 'lit-html/directives/repeat';
-import {successfulFetch} from './utils/xhr';
 import {ToggleButton} from './toggle-button';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
@@ -44,28 +50,18 @@ import {
   viewportIdFull,
   ViewportSelector,
 } from './viewport';
+import {WrappedCodemirror} from './wrapped-codemirror';
 import AmpStoryAdPreview from './amp-story-ad-preview';
-import codemirror from '../lib/runtime-deps/codemirror';
-import fs from 'fs-extra';
-import htmlMinifier from 'html-minifier';
 
 const {id, g, n, s} = getNamespace('editor');
-
-const updateDebounceRate = 300;
-
-const readFixtureHtml = async name =>
-  (await fs.readFile(`src/fixtures/${name}.html`)).toString('utf-8');
 
 /** @return {Promise<{content: string}>} */
 const staticServerData = async () => ({
   content: await readFixtureHtml('ad'),
   // Since this is a template that is never user-edited, let's minify it to
   // keep the bundle small.
-  storyDocTemplate: htmlMinifier.minify(
-    await readFixtureHtml('story'),
-    htmlMinifyConfig
-  ),
-  templatesJson: (await fs.readFile('dist/templates.json')).toString('utf-8'),
+  storyDocTemplate: minifyHtml(await readFixtureHtml('story')),
+  templatesJson: await readFileString('dist/templates.json'),
 });
 
 /**
@@ -260,11 +256,11 @@ const ContentPanel = ({
     ${ContentToolbar({isFilesPanelDisplayed, isTemplatePanelDisplayed})}
     ${TemplatesPanel({isDisplayed: isTemplatePanelDisplayed, templates})}
     <!--
-        Default Content to load on the server and then populate codemirror on
-        the client.
-        codeMirrorElement is a promise resolved by codemirror(), hence the
-        until directive. Once resolved, content can be empty.
-      -->
+      Default Content to load on the server and then populate codemirror on
+      the client.
+      codeMirrorElement is a promise resolved by codemirror(), hence the
+      until directive. Once resolved, content can be empty.
+    -->
     ${until(codeMirrorElement || Textarea({content}))}
   </div>
 `;
@@ -335,24 +331,9 @@ const PreviewPanel = ({
 
 const dispatchUpdatePreview = redispatchAs(g('update-preview'));
 
-const RefreshIcon = () => html`
+const UpdatePreviewButton = () => html`
   <div class="${n('update-preview-button')}" @click=${dispatchUpdatePreview}>
-    ${svg`
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24px"
-        height="24px"
-        viewBox="0 0 24 24"
-        fill="#000000"
-      >
-      <g>
-        <path
-          d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
-        />
-        <path d="M0 0h24v24H0z" fill="none" />
-      </g>
-    </svg>
-    `}
+    ${RefreshIcon()}
   </div>
 `;
 
@@ -373,7 +354,7 @@ const PreviewToolbar = ({isFullPreview, viewportId}) => html`
       className: [g('flex-center')],
       viewportId,
     })}
-    ${RefreshIcon()}
+    ${UpdatePreviewButton()}
   </div>
 `;
 
@@ -397,12 +378,7 @@ class Editor {
 
     this.parent_ = element.parentElement;
 
-    this.updateOnChangesTimeout_ = null;
-
-    this.hintTimeout_ = null;
-    this.amphtmlHints_ = this.fetchHintsData_();
-
-    const templates = parseTemplatesJsonScript(element);
+    this.amphtmlHints_ = idleSuccessfulFetch(win, hintsUrl).then(r => r.json());
 
     this.fetchTemplateContent_ = fetchTemplateContentFactory(win);
 
@@ -411,22 +387,8 @@ class Editor {
       resolve: codeMirrorElementResolve,
     } = new Deferred();
 
-    this.codeMirror_ = new codemirror(codeMirrorElementResolve, {
+    this.codeMirror_ = new WrappedCodemirror(win, codeMirrorElementResolve, {
       value,
-      mode: 'text/html',
-      selectionPointer: true,
-      styleActiveLine: true,
-      lineNumbers: false,
-      showCursorWhenSelecting: true,
-      cursorBlinkRate: 300,
-      autoCloseBrackets: true,
-      autoCloseTags: true,
-      gutters: ['CodeMirror-error-markers'],
-      extraKeys: {'Ctrl-Space': 'autocomplete'},
-      hintOptions: {
-        completeSingle: false,
-      },
-      theme: 'monokai',
     });
 
     this.preview_ = new AmpStoryAdPreview(win, previewElement);
@@ -440,87 +402,36 @@ class Editor {
       codeMirrorElement,
       files: [],
       isFullPreview: false,
-      previewElement,
-      viewportId: viewportIdDefault,
       isTemplatePanelDisplayed: false,
-      templates,
+      previewElement,
+      templates: parseTemplatesJsonScript(element),
+      viewportId: viewportIdDefault,
     });
 
     batchedRender();
 
     this.refreshCodeMirror_();
-    this.attachCodeMirrorEvents_();
+    this.updatePreview_();
 
     // We only run amp4ads in this REPL.
     this.setHints_('amp4ads');
 
-    this.updatePreview_();
+    this.codeMirror_.on('dragover', () => this.dragover_());
+    this.codeMirror_.on('dragleave', () => this.dragleaveOrDragEnd_());
 
-    this.attachEventHandlers_();
-  }
-
-  attachEventHandlers_() {
-    const topLevelHandlers = {
+    listenAllBound(this, this.parent_, {
       dragend: this.dragleaveOrDragend_,
       dragleave: this.dragleaveOrDragend_,
       dragover: this.dragover_,
       drop: this.drop_,
       [g('delete-file')]: this.deleteFile_,
-      [g('update-preview')]: this.updatePreview_,
       [g('insert-file-ref')]: this.insertFileRef_,
-      [g('upload-files')]: this.uploadFiles_,
+      [g('select-template')]: this.selectTemplate_,
       [g('select-viewport')]: this.selectViewport_,
       [g('toggle-templates')]: this.toggleTemplates_,
-      [g('select-template')]: this.selectTemplates_,
       [g('toggle')]: this.toggle_,
-    };
-
-    for (const eventType of Object.keys(topLevelHandlers)) {
-      const boundHandler = topLevelHandlers[eventType].bind(this);
-      this.parent_.addEventListener(eventType, boundHandler);
-    }
-  }
-
-  attachCodeMirrorEvents_() {
-    const {clearTimeout, setTimeout} = this.win;
-
-    this.codeMirror_.on('changes', () => {
-      if (this.updateOnChangesTimeout_) {
-        clearTimeout(this.updateOnChangesTimeout_);
-      }
-      this.updateOnChangesTimeout_ = setTimeout(() => {
-        this.updatePreview_();
-      }, updateDebounceRate);
-    });
-
-    this.codeMirror_.on('dragover', () => this.dragover_());
-    this.codeMirror_.on('dragleave', () => this.dragleaveOrDragEnd_());
-
-    // Below stolen from @ampproject/docs/playground/src/editor/editor.js
-    // (Editor#createCodeMirror)
-    this.codeMirror_.on('inputRead', (editor, change) => {
-      if (this.hintTimeout_) {
-        clearTimeout(this.hintTimeout_);
-      }
-      if (change.origin !== '+input') {
-        return;
-      }
-      if (change && change.text && hintIgnoreEnds.has(change.text.join(''))) {
-        return;
-      }
-      this.hintTimeout_ = setTimeout(() => {
-        if (editor.state.completionActive) {
-          return;
-        }
-        const cur = editor.getCursor();
-        const token = editor.getTokenAt(cur);
-        const isCss = token.state.htmlState.context.tagName === 'style';
-        const isTagDeclaration = token.state.htmlState.tagName;
-        const isTagStart = token.string === '<';
-        if (isCss || isTagDeclaration || isTagStart) {
-          codemirror.commands.autocomplete(editor);
-        }
-      }, 150);
+      [g('update-preview')]: this.updatePreview_,
+      [g('upload-files')]: this.uploadFiles_,
     });
   }
 
@@ -541,7 +452,7 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
-  async selectTemplates_({target: {dataset}}) {
+  async selectTemplate_({target: {dataset}}) {
     const templateName = assert(dataset.name);
     const {files} = this.state_.templates[templateName];
     this.codeMirror_.setValue(await this.fetchTemplateContent_(templateName));
@@ -567,13 +478,7 @@ class Editor {
    */
   addFiles_(files) {
     this.state_.isFilesPanelDisplayed = true;
-
-    this.state_.files = this.state_.files.concat(
-      Array.from(files)
-        .map(f => attachBlobUrl(this.win, f))
-        .sort(fileSortCompare)
-    );
-
+    this.state_.files = concatAttachBlobUrl(this.win, this.state_.files, files);
     this.updateFileHints_();
   }
 
@@ -607,7 +512,7 @@ class Editor {
 
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
-    const docWithFileRefs = this.replaceFileRefs_(doc);
+    const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
     this.preview_.update(docWithFileRefs);
   }
 
@@ -637,28 +542,13 @@ class Editor {
     this.codeMirror_.replaceSelection(`/${name}`, 'around');
   }
 
-  replaceFileRefs_(str) {
-    for (const {name, url} of this.state_.files) {
-      str = str.replace(new RegExp(`/${name}`, 'g'), url);
-    }
-    return str;
-  }
-
   deleteFile_({target}) {
     const {dataset} = assert(target.closest('[data-index]'));
-    const deletedIndex = parseInt(assert(dataset.index), 10);
-    const [deleted] = this.state_.files.splice(deletedIndex, 1);
-    const {url: deletedUrl} = deleted;
-
-    // not all urls are blob urls
-    if (/^blob:/.test(deletedUrl)) {
-      this.win.URL.revokeObjectURL(deletedUrl);
-    }
-
-    // Force re-render
-    this.state_.files = this.state_.files;
+    const index = parseInt(assert(dataset.index), 10);
+    this.state_.files = removeFileRevokeUrl(this.win, this.state_.files, index);
     this.updateFileHints_();
   }
+
   /**
    * Replaces CodeMirror hints with the AMP spec.
    *
@@ -673,7 +563,7 @@ class Editor {
    * @private
    */
   async setHints_(format) {
-    const {htmlSchema} = codemirror;
+    const htmlSchema = this.codeMirror_.getHintHtmlSchema();
     const hints = await this.amphtmlHints_;
     for (const key of Object.keys(htmlSchema)) {
       delete htmlSchema[key];
@@ -688,34 +578,13 @@ class Editor {
   }
 
   /**
-   * Loads a JSON file containing the CodeMirror HTML Schema to be consumed for
-   * AMP formats.
-   *
-   * Kinda stolen from @ampproject/docs/playground/src/editor.js
-   * (Editor#fetchHintsData).
-   * @private
-   */
-  fetchHintsData_() {
-    const {promise, reject, resolve} = new Deferred();
-    this.win.requestIdleCallback(async () => {
-      try {
-        const response = await successfulFetch(this.win, hintsUrl);
-        resolve(response.json());
-      } catch (err) {
-        reject(err);
-      }
-    });
-    return promise;
-  }
-
-  /**
    * Sets attr hints like for "src" and "poster" for the tags in the spec that
    * allow it, so that they show uploaded files.
    * @private
    */
   updateFileHints_() {
     setAttrFileHints(
-      codemirror.htmlSchema,
+      this.codeMirror_.getHintHtmlSchema(),
       this.state_.files.map(({name}) => `/${name}`)
     );
   }

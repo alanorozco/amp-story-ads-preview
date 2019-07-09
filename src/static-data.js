@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {htmlMinifyConfig} from '../lib/html-minify-config';
+import fs from 'fs-extra';
+import htmlMinifier from 'html-minifier';
 
-export const redispatchAs = eventType => e => {
-  e.preventDefault();
-  e.stopPropagation();
-  dispatchCustomEvent(e.currentTarget, eventType);
-};
+export const readFileString = async name =>
+  (await fs.readFile(name)).toString('utf-8');
 
-export function dispatchCustomEvent(element, eventType) {
-  element.dispatchEvent(new CustomEvent(eventType, {bubbles: true}));
-}
+export const readFixtureHtml = name =>
+  readFileString(`src/fixtures/${name}.html`);
 
-export function listenAllBound(context, element, handlers) {
-  for (const eventType of Object.keys(handlers)) {
-    const boundHandler = handlers[eventType].bind(context);
-    element.addEventListener(eventType, boundHandler);
-  }
-}
+export const minifyHtml = html => htmlMinifier.minify(html, htmlMinifyConfig);

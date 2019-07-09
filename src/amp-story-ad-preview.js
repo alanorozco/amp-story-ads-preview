@@ -21,6 +21,7 @@ import {ifDefined} from 'lit-html/directives/if-defined';
 import {minifyInlineJs} from './utils/minify-inline-js';
 import {setSrcdocAsyncMultiStrategy, whenIframeLoaded} from './utils/iframe';
 import {untilAttached} from './utils/until-attached';
+import memoize from 'lodash.memoize';
 
 const {n, s} = getNamespace('amp-story-ad-preview');
 
@@ -100,34 +101,63 @@ function getDataTemplate(element) {
   return assert(template, `Expected [data-template] on ${element}`);
 }
 
+const htmlParserFor = memoize(win => win.document.createElement('div'));
+
+const awaitSelect = (iframeReady, selector) =>
+  iframeReady.then(iframe => iframe.contentDocument.querySelector(selector));
+
+function setMetaCtaLink(win, docStr, ctaLink) {
+  let type = defaultCtaType;
+  let url = defaultCtaUrl;
+  const matches = docStr.match(metaCtaRe);
+  if (matches && matches.length > 0) {
+    const parser = htmlParserFor(win);
+    parser.innerHTML = matches.join('\n');
+    const metas = parser.querySelectorAll('meta');
+    parser.innerHTML = '';
+    for (const meta of metas) {
+      const name = meta.getAttribute('name');
+      const content = meta.getAttribute('content');
+      if (name == 'amp-cta-type') {
+        type = content;
+      }
+      if (name == 'amp-cta-url') {
+        url = content;
+      }
+    }
+  }
+  ctaLink.setAttribute('href', url);
+  ctaLink.textContent = assert(CTA_TYPES[type], `Unknown CTA type ${type}`);
+}
+
 export default class AmpStoryAdPreview {
   constructor(win, element) {
+    /** @private @const {!Window>} */
     this.win = win;
-    this.storyIframe_ = untilAttached(element, s('.iframe')).then(
-      whenIframeLoaded
-    );
 
     const {iframeReady, writer, srcdoc} = setSrcdocAsyncMultiStrategy(
       win,
-      this.storyIframe_,
+      untilAttached(element, s('.iframe')).then(whenIframeLoaded),
       getDataTemplate(element).replace('{{ adSandbox }}', defaultIframeSandbox)
     );
+
+    /** @private @const {!Promise<HTMLIFrameElement>} */
+    this.storyIframe_ = iframeReady;
 
     /**
      * Writer for ad iframe content.
      * Defaults to srcdoc writer, uses document.write() when unsupported.
      * TODO: A4A runtime throws replaceState error when using srcdoc.
      * Figure out how to fix, or always use document.write()
-     * @private {function(HTMLIframeElement, string):string>}
+     * @private @const {function(HTMLIframeElement, string):string>}
      */
     this.writeToIframe_ = writer;
 
-    /** @private {!Promise<HTMLIFrameElement>} */
-    this.adIframe_ = iframeReady.then(
-      iframe => iframe.contentDocument.querySelector('iframe') // xzibit.png
-    );
+    /** @private @const {!Promise<HTMLIFrameElement>} */
+    this.adIframe_ = awaitSelect(iframeReady, 'iframe'); // xzibit.png
 
-    this.htmlParserEl_ = null;
+    /** @private @const {!Promise<Element>} */
+    this.storyCtaLink_ = awaitSelect(iframeReady, '.i-amphtml-story-ad-link');
 
     render(WrappedIframe({srcdoc}), element);
   }
@@ -141,40 +171,6 @@ export default class AmpStoryAdPreview {
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
     this.writeToIframe_(await this.adIframe_, patch(dirty));
-    this.setMetaCtaLabel_(dirty);
-  }
-
-  async setMetaCtaLabel_(dirty) {
-    const {type, url} = this.extractMetaCta_(dirty);
-    const storyCta = (await this.storyIframe_).contentDocument.querySelector(
-      '.i-amphtml-story-ad-link'
-    );
-    storyCta.textContent = CTA_TYPES[type];
-    storyCta.setAttribute('href', url);
-  }
-
-  extractMetaCta_(dirty) {
-    let type = defaultCtaType;
-    let url = defaultCtaUrl;
-    const matches = dirty.match(metaCtaRe);
-    if (matches && matches.length > 0) {
-      if (!this.htmlParserEl_) {
-        this.htmlParserEl_ = this.win.document.createElement('div');
-      }
-      this.htmlParserEl_.innerHTML = matches.join('\n');
-      const metas = this.htmlParserEl_.querySelectorAll('meta');
-      this.htmlParserEl_.innerHTML = '';
-      for (const meta of metas) {
-        const name = meta.getAttribute('name');
-        const content = meta.getAttribute('content');
-        if (name == 'amp-cta-type') {
-          type = content;
-        }
-        if (name == 'amp-cta-url') {
-          url = content;
-        }
-      }
-    }
-    return {type, url};
+    setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
   }
 }
