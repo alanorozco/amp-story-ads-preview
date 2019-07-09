@@ -9,10 +9,14 @@
 ## 🚧 Building
 
 [`yarn`](https://yarnpkg.com) is used for package management.
-[Install `yarn`](https://yarnpkg.com/en/docs/install), then install
+[Install `yarn`](https://yarnpkg.com/en/docs/install), then install the required
+packages via:
 
+```
+yarn
+```
 
-then run to build:
+...then run to build:
 
 ```
 yarn build
@@ -34,7 +38,8 @@ Tasks on [`pkg.scripts`](./package.json) run with `yarn TASK_NAME`:
 - `yarn lint` lints the project.
 - `yarn serve` serves the build.
 - `yarn watch-slow` for a slow full-restart watch.
-- `yarn x` e\[**x**\]ecutes a `node` binary in the project's context (mainly for `esm`).
+- `yarn x` e\[**x**\]ecutes a `node` binary in the project's context (see `yarn xr`).
+- `yarn xr` returns an `-r [DEPENDENCY]` string for runnable dependencies (`ignore-styles` and `esm`).
 
 ## 🔁 Continuous Integration
 

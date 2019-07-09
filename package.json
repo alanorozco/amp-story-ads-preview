@@ -5,18 +5,19 @@
   "license": "Apache-2.0",
   "scripts": {
     "clean": "rm -Rf dist",
-    "build": "yarn run --silent x bin/build.js",
+    "build": "yarn -s x bin/build.js",
     "lint": "eslint bin lib test src *.js",
     "postinstall": "./bin/postinstall.sh",
-    "serve": "yarn run --silent x bin/serve.js",
-    "test": "mocha --require ignore-styles --require esm",
-    "watch": "yarn run --silent x bin/build.js --watch",
-    "watch-slow": "yarn run --silent x bin/watch.js",
-    "x": "node -r ignore-styles -r esm"
+    "serve": "yarn -s x bin/serve.js",
+    "test": "mocha `yarn -s xr`",
+    "watch": "yarn -s x bin/build.js --watch",
+    "watch-slow": "yarn -s x bin/watch.js",
+    "x": "node `yarn -s xr`",
+    "xr": "echo '-r ignore-styles -r esm'"
   },
   "nodemonConfig": {
     "execMap": {
-      "js": "yarn run --silent x"
+      "js": "yarn -s x"
     },
     "ext": "css js html",
     "script": "bin/serve.js",
@@ -26,7 +27,7 @@
       "src"
     ],
     "events": {
-      "restart": "yarn run --silent build"
+      "restart": "yarn -s build"
     }
   },
   "dependencies": {
