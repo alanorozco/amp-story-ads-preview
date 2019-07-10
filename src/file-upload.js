@@ -60,8 +60,8 @@ export const FilesDragHint = ({isDisplayed}) => html`
  * @return {lit-html/TemplateResult}
  */
 export const FilesPanel = ({isDisplayed, files}) => html`
-  <div class="${n('files-panel')}" ?hidden=${!isDisplayed}>
-    ${Toolbar({classNames: [n('files-panel-header')], children: ['Files']})}
+  <div class="${n('panel')}" ?hidden=${!isDisplayed}>
+    ${Toolbar({classNames: [n('panel-header')], children: ['Files']})}
     ${FileList({files})}
   </div>
 `;
@@ -78,13 +78,13 @@ const fileRepeatKey = ({url}) => url;
 const FileList = ({files}) =>
   files.length < 1
     ? html`
-        <div class="${g('flex-center')} ${n('file-list-empty')}">
-          <div>No files uploaded.</div>
+        <div class="${g('flex-center')} ${n('list-empty')}">
+          <div class="${n('text')}">No files uploaded.</div>
           ${FileUploadButton()}
         </div>
       `
     : html`
-        <div class="${n('file-list')}">
+        <div class="${n('list')}">
           ${repeat(files, fileRepeatKey, FileListItem)}
         </div>
       `;
@@ -100,18 +100,18 @@ const dispatchDeleteFile = redispatchAs(g('delete-file'));
  */
 const FileListItem = ({name}, index) => html`
   <div
-    class="${n('file-list-item')}"
+    class="${n('list-item')}"
     data-name="${name}"
     data-index="${index}"
     @click="${dispatchInsertFileRef}"
   >
-    <div class=${n('delete-file-button')} @click=${dispatchDeleteFile}>
+    <div class=${n('delete-button')} @click=${dispatchDeleteFile}>
       <span>×</span>
     </div>
-    <div class="${n('file-list-item-clipped')}">
+    <div class="${n('clipped')}">
       ${name}
     </div>
-    <div class="${n('file-list-item-unclipped')}">
+    <div class="${n('unclipped')}">
       ${name}
     </div>
   </div>
@@ -140,6 +140,7 @@ export const FileUploadButton = () => html`
     <input type="file" hidden multiple @change="${dispatchUploadFiles}" />
   </div>
 `;
+
 export function removeFileRevokeUrl(win, files, index) {
   const [deleted] = files.splice(index, 1);
   const {url} = deleted;

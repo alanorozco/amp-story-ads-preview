@@ -38,12 +38,12 @@
 
 .content .content-toolbar {
   background: var(--content-bg);
-  color: white;
 }
 
-.content-toolbar .text-button,
-.content-toolbar .content-toolbar-toggle {
+
+.content-toolbar > div {
   color: rgba(255, 255, 255, 0.6);
+  background: none;
 }
 
 .content-toolbar {
