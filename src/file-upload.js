@@ -134,7 +134,7 @@ const dispatchUploadFiles = redispatchAs(g('upload-files'));
  */
 export const FileUploadButton = () => html`
   <div class="${n('upload-button-container')}" @click="${cascadeInputClick}">
-    <div class="${(n('upload-button'), g('text-button'))}">
+    <div class="${g('text-button')}">
       Add Files
     </div>
     <input type="file" hidden multiple @change="${dispatchUploadFiles}" />

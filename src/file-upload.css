@@ -55,6 +55,7 @@
 .panel-header {
   padding: 0 var(--file-item-x-padding);
   font-weight: bold;
+  text-align: center;
 }
 
 .list-item > div {
@@ -90,11 +91,6 @@
 .list-item:hover .unclipped {
   opacity: 1;
   z-index: 1;
-}
-
-.uploaded-files-title {
-  text-align: center;
-  text-decoration: underline;
 }
 
 .list-empty {
