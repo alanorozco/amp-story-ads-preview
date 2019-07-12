@@ -23,6 +23,9 @@ export async function successfulFetch(win, ...args) {
 }
 
 export function idleSuccessfulFetch(win, ...args) {
+  if (!('requestIdleCallback' in win)) {
+    return successfulFetch(win, ...args);
+  }
   const {promise, reject, resolve} = new Deferred();
   win.requestIdleCallback(() => {
     successfulFetch(win, ...args).then(resolve, reject);
