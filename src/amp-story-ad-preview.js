@@ -36,7 +36,6 @@ const defaultIframeSandbox = [
   'allow-same-origin',
   'allow-popups',
   'allow-popups-to-escape-sandbox',
-  'allow-presentation',
   'allow-top-navigation',
 ].join(' ');
 
