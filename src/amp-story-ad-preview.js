@@ -14,14 +14,21 @@
  */
 import './amp-story-ad-preview.css';
 import {assert} from '../lib/assert';
+import {CTA_TYPES} from './cta-types';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {ifDefined} from 'lit-html/directives/if-defined';
 import {minifyInlineJs} from './utils/minify-inline-js';
 import {setSrcdocAsyncMultiStrategy, whenIframeLoaded} from './utils/iframe';
 import {untilAttached} from './utils/until-attached';
+import memoize from 'lodash.memoize';
 
 const {n, s} = getNamespace('amp-story-ad-preview');
+
+const defaultCtaType = 'LEARN_MORE';
+const defaultCtaUrl = 'https://amp.dev';
+
+const metaCtaRe = /<meta\s+[^>]*name=['"]?amp-cta-(type|url)['"]?[^>]*>/gi;
 
 const defaultIframeSandbox = [
   'allow-scripts',
@@ -29,7 +36,6 @@ const defaultIframeSandbox = [
   'allow-same-origin',
   'allow-popups',
   'allow-popups-to-escape-sandbox',
-  'allow-presentation',
   'allow-top-navigation',
 ].join(' ');
 
@@ -94,27 +100,63 @@ function getDataTemplate(element) {
   return assert(template, `Expected [data-template] on ${element}`);
 }
 
+const htmlParserFor = memoize(win => win.document.createElement('div'));
+
+const awaitSelect = (iframeReady, selector) =>
+  iframeReady.then(iframe => iframe.contentDocument.querySelector(selector));
+
+function setMetaCtaLink(win, docStr, ctaLink) {
+  let type = defaultCtaType;
+  let url = defaultCtaUrl;
+  const matches = docStr.match(metaCtaRe);
+  if (matches && matches.length > 0) {
+    const parser = htmlParserFor(win);
+    parser.innerHTML = matches.join('\n');
+    const metas = parser.querySelectorAll('meta');
+    parser.innerHTML = '';
+    for (const meta of metas) {
+      const name = meta.getAttribute('name');
+      const content = meta.getAttribute('content');
+      if (name == 'amp-cta-type') {
+        type = content;
+      }
+      if (name == 'amp-cta-url') {
+        url = content;
+      }
+    }
+  }
+  ctaLink.setAttribute('href', url);
+  ctaLink.textContent = assert(CTA_TYPES[type], `Unknown CTA type ${type}`);
+}
+
 export default class AmpStoryAdPreview {
   constructor(win, element) {
+    /** @private @const {!Window>} */
+    this.win = win;
+
     const {iframeReady, writer, srcdoc} = setSrcdocAsyncMultiStrategy(
       win,
       untilAttached(element, s('.iframe')).then(whenIframeLoaded),
       getDataTemplate(element).replace('{{ adSandbox }}', defaultIframeSandbox)
     );
 
+    /** @private @const {!Promise<HTMLIFrameElement>} */
+    this.storyIframe_ = iframeReady;
+
     /**
      * Writer for ad iframe content.
      * Defaults to srcdoc writer, uses document.write() when unsupported.
      * TODO: A4A runtime throws replaceState error when using srcdoc.
      * Figure out how to fix, or always use document.write()
-     * @private {function(HTMLIframeElement, string):string>}
+     * @private @const {function(HTMLIframeElement, string):string>}
      */
     this.writeToIframe_ = writer;
 
-    /** @private {!Promise<HTMLIFrameElement>} */
-    this.adIframe_ = iframeReady.then(
-      iframe => iframe.contentDocument.querySelector('iframe') // xzibit.png
-    );
+    /** @private @const {!Promise<HTMLIFrameElement>} */
+    this.adIframe_ = awaitSelect(iframeReady, 'iframe'); // xzibit.png
+
+    /** @private @const {!Promise<Element>} */
+    this.storyCtaLink_ = awaitSelect(iframeReady, '.i-amphtml-story-ad-link');
 
     render(WrappedIframe({srcdoc}), element);
   }
@@ -128,5 +170,6 @@ export default class AmpStoryAdPreview {
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
     this.writeToIframe_(await this.adIframe_, patch(dirty));
+    setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
   }
 }

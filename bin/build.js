@@ -75,7 +75,7 @@ const litHtmlMinifierBabelPlugin = [
       sortClassName: false,
       sortAttributes: false,
     },
-    modules: {'lit-html': ['html']},
+    modules: {'lit-html': ['html', 'svg']},
   },
 ];
 
@@ -213,8 +213,10 @@ const buildTemplatesJson = () =>
       let files;
 
       const shouldIncludeFile = file => {
-        if (file.startsWith('_preview.')) {
-          previewExt = file.split('.').pop();
+        if (file.startsWith('_preview')) {
+          if (file.startsWith(/* note ending `.` */ '_preview.')) {
+            previewExt = file.split('.').pop();
+          }
           return false;
         }
         return !/(^\.|\.(html|txt|md)$)/.test(file);

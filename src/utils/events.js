@@ -17,5 +17,16 @@
 export const redispatchAs = eventType => e => {
   e.preventDefault();
   e.stopPropagation();
-  e.currentTarget.dispatchEvent(new CustomEvent(eventType, {bubbles: true}));
+  dispatchCustomEvent(e.currentTarget, eventType);
 };
+
+export function dispatchCustomEvent(element, eventType) {
+  element.dispatchEvent(new CustomEvent(eventType, {bubbles: true}));
+}
+
+export function listenAllBound(context, element, handlers) {
+  for (const eventType of Object.keys(handlers)) {
+    const boundHandler = handlers[eventType].bind(context);
+    element.addEventListener(eventType, boundHandler);
+  }
+}

@@ -13,22 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {assert} from '../../lib/assert';
-import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
-
-export async function successfulFetch(win, ...args) {
-  const response = await win.fetch(...args);
-  assert(response.status == 200, `Expected 200, got ${response.status}`);
-  return response;
-}
-
-export function idleSuccessfulFetch(win, ...args) {
-  if (!('requestIdleCallback' in win)) {
-    return successfulFetch(win, ...args);
-  }
-  const {promise, reject, resolve} = new Deferred();
-  win.requestIdleCallback(() => {
-    successfulFetch(win, ...args).then(resolve, reject);
-  });
-  return promise;
-}
+export const CTA_TYPES = {
+  APPLY_NOW: 'Apply Now',
+  BOOK_NOW: 'Book',
+  BUY_TICKETS: 'Buy Tickets',
+  DOWNLOAD: 'Download',
+  EXPLORE: 'Explore',
+  GET_NOW: 'Get Now',
+  INSTALL: 'Install Now',
+  LEARN_MORE: 'Learn More',
+  LISTEN: 'Listen',
+  MORE: 'More',
+  OPEN_APP: 'Open App',
+  ORDER_NOW: 'Order Now',
+  PLAY: 'Play',
+  READ: 'Read',
+  SHOP: 'Shop',
+  SHOW: 'Show',
+  SHOWTIMES: 'Showtimes',
+  SIGN_UP: 'Sign Up',
+  SUBSCRIBE: 'Subscribe Now',
+  USE_APP: 'Use App',
+  VIEW: 'View',
+  WATCH: 'Watch',
+  WATCH_EPISODE: 'Watch Episode',
+};

@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {assert} from '../../lib/assert';
-import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
+import {htmlMinifyConfig} from '../lib/html-minify-config';
+import fs from 'fs-extra';
+import htmlMinifier from 'html-minifier';
 
-export async function successfulFetch(win, ...args) {
-  const response = await win.fetch(...args);
-  assert(response.status == 200, `Expected 200, got ${response.status}`);
-  return response;
-}
+export const readFileString = async name =>
+  (await fs.readFile(name)).toString('utf-8');
 
-export function idleSuccessfulFetch(win, ...args) {
-  if (!('requestIdleCallback' in win)) {
-    return successfulFetch(win, ...args);
-  }
-  const {promise, reject, resolve} = new Deferred();
-  win.requestIdleCallback(() => {
-    successfulFetch(win, ...args).then(resolve, reject);
-  });
-  return promise;
-}
+export const readFixtureHtml = name =>
+  readFileString(`src/fixtures/${name}.html`);
+
+export const minifyHtml = html => htmlMinifier.minify(html, htmlMinifyConfig);
