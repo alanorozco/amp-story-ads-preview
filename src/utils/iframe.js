@@ -74,9 +74,9 @@ export function whenIframeLoaded(iframe) {
  *  - `writer` to be used for further updates.
  *    Takes `(iframe, srcdoc)` and returns `srcdoc` for chaining.
  */
-export const setSrcdocAsyncMultiStrategy = (win, iframeReady, srcdoc) =>
+export function setSrcdocAsyncMultiStrategy(win, iframeReady, srcdoc) {
   // https://caniuse.com/#search=srcdoc
-  'srcdoc' in win.HTMLIFrameElement.prototype
+  return false && 'srcdoc' in win.HTMLIFrameElement.prototype
     ? {
         srcdoc,
         iframeReady,
@@ -90,3 +90,4 @@ export const setSrcdocAsyncMultiStrategy = (win, iframeReady, srcdoc) =>
         }),
         writer: writeToIframe,
       };
+}
