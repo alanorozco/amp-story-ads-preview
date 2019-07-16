@@ -17,10 +17,10 @@ import {assert} from '../lib/assert';
 import {CTA_TYPES} from './cta-types';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
+import {memoize} from 'lodash-es';
 import {minifyInlineJs} from './utils/minify-inline-js';
 import {untilAttached} from './utils/until-attached';
 import {whenIframeLoaded, writeToIframe} from './utils/iframe';
-import memoize from 'lodash.memoize';
 
 const {n, s} = getNamespace('amp-story-ad-preview');
 

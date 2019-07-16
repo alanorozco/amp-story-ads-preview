@@ -32,7 +32,8 @@
     }
   },
   "dependencies": {
-    "@babel/runtime": "7.4.5"
+    "@babel/runtime": "7.4.5",
+    "lodash-es": "^4.17.14"
   },
   "devDependencies": {
     "@babel/core": "7.4.5",
@@ -62,7 +63,6 @@
     "ignore-styles": "5.0.1",
     "lit-html": "npm:@popeindustries/lit-html-server",
     "lit-html-browser": "npm:lit-html",
-    "lodash.memoize": "4.1.2",
     "minimist": "1.2.0",
     "mocha": "6.1.4",
     "nodemon": "1.19.1",

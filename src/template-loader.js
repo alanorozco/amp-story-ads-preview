@@ -18,11 +18,11 @@ import {assert} from '../lib/assert';
 import {classMap} from 'lit-html/directives/class-map';
 import {html} from 'lit-html';
 import {identity} from './utils/function';
+import {memoize} from 'lodash-es';
 import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
 import {successfulFetch} from './utils/xhr';
 import {unsafeHTML} from 'lit-html/directives/unsafe-html';
-import memoize from 'lodash.memoize';
 
 import {getNamespace} from '../lib/namespace';
 
