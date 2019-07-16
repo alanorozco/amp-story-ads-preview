@@ -21,9 +21,10 @@ import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
  * @param {string} srcdoc
  * @return {string} (for compatibility with srcdoc writer, not important atm.)
  */
-export function writeToIframe(iframe, srcdoc) {
+export async function writeToIframe(iframe, srcdoc) {
   iframe.src = 'about:blank';
-  const childDoc = iframe.contentWindow.document;
+  const loaded = await whenIframeLoaded(iframe);
+  const childDoc = loaded.contentWindow.document;
   childDoc.open();
   childDoc.write(srcdoc);
   childDoc.close();
