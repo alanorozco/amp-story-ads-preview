@@ -5,7 +5,8 @@
     <meta charset="utf-8" />
     <style amp-boilerplate>body{-webkit-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-moz-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-ms-animation:-amp-start 8s steps(1,end) 0s 1 normal both;animation:-amp-start 8s steps(1,end) 0s 1 normal both}@-webkit-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-moz-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-ms-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-o-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}</style><noscript><style amp-boilerplate>body{-webkit-animation:none;-moz-animation:none;-ms-animation:none;animation:none}</style></noscript>
     <script>
-      if (window.history.replaceState) {
+      //navigate story so that ad page is visible
+      if (window.history && window.history.replaceState) {
         window.history.replaceState(
           {
             ampStoryPageId: 'page-1',
@@ -152,6 +153,7 @@
       <aside class="i-amphtml-ad-overlay-container">
         <p class="i-amphtml-story-ad-attribution">Ad</p>
       </aside>
+      <!-- filler page before ad -->
       <amp-story-page class="i-amphtml-story-ad-cover" id="cover">
         <amp-story-grid-layer template="fill">
           <amp-img
@@ -180,6 +182,7 @@
           </a>
         </amp-story-cta-layer>
       </amp-story-page>
+      <!-- filler page after ad -->
       <amp-story-page id="page-2">
         <amp-story-grid-layer template="fill">
           <amp-video

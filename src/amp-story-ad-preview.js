@@ -17,10 +17,9 @@ import {assert} from '../lib/assert';
 import {CTA_TYPES} from './cta-types';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
-import {ifDefined} from 'lit-html/directives/if-defined';
 import {minifyInlineJs} from './utils/minify-inline-js';
-import {setSrcdocAsyncMultiStrategy, whenIframeLoaded} from './utils/iframe';
 import {untilAttached} from './utils/until-attached';
+import {whenIframeLoaded, writeToIframe} from './utils/iframe';
 import memoize from 'lodash.memoize';
 
 const {n, s} = getNamespace('amp-story-ad-preview');
@@ -41,10 +40,9 @@ const defaultIframeSandbox = [
 
 /**
  * Renders a wrapped iframe with optional srcdoc.
- * @param {string=} srcdoc
  * @return {lit-html/TemplateResult}
  */
-const WrappedIframe = ({srcdoc}) => html`
+const WrappedIframe = () => html`
   <div class="${n('wrap')}">
     <iframe
       allowpaymentrequest
@@ -52,7 +50,6 @@ const WrappedIframe = ({srcdoc}) => html`
       class=${n('iframe')}
       sandbox=${defaultIframeSandbox}
       title="AMP Story Ad Preview"
-      srcdoc=${ifDefined(srcdoc)}
     >
       <p>Loading…</p>
     </iframe>
@@ -134,31 +131,28 @@ export default class AmpStoryAdPreview {
     /** @private @const {!Window>} */
     this.win = win;
 
-    const {iframeReady, writer, srcdoc} = setSrcdocAsyncMultiStrategy(
-      win,
-      untilAttached(element, s('.iframe')).then(whenIframeLoaded),
-      getDataTemplate(element).replace('{{ adSandbox }}', defaultIframeSandbox)
+    const storyDoc = getDataTemplate(element).replace(
+      '{{ adSandbox }}',
+      defaultIframeSandbox
     );
+    /** @private @const {!Promise<HTMLIFrameElement>} */
+    this.storyIframe_ = untilAttached(element, s('.iframe'))
+      .then(whenIframeLoaded)
+      .then(iframe => {
+        writeToIframe(iframe, storyDoc);
+        return whenIframeLoaded(iframe);
+      });
 
     /** @private @const {!Promise<HTMLIFrameElement>} */
-    this.storyIframe_ = iframeReady;
-
-    /**
-     * Writer for ad iframe content.
-     * Defaults to srcdoc writer, uses document.write() when unsupported.
-     * TODO: A4A runtime throws replaceState error when using srcdoc.
-     * Figure out how to fix, or always use document.write()
-     * @private @const {function(HTMLIframeElement, string):string>}
-     */
-    this.writeToIframe_ = writer;
-
-    /** @private @const {!Promise<HTMLIFrameElement>} */
-    this.adIframe_ = awaitSelect(iframeReady, 'iframe'); // xzibit.png
+    this.adIframe_ = awaitSelect(this.storyIframe_, 'iframe'); // xzibit.png
 
     /** @private @const {!Promise<Element>} */
-    this.storyCtaLink_ = awaitSelect(iframeReady, '.i-amphtml-story-ad-link');
+    this.storyCtaLink_ = awaitSelect(
+      this.storyIframe_,
+      '.i-amphtml-story-ad-link'
+    );
 
-    render(WrappedIframe({srcdoc}), element);
+    render(WrappedIframe(), element);
   }
 
   /**
@@ -169,7 +163,7 @@ export default class AmpStoryAdPreview {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    this.writeToIframe_(await this.adIframe_, patch(dirty));
+    writeToIframe(await this.adIframe_, patch(dirty));
     setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
   }
 }
