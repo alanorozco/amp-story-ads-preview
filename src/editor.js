@@ -29,6 +29,7 @@ import {
   FilesDragHint,
   FilesPanel,
   FileUploadButton,
+  readableFileUrl,
   removeFileRevokeUrl,
   replaceFileRefs,
 } from './file-upload';
@@ -445,7 +446,7 @@ class Editor {
 
   insertFileRef_({target: {dataset}}) {
     const name = assert(dataset.name);
-    this.codeMirror_.replaceSelection(`/${name}`, 'around');
+    this.codeMirror_.replaceSelection(readableFileUrl(name), 'around');
   }
 
   deleteFile_({target}) {
@@ -491,7 +492,7 @@ class Editor {
   updateFileHints_() {
     setAttrFileHints(
       this.codeMirror_.getHintHtmlSchema(),
-      this.state_.files.map(({name}) => `/${name}`)
+      this.state_.files.map(({name}) => readableFileUrl(name))
     );
   }
 
