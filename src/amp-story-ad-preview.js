@@ -163,7 +163,12 @@ export default class AmpStoryAdPreview {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    writeToIframe(await this.adIframe_, patch(dirty));
+
+    // Reset, then wait.
+    const adIframe = await this.adIframe_;
+    adIframe.src = 'about:blank';
+
+    writeToIframe(await whenIframeLoaded(adIframe), patch(dirty));
     setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
   }
 }
