@@ -21,3 +21,21 @@ div {
   justify-content: center;
   flex: 1;
 }
+
+.text-button {
+  text-align: center;
+  cursor: pointer;
+  padding: 0 12px;
+  line-height: 36px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 13px;
+  text-transform: uppercase;
+  /* color: rgba(255, 255, 255, 0.6); */
+  border: 1px solid var(--blueishgray-transparent);
+  margin: 0 8px;
+}
+
+.text-button:hover {
+  color: var(--amp-blue);
+}

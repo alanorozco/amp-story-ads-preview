@@ -34,3 +34,80 @@
   50% {transform: translate(-8px)}
   100% {transform: translate(0)}
 }
+
+.panel {
+  --file-item-width: 220px;
+  --file-item-x-padding: 14px;
+  flex: 0 0 var(--file-item-width);
+  overflow: visible;
+  flex-direction: column;
+}
+
+.panel:not([hidden]) {
+  display: flex;
+}
+
+.list-item {
+  position: relative;
+  cursor: pointer;
+}
+
+.panel-header {
+  padding: 0 var(--file-item-x-padding);
+  font-weight: bold;
+  text-align: center;
+}
+
+.list-item > div {
+  padding: 8px var(--file-item-x-padding);
+  white-space: nowrap;
+}
+
+.list-item > div:not(.delete-button){
+  padding-left: 30px;
+}
+
+.list-item .clipped {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: var(--file-item-width);
+}
+
+.list-item .unclipped {
+  pointer-events: none;
+  opacity: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: var(--blueishgray-semiopaque);
+  color: var(--amp-blue);
+  min-width: 100%;
+}
+
+.list-item:hover .clipped {
+  opacity: 0;
+}
+
+.list-item:hover .unclipped {
+  opacity: 1;
+  z-index: 1;
+}
+
+.list-empty {
+  flex: 0;
+  margin: 20px 0;
+  flex-direction: column;
+  justify-self: start;
+}
+
+.list-empty > div:not(.text) {
+  margin: 10px 0;
+  background: var(--blueishgray-semiopaque);
+  color: black;
+}
+
+.delete-button {
+  z-index:2;
+  position: absolute;
+  cursor: pointer;
+}
