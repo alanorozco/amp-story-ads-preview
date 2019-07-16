@@ -16,6 +16,7 @@
 import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
+import {ChangeDefaultStory} from './modify-storyAd';
 import {
   ChooseTemplatesButton,
   fetchTemplateContentFactory,
@@ -193,6 +194,7 @@ const ContentToolbar = ({isFilesPanelDisplayed, isTemplatePanelDisplayed}) =>
         [n('templates-button')]: true,
         [n('selected')]: isTemplatePanelDisplayed,
       }),
+      ChangeDefaultStory(),
     ],
   });
 
@@ -338,6 +340,7 @@ class Editor {
       [g('toggle')]: this.toggle_,
       [g('update-preview')]: this.updatePreview_,
       [g('upload-files')]: this.uploadFiles_,
+      [g('modify-storyAd')]: this.modifyStoryAd_,
     });
   }
 
@@ -529,6 +532,20 @@ class Editor {
     if (files && files.length) {
       this.addFiles_(files);
     }
+  }
+
+  modifyStoryAd_() {
+    debugger;
+    console.log(Textarea.mirror.getValue());
+
+    // get current ad state from codemirror
+    // this.adstate = codemirror.getValue();
+    // persist ad state
+    // get ad blob url
+    // load story.html
+    // insert story-auto-ads-config with src = blob;
+    //place storyAd code into the editor with ad blob url in stored in it
+    // update preview
   }
 }
 
