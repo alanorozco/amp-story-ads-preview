@@ -63,7 +63,7 @@ const staticServerData = async () => ({
   content: await readFixtureHtml('ad'),
   // Since this is a template that is never user-edited, let's minify it to
   // keep the bundle small.
-  storyDocTemplate: minifyHtml(await readFixtureHtml('story')),
+  storyDocTemplate: await readFixtureHtml('story'),
   templatesJson: await readFileString('dist/templates.json'),
 });
 
@@ -318,6 +318,9 @@ class Editor {
 
     batchedRender();
 
+    this.adState_ = this.codeMirror_.getValue();
+    this.isOnAdEditor_ = true;
+
     this.refreshCodeMirror_();
     this.updatePreview_();
 
@@ -422,7 +425,11 @@ class Editor {
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
-    this.preview_.update(docWithFileRefs);
+    // if (this.isOnAdEditor_) {
+    this.preview_.updateInner(docWithFileRefs);
+    // } else {
+    //   this.preview_.updateOuter(docWithFileRefs);
+    // }
   }
 
   toggleFullPreview_() {
@@ -534,18 +541,9 @@ class Editor {
     }
   }
 
-  modifyStoryAd_() {
-    debugger;
-    console.log(Textarea.mirror.getValue());
-
-    // get current ad state from codemirror
-    // this.adstate = codemirror.getValue();
-    // persist ad state
-    // get ad blob url
-    // load story.html
-    // insert story-auto-ads-config with src = blob;
-    //place storyAd code into the editor with ad blob url in stored in it
-    // update preview
+  async modifyStoryAd_() {
+    this.adState_ = this.codeMirror_.getValue();
+    this.codeMirror_.setValue(this.preview_.storyDoc);
   }
 }
 

@@ -27,6 +27,6 @@ const dispatchModifyStoryAd = redispatchAs(g('modify-storyAd'));
 
 export const ChangeDefaultStory = () => html`
   <div class="${g('text-button')}" @click="${dispatchModifyStoryAd}">
-    Modify StoryAd
+    Modify Story Ad
   </div>
 `;

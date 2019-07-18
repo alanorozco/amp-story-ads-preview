@@ -130,8 +130,7 @@ export default class AmpStoryAdPreview {
   constructor(win, element) {
     /** @private @const {!Window>} */
     this.win = win;
-
-    const storyDoc = getDataTemplate(element).replace(
+    this.storyDoc = getDataTemplate(element).replace(
       '{{ adSandbox }}',
       defaultIframeSandbox
     );
@@ -139,7 +138,7 @@ export default class AmpStoryAdPreview {
     this.storyIframe_ = untilAttached(element, s('.iframe'))
       .then(whenIframeLoaded)
       .then(iframe => {
-        writeToIframe(iframe, storyDoc);
+        writeToIframe(iframe, this.storyDoc);
         return whenIframeLoaded(iframe);
       });
 
@@ -159,11 +158,18 @@ export default class AmpStoryAdPreview {
    * Updates the current preview with full document HTML.
    * @param {string} dirty Dirty document HTML.
    */
-  async update(dirty) {
+  async updateInner(dirty) {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
     writeToIframe(await this.adIframe_, patch(dirty));
     setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
   }
+
+  // async updateOuter(dirty) {
+  //   writeToIframe(await this.storyIframe_, patch(dirty));
+  // writeToIframe(this.adiframe, this.storyDoc);
+  // whenIframeLoaded(this.adiframe);
+  // this.adIframe_ = awaitSelect(this.storyIframe_, 'iframe');
+  //}
 }
