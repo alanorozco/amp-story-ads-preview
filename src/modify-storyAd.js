@@ -17,7 +17,7 @@ import {getNamespace} from '../lib/namespace';
 import {html} from 'lit-html';
 import {redispatchAs} from './utils/events';
 
-const {g, n} = getNamespace('modify-storyAd');
+const {g} = getNamespace('modify-storyAd');
 
 // function cascadeInputClick({currentTarget}) {
 //   assert(currentTarget.getElementsByClassName('amp-sap_text-button')).click();

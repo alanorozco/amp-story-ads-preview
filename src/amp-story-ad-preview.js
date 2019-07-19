@@ -167,7 +167,7 @@ export default class AmpStoryAdPreview {
   }
 
   async updateOuter(dirty, dirtyInner) {
-    writeToIframe(await this.storyIframe_, dirty);
+    writeToIframe(await this.storyIframe_, patch(dirty));
     await whenIframeLoaded(await this.storyIframe_);
     this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
     this.updateInner(dirtyInner);
