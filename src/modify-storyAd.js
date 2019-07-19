@@ -25,8 +25,8 @@ const {g, n} = getNamespace('modify-storyAd');
 
 const dispatchModifyStoryAd = redispatchAs(g('modify-storyAd'));
 
-export const ChangeDefaultStory = () => html`
+export const ChangeDefaultStory = ({editingInner}) => html`
   <div class="${g('text-button')}" @click="${dispatchModifyStoryAd}">
-    Modify Story Ad
+    ${editingInner ? 'Story' : 'Ad'}
   </div>
 `;

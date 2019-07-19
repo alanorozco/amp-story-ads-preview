@@ -40,7 +40,7 @@ import {hintsUrl, setAttrFileHints} from './hints';
 import {html, render} from 'lit-html';
 import {idleSuccessfulFetch} from './utils/xhr';
 import {listenAllBound, redispatchAs} from './utils/events';
-import {minifyHtml, readFileString, readFixtureHtml} from './static-data';
+import {readFileString, readFixtureHtml} from './static-data';
 import {RefreshIcon} from './icons';
 import {ToggleButton} from './toggle-button';
 import {Toolbar} from './toolbar';
@@ -117,6 +117,7 @@ const renderEditor = ({
   templates,
   templatesJson,
   viewportId = viewportIdDefault,
+  editingInner = true,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
@@ -131,6 +132,7 @@ const renderEditor = ({
       codeMirrorElement,
       content,
       templates,
+      editingInner,
     })}
     ${PreviewPanel({
       isFullPreview,
@@ -159,10 +161,15 @@ const ContentPanel = ({
   isFilesPanelDisplayed,
   isTemplatePanelDisplayed,
   templates,
+  editingInner,
 }) => html`
   <div class=${n('content')} ?hidden=${!isDisplayed}>
     ${FilesDragHint({isDisplayed: isFilesDragHintDisplayed})}
-    ${ContentToolbar({isFilesPanelDisplayed, isTemplatePanelDisplayed})}
+    ${ContentToolbar({
+      isFilesPanelDisplayed,
+      isTemplatePanelDisplayed,
+      editingInner,
+    })}
     ${TemplatesPanel({isDisplayed: isTemplatePanelDisplayed, templates})}
     <!--
       Default Content to load on the server and then populate codemirror on
@@ -180,7 +187,11 @@ const ContentPanel = ({
  * @param {boolean=} data.isFilesPanelDisplayed
  * @return {lit-html/TemplateResult}
  */
-const ContentToolbar = ({isFilesPanelDisplayed, isTemplatePanelDisplayed}) =>
+const ContentToolbar = ({
+  isFilesPanelDisplayed,
+  isTemplatePanelDisplayed,
+  editingInner,
+}) =>
   Toolbar({
     classNames: [n('content-toolbar')],
     children: [
@@ -194,7 +205,7 @@ const ContentToolbar = ({isFilesPanelDisplayed, isTemplatePanelDisplayed}) =>
         [n('templates-button')]: true,
         [n('selected')]: isTemplatePanelDisplayed,
       }),
-      ChangeDefaultStory(),
+      ChangeDefaultStory({editingInner}),
     ],
   });
 
@@ -314,11 +325,13 @@ class Editor {
       previewElement,
       templates: parseTemplatesJsonScript(element),
       viewportId: viewportIdDefault,
+      editingInner: true,
     });
 
     batchedRender();
 
-    this.adState_ = this.codeMirror_.getValue();
+    this.storyState_ = this.preview_.storyDoc;
+    this.adState_ = null;
     this.isOnAdEditor_ = true;
 
     this.refreshCodeMirror_();
@@ -425,11 +438,11 @@ class Editor {
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
-    // if (this.isOnAdEditor_) {
-    this.preview_.updateInner(docWithFileRefs);
-    // } else {
-    //   this.preview_.updateOuter(docWithFileRefs);
-    // }
+    if (this.state_.editingInner) {
+      this.preview_.updateInner(docWithFileRefs);
+    } else {
+      this.preview_.updateOuter(docWithFileRefs, this.adState_);
+    }
   }
 
   toggleFullPreview_() {
@@ -541,9 +554,15 @@ class Editor {
     }
   }
 
-  async modifyStoryAd_() {
-    this.adState_ = this.codeMirror_.getValue();
-    this.codeMirror_.setValue(this.preview_.storyDoc);
+  modifyStoryAd_() {
+    this.state_.editingInner = !this.state_.editingInner;
+    if (!this.state_.editingInner) {
+      this.adState_ = this.codeMirror_.getValue();
+      this.codeMirror_.setValue(this.storyState_);
+    } else {
+      this.storyState_ = this.codeMirror_.getValue();
+      this.codeMirror_.setValue(this.adState_);
+    }
   }
 }
 

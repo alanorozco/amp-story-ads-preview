@@ -166,10 +166,10 @@ export default class AmpStoryAdPreview {
     setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
   }
 
-  // async updateOuter(dirty) {
-  //   writeToIframe(await this.storyIframe_, patch(dirty));
-  // writeToIframe(this.adiframe, this.storyDoc);
-  // whenIframeLoaded(this.adiframe);
-  // this.adIframe_ = awaitSelect(this.storyIframe_, 'iframe');
-  //}
+  async updateOuter(dirty, dirtyInner) {
+    writeToIframe(await this.storyIframe_, dirty);
+    await whenIframeLoaded(await this.storyIframe_);
+    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
+    this.updateInner(dirtyInner);
+  }
 }
