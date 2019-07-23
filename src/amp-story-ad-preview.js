@@ -67,13 +67,37 @@ const httpsCircumventionPatch = minifyInlineJs(`
       return el;
     };
   })(document);
-`);
+
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState(
+      {
+        ampStoryPageId: 'page-1',
+      },
+      ''
+    );
+  }
+  `);
+
+const startingPage = `
+if (window.history && window.history.replaceState) {
+  window.history.replaceState(
+    {
+      ampStoryPageId: 'page-1',
+    },
+    ''
+  );
+}`;
 
 const setBodyAmpStoryVisible = docStr =>
   docStr.replace(/<(body[^>]*)>/, '<$1 amp-story-visible>');
 
 const insertHttpsCircumventionPatch = docStr =>
-  docStr.replace('<head>', `<head><script>${httpsCircumventionPatch}</script>`);
+  addScriptToHead(docStr, httpsCircumventionPatch);
+
+const addScriptToHead = (docStr, scriptContent) =>
+  docStr.replace('<head>', `<head><script>${scriptContent}</script>`);
+
+const storyNavigationPatch = docStr => addScriptToHead(docStr, startingPage);
 
 /**
  * Patches an <amp-story> ad document string for REPL support:
@@ -82,8 +106,11 @@ const insertHttpsCircumventionPatch = docStr =>
  * @param {string} docStr
  * @return {string}
  */
+
 const patch = docStr =>
   setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
+
+const patchOuter = str => storyNavigationPatch(str);
 
 /**
  * Gets amp-story document string from `data-template` attribute.
@@ -162,12 +189,15 @@ export default class AmpStoryAdPreview {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
+    console.log(patch(dirty));
     writeToIframe(await this.adIframe_, patch(dirty));
     setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
   }
 
   async updateOuter(dirty, dirtyInner) {
-    writeToIframe(await this.storyIframe_, patch(dirty));
+    // if ad mode
+    // patchOuter(dirty)
+    writeToIframe(await this.storyIframe_, patchOuter(dirty));
     await whenIframeLoaded(await this.storyIframe_);
     this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
     this.updateInner(dirtyInner);
