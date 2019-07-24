@@ -54,6 +54,7 @@ import {
   ViewportSelector,
 } from './viewport';
 import {WrappedCodemirror} from './wrapped-codemirror';
+import {writeToIframe} from './utils/iframe';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 
 const {id, g, n, s} = getNamespace('editor');

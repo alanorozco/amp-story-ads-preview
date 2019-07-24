@@ -67,26 +67,18 @@ const httpsCircumventionPatch = minifyInlineJs(`
       return el;
     };
   })(document);
-
-  if (window.history && window.history.replaceState) {
-    window.history.replaceState(
-      {
-        ampStoryPageId: 'page-1',
-      },
-      ''
-    );
-  }
   `);
 
-const startingPage = `
+const startingPage = minifyInlineJs(`
 if (window.history && window.history.replaceState) {
   window.history.replaceState(
     {
-      ampStoryPageId: 'page-1',
+      ampStoryPageId: '$pageId$',
     },
     ''
   );
-}`;
+}
+`);
 
 const setBodyAmpStoryVisible = docStr =>
   docStr.replace(/<(body[^>]*)>/, '<$1 amp-story-visible>');
@@ -97,7 +89,8 @@ const insertHttpsCircumventionPatch = docStr =>
 const addScriptToHead = (docStr, scriptContent) =>
   docStr.replace('<head>', `<head><script>${scriptContent}</script>`);
 
-const storyNavigationPatch = docStr => addScriptToHead(docStr, startingPage);
+const storyNavigationPatch = (docStr, pageId) =>
+  addScriptToHead(docStr, startingPage.replace('$pageId$', pageId));
 
 /**
  * Patches an <amp-story> ad document string for REPL support:
@@ -110,7 +103,8 @@ const storyNavigationPatch = docStr => addScriptToHead(docStr, startingPage);
 const patch = docStr =>
   setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
 
-const patchOuter = str => storyNavigationPatch(str);
+const patchOuter = (str, pageId = 'page-1') =>
+  storyNavigationPatch(str, pageId);
 
 /**
  * Gets amp-story document string from `data-template` attribute.
@@ -157,6 +151,8 @@ export default class AmpStoryAdPreview {
   constructor(win, element) {
     /** @private @const {!Window>} */
     this.win = win;
+    this.pageId = 'page-1';
+    this.isAdMode = false;
     this.storyDoc = getDataTemplate(element).replace(
       '{{ adSandbox }}',
       defaultIframeSandbox
@@ -165,7 +161,7 @@ export default class AmpStoryAdPreview {
     this.storyIframe_ = untilAttached(element, s('.iframe'))
       .then(whenIframeLoaded)
       .then(iframe => {
-        writeToIframe(iframe, this.storyDoc);
+        writeToIframe(iframe, patchOuter(this.storyDoc));
         return whenIframeLoaded(iframe);
       });
 
@@ -189,17 +185,29 @@ export default class AmpStoryAdPreview {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    console.log(patch(dirty));
-    writeToIframe(await this.adIframe_, patch(dirty));
+    if (this.isAdMode) {
+      this.pageId = 'cover';
+      await this.maybeReloadOuterPage(this.storyDoc, 'page-1');
+      this.isAdMode = !this.isAdMode;
+    }
+    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
     setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
+    writeToIframe(await this.adIframe_, dirty);
   }
 
   async updateOuter(dirty, dirtyInner) {
-    // if ad mode
-    // patchOuter(dirty)
-    writeToIframe(await this.storyIframe_, patchOuter(dirty));
-    await whenIframeLoaded(await this.storyIframe_);
+    await this.maybeReloadOuterPage(dirty, 'cover');
     this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
     this.updateInner(dirtyInner);
+    this.isAdMode = !this.isAdMode;
+  }
+
+  async maybeReloadOuterPage(dirty, pageId) {
+    if (this.pageId == pageId) {
+      return;
+    }
+    this.pageId = pageId;
+    writeToIframe(await this.storyIframe_, patchOuter(dirty, pageId));
+    return whenIframeLoaded(await this.storyIframe_);
   }
 }
