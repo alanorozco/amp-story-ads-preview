@@ -21,8 +21,8 @@ const {g} = getNamespace('toggleInnerOuter');
 
 const toggleInnerOuter = redispatchAs(g('toggleInnerOuter'));
 
-export const ToggleInnerOuterContentButton = ({editingInner}) => html`
+export const ToggleInnerOuterContentButton = ({isEditingInner}) => html`
   <div class="${g('text-button')}" @click="${toggleInnerOuter}">
-    ${editingInner ? 'Story' : 'Ad'}
+    ${isEditingInner ? 'Story' : 'Ad'}
   </div>
 `;
