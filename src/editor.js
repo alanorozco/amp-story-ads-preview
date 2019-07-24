@@ -16,7 +16,6 @@
 import './editor.css';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
-import {ChangeDefaultStory} from './modify-storyAd';
 import {
   ChooseTemplatesButton,
   fetchTemplateContentFactory,
@@ -43,6 +42,7 @@ import {listenAllBound, redispatchAs} from './utils/events';
 import {readFileString, readFixtureHtml} from './static-data';
 import {RefreshIcon} from './icons';
 import {ToggleButton} from './toggle-button';
+import {ToggleInnerOuterContentButton} from './toggleInnerOuter';
 import {Toolbar} from './toolbar';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
@@ -118,7 +118,7 @@ const renderEditor = ({
   templates,
   templatesJson,
   viewportId = viewportIdDefault,
-  editingInner = true,
+  isEditingInner = true,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
@@ -133,7 +133,7 @@ const renderEditor = ({
       codeMirrorElement,
       content,
       templates,
-      editingInner,
+      isEditingInner,
     })}
     ${PreviewPanel({
       isFullPreview,
@@ -162,14 +162,14 @@ const ContentPanel = ({
   isFilesPanelDisplayed,
   isTemplatePanelDisplayed,
   templates,
-  editingInner,
+  isEditingInner,
 }) => html`
   <div class=${n('content')} ?hidden=${!isDisplayed}>
     ${FilesDragHint({isDisplayed: isFilesDragHintDisplayed})}
     ${ContentToolbar({
       isFilesPanelDisplayed,
       isTemplatePanelDisplayed,
-      editingInner,
+      isEditingInner,
     })}
     ${TemplatesPanel({isDisplayed: isTemplatePanelDisplayed, templates})}
     <!--
@@ -191,7 +191,7 @@ const ContentPanel = ({
 const ContentToolbar = ({
   isFilesPanelDisplayed,
   isTemplatePanelDisplayed,
-  editingInner,
+  isEditingInner,
 }) =>
   Toolbar({
     classNames: [n('content-toolbar')],
@@ -206,7 +206,7 @@ const ContentToolbar = ({
         [n('templates-button')]: true,
         [n('selected')]: isTemplatePanelDisplayed,
       }),
-      ChangeDefaultStory({editingInner}),
+      ToggleInnerOuterContentButton({isEditingInner}),
     ],
   });
 
@@ -326,7 +326,7 @@ class Editor {
       previewElement,
       templates: parseTemplatesJsonScript(element),
       viewportId: viewportIdDefault,
-      editingInner: true,
+      isEditingInner: true,
     });
 
     batchedRender();
@@ -357,7 +357,7 @@ class Editor {
       [g('toggle')]: this.toggle_,
       [g('update-preview')]: this.updatePreview_,
       [g('upload-files')]: this.uploadFiles_,
-      [g('modify-storyAd')]: this.modifyStoryAd_,
+      [g('toggleInnerOuter')]: this.modifyStoryAd_,
     });
   }
 
@@ -439,7 +439,7 @@ class Editor {
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
-    if (this.state_.editingInner) {
+    if (this.state_.isEditingInner) {
       this.preview_.updateInner(docWithFileRefs);
     } else {
       this.preview_.updateOuter(docWithFileRefs, this.adState_);
@@ -556,8 +556,8 @@ class Editor {
   }
 
   modifyStoryAd_() {
-    this.state_.editingInner = !this.state_.editingInner;
-    if (!this.state_.editingInner) {
+    this.state_.isEditingInner = !this.state_.isEditingInner;
+    if (!this.state_.isEditingInner) {
       this.adState_ = this.codeMirror_.getValue();
       this.codeMirror_.setValue(this.storyState_);
     } else {

@@ -17,16 +17,12 @@ import {getNamespace} from '../lib/namespace';
 import {html} from 'lit-html';
 import {redispatchAs} from './utils/events';
 
-const {g} = getNamespace('modify-storyAd');
+const {g} = getNamespace('toggleInnerOuter');
 
-// function cascadeInputClick({currentTarget}) {
-//   assert(currentTarget.getElementsByClassName('amp-sap_text-button')).click();
-// }
+const toggleInnerOuter = redispatchAs(g('toggleInnerOuter'));
 
-const dispatchModifyStoryAd = redispatchAs(g('modify-storyAd'));
-
-export const ChangeDefaultStory = ({editingInner}) => html`
-  <div class="${g('text-button')}" @click="${dispatchModifyStoryAd}">
+export const ToggleInnerOuterContentButton = ({editingInner}) => html`
+  <div class="${g('text-button')}" @click="${toggleInnerOuter}">
     ${editingInner ? 'Story' : 'Ad'}
   </div>
 `;
