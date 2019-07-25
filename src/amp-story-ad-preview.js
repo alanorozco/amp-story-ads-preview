@@ -77,8 +77,8 @@ const setBodyAmpStoryVisible = docStr =>
 const insertHttpsCircumventionPatch = docStr =>
   addScriptToHead(docStr, httpsCircumventionPatch);
 
-const addScriptToHead = (docStr, scriptContent) =>
-  docStr.replace('<head>', `<head>${scriptContent}`);
+const addScriptToHead = (docStr, headContent) =>
+  docStr.replace('<head>', `<head>${headContent}`);
 
 const storyNavigationPatch = (docStr, pageId) =>
   addScriptToHead(docStr, startingPage.replace('$pageId$', pageId));

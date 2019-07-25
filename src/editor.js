@@ -14,26 +14,46 @@
  * limitations under the License.
  */
 import './editor.css';
-import { appliedState, batchedApplier } from './utils/applied-state';
-import { assert } from '../lib/assert';
-import { ChooseTemplatesButton, fetchTemplateContentFactory, parseTemplatesJsonScript, templateFileUrl, TemplatesJsonScriptOptional, TemplatesPanel } from './template-loader';
-import { concatAttachBlobUrl, FilesDragHint, FilesPanel, FileUploadButton, removeFileRevokeUrl, replaceFileRefs } from './file-upload';
-import { CTA_TYPES } from './cta-types';
-import { Deferred } from '../vendor/ampproject/amphtml/src/utils/promise';
-import { getNamespace } from '../lib/namespace';
-import { hintsUrl, setAttrFileHints } from './hints';
-import { html, render } from 'lit-html';
-import { idleSuccessfulFetch } from './utils/xhr';
-import { listenAllBound, redispatchAs } from './utils/events';
-import { readFileString, readFixtureHtml } from './static-data';
-import { RefreshIcon } from './icons';
-import { ToggleButton } from './toggle-button';
-import { ToggleInnerOuterContentButton } from './toggleInnerOuter';
-import { Toolbar } from './toolbar';
-import { until } from 'lit-html/directives/until';
-import { untilAttached } from './utils/until-attached';
-import { validViewportId, Viewport, viewportIdDefault, viewportIdFull, ViewportSelector } from './viewport';
-import { WrappedCodemirror } from './wrapped-codemirror';
+import {appliedState, batchedApplier} from './utils/applied-state';
+import {assert} from '../lib/assert';
+import {
+  ChooseTemplatesButton,
+  fetchTemplateContentFactory,
+  parseTemplatesJsonScript,
+  templateFileUrl,
+  TemplatesJsonScriptOptional,
+  TemplatesPanel,
+} from './template-loader';
+import {
+  concatAttachBlobUrl,
+  FilesDragHint,
+  FilesPanel,
+  FileUploadButton,
+  removeFileRevokeUrl,
+  replaceFileRefs,
+} from './file-upload';
+import {CTA_TYPES} from './cta-types';
+import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
+import {getNamespace} from '../lib/namespace';
+import {hintsUrl, setAttrFileHints} from './hints';
+import {html, render} from 'lit-html';
+import {idleSuccessfulFetch} from './utils/xhr';
+import {listenAllBound, redispatchAs} from './utils/events';
+import {readFileString, readFixtureHtml} from './static-data';
+import {RefreshIcon} from './icons';
+import {ToggleButton} from './toggle-button';
+import {ToggleInnerOuterContentButton} from './toggleInnerOuter';
+import {Toolbar} from './toolbar';
+import {until} from 'lit-html/directives/until';
+import {untilAttached} from './utils/until-attached';
+import {
+  validViewportId,
+  Viewport,
+  viewportIdDefault,
+  viewportIdFull,
+  ViewportSelector,
+} from './viewport';
+import {WrappedCodemirror} from './wrapped-codemirror';
 import AmpStoryAdPreview from './amp-story-ad-preview';
 
 const {id, g, n, s} = getNamespace('editor');
