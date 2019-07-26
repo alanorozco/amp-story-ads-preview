@@ -14,12 +14,12 @@
  */
 import './amp-story-ad-preview.css';
 import {assert} from '../lib/assert';
+import {cssPatch, navigationPatch} from './story-patch';
 import {CTA_TYPES} from './cta-types';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {memoize} from 'lodash-es';
 import {minifyInlineJs} from './utils/minify-inline-js';
-import {startingPage} from './story-patch';
 import {untilAttached} from './utils/until-attached';
 import {whenIframeLoaded, writeToIframe} from './utils/iframe';
 
@@ -81,7 +81,9 @@ const addScriptToHead = (docStr, headContent) =>
   docStr.replace('<head>', `<head>${headContent}`);
 
 const storyNavigationPatch = (docStr, pageId) =>
-  addScriptToHead(docStr, startingPage.replace('$pageId$', pageId));
+  addScriptToHead(docStr, navigationPatch.replace('$pageId$', pageId));
+
+const storyCssPatch = docStr => addScriptToHead(docStr, cssPatch);
 
 /**
  * Patches an <amp-story> ad document string for REPL support:
@@ -95,7 +97,7 @@ const patch = docStr =>
   setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
 
 const patchOuter = (str, pageId = 'page-1') =>
-  storyNavigationPatch(str, pageId);
+  storyNavigationPatch(storyCssPatch(str), pageId);
 
 /**
  * Gets amp-story document string from `data-template` attribute.
@@ -150,7 +152,7 @@ export default class AmpStoryAdPreview {
     this.storyIframe_ = untilAttached(element, s('.iframe'))
       .then(whenIframeLoaded)
       .then(iframe => {
-        writeToIframe(iframe, patchOuter(this.storyDoc));
+        writeToIframe(iframe, patchOuter(this.storyDoc, 'page-1'));
         return whenIframeLoaded(iframe);
       });
 
@@ -176,7 +178,15 @@ export default class AmpStoryAdPreview {
     // b) reject when invalid
     if (switchingContext) {
       // Navigate back to ad page
-      await this.maybeReloadOuterPage(this.storyDoc, 'page-1');
+      // await this.reloadStoryWithScript(this.storyDoc, 'page-1');
+      writeToIframe(
+        await this.storyIframe_,
+        patchOuter(this.storyDoc, 'page-1')
+      );
+      await whenIframeLoaded(await this.storyIframe_);
+    } else {
+      writeToIframe(await this.storyIframe_, storyCssPatch(this.storyDoc));
+      await whenIframeLoaded(await this.storyIframe_);
     }
     this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
     setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
@@ -185,15 +195,24 @@ export default class AmpStoryAdPreview {
 
   async updateOuter(dirty, dirtyInner, switchingContext) {
     this.storyDoc = dirty;
-    await this.maybeReloadOuterPage(dirty, 'cover');
-    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
     if (switchingContext) {
-      this.updateInner(dirtyInner);
+      // await this.reloadStoryWithScript(dirty, 'cover');
+      writeToIframe(await this.storyIframe_, patchOuter(dirty, 'cover'));
+      await whenIframeLoaded(await this.storyIframe_);
     }
+    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
+    this.updateInner(dirtyInner, false);
   }
 
-  async maybeReloadOuterPage(dirty, pageId) {
-    writeToIframe(await this.storyIframe_, patchOuter(dirty, pageId));
-    return whenIframeLoaded(await this.storyIframe_);
-  }
+  // async reloadStoryWithScript(dirty, pageId) {
+  //   writeToIframe(await this.storyIframe_, patchOuter(dirty, pageId));
+  //   return whenIframeLoaded(await this.storyIframe_);
+  // }
+
+  // async reloadStoryCss(dirty) {
+  //   writeToIframe(await this.storyIframe_, storyCssPatch(dirty));
+  //   await whenIframeLoaded(await this.storyIframe_);
+  // }
 }
+//only patch script when switching context not every time it updates.
+//check//make navPatch and csspatch two seperate things

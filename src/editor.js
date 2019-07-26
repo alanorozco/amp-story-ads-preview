@@ -333,6 +333,7 @@ class Editor {
     this.storyState_ = this.preview_.storyDoc;
     this.adState_ = null;
     this.isOnAdEditor_ = true;
+    this.swichingContext = true;
 
     this.refreshCodeMirror_();
     this.updatePreview_();
@@ -447,7 +448,7 @@ class Editor {
         this.swichingContext
       );
     }
-    this.swichingContext = false;
+    // this.swichingContext = false;
   }
 
   toggleFullPreview_() {
