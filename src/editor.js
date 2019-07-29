@@ -333,7 +333,6 @@ class Editor {
     this.storyState_ = this.preview_.storyDoc;
     this.adState_ = null;
     this.isOnAdEditor_ = true;
-    this.swichingContext = true;
 
     this.refreshCodeMirror_();
     this.updatePreview_();
@@ -440,15 +439,10 @@ class Editor {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
     if (this.state_.isEditingInner) {
-      this.preview_.updateInner(docWithFileRefs, this.swichingContext);
+      this.preview_.updateInner(docWithFileRefs, 'page-1');
     } else {
-      this.preview_.updateOuter(
-        docWithFileRefs,
-        this.adState_,
-        this.swichingContext
-      );
+      this.preview_.updateOuter(docWithFileRefs, this.adState_);
     }
-    // this.swichingContext = false;
   }
 
   toggleFullPreview_() {
@@ -562,7 +556,6 @@ class Editor {
 
   modifyStoryAd_() {
     this.state_.isEditingInner = !this.state_.isEditingInner;
-    this.swichingContext = true;
     if (!this.state_.isEditingInner) {
       this.adState_ = this.codeMirror_.getValue();
       this.codeMirror_.setValue(this.storyState_);

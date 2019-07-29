@@ -144,7 +144,7 @@ amp-story-cta-layer {
 </style>
 `);
 
-export const navigationPatch = `<script>
+export const navigationPatch = minifyInlineJs(`<script>
 if (window.history && window.history.replaceState) {
   window.history.replaceState(
     {
@@ -154,4 +154,4 @@ if (window.history && window.history.replaceState) {
   );
 }
 </script>
-`;
+`);

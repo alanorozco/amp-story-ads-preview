@@ -96,8 +96,13 @@ const storyCssPatch = docStr => addScriptToHead(docStr, cssPatch);
 const patch = docStr =>
   setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
 
-const patchOuter = (str, pageId = 'page-1') =>
-  storyNavigationPatch(storyCssPatch(str), pageId);
+function patchOuter(str, pageId) {
+  str = storyCssPatch(str);
+  if (!pageId) {
+    return str;
+  }
+  return storyNavigationPatch(str, pageId);
+}
 
 /**
  * Gets amp-story document string from `data-template` attribute.
@@ -172,47 +177,24 @@ export default class AmpStoryAdPreview {
    * Updates the current preview with full document HTML.
    * @param {string} dirty Dirty document HTML.
    */
-  async updateInner(dirty, switchingContext) {
+  async updateInner(dirty, startPageId) {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    if (switchingContext) {
-      // Navigate back to ad page
-      // await this.reloadStoryWithScript(this.storyDoc, 'page-1');
-      writeToIframe(
-        await this.storyIframe_,
-        patchOuter(this.storyDoc, 'page-1')
-      );
-      await whenIframeLoaded(await this.storyIframe_);
-    } else {
-      writeToIframe(await this.storyIframe_, storyCssPatch(this.storyDoc));
-      await whenIframeLoaded(await this.storyIframe_);
-    }
+    // Navigate back to ad page
+    writeToIframe(
+      await this.storyIframe_,
+      patchOuter(this.storyDoc, startPageId)
+    );
+    await whenIframeLoaded(await this.storyIframe_);
     this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
     setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
     writeToIframe(await this.adIframe_, patch(dirty));
   }
 
-  async updateOuter(dirty, dirtyInner, switchingContext) {
+  async updateOuter(dirty, dirtyInner) {
     this.storyDoc = dirty;
-    if (switchingContext) {
-      // await this.reloadStoryWithScript(dirty, 'cover');
-      writeToIframe(await this.storyIframe_, patchOuter(dirty, 'cover'));
-      await whenIframeLoaded(await this.storyIframe_);
-    }
     this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
-    this.updateInner(dirtyInner, false);
+    this.updateInner(dirtyInner);
   }
-
-  // async reloadStoryWithScript(dirty, pageId) {
-  //   writeToIframe(await this.storyIframe_, patchOuter(dirty, pageId));
-  //   return whenIframeLoaded(await this.storyIframe_);
-  // }
-
-  // async reloadStoryCss(dirty) {
-  //   writeToIframe(await this.storyIframe_, storyCssPatch(dirty));
-  //   await whenIframeLoaded(await this.storyIframe_);
-  // }
 }
-//only patch script when switching context not every time it updates.
-//check//make navPatch and csspatch two seperate things
