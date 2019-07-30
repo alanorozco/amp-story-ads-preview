@@ -177,24 +177,26 @@ export default class AmpStoryAdPreview {
    * Updates the current preview with full document HTML.
    * @param {string} dirty Dirty document HTML.
    */
-  async updateInner(dirty, startPageId) {
+  async updateInner(dirty) {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
     // Navigate back to ad page
-    writeToIframe(
-      await this.storyIframe_,
-      patchOuter(this.storyDoc, startPageId)
-    );
-    await whenIframeLoaded(await this.storyIframe_);
-    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
     setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
+    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
     writeToIframe(await this.adIframe_, patch(dirty));
   }
 
   async updateOuter(dirty, dirtyInner) {
     this.storyDoc = dirty;
     this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
-    this.updateInner(dirtyInner);
+    this.updateInnerInStory(dirtyInner);
+  }
+
+  async updateInnerInStory(dirty) {
+    writeToIframe(await this.storyIframe_, patchOuter(this.storyDoc));
+    await whenIframeLoaded(await this.storyIframe_);
+    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
+    writeToIframe(await this.adIframe_, patch(dirty));
   }
 }
