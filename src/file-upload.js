@@ -18,6 +18,7 @@ import {assert} from '../lib/assert';
 import {classMap} from 'lit-html/directives/class-map';
 import {getNamespace} from '../lib/namespace';
 import {html} from 'lit-html';
+import {memoize} from 'lodash-es';
 import {redispatchAs} from './utils/events';
 import {repeat} from 'lit-html/directives/repeat';
 import {Toolbar} from './toolbar';
@@ -153,9 +154,31 @@ export function removeFileRevokeUrl(win, files, index) {
   return files;
 }
 
+/**
+ * Creates a RegExp for a loosely-delimited (e.g. matching quotes are not checked)
+ * attribute value like: `=value>`, `=value`, `="value"`, `='value'`
+ * @param {*} value
+ * @return {RegExp} Matching groups (1, 2) and start/end delimiters, including starting
+ * equal sign `=` and possible wrapping chars (whitespace, `'`, `"`, '>').
+ */
+const delimitedAttrValueRe = memoize(
+  value => new RegExp(`(=['"]?)${value}([\s'">])`, 'g')
+);
+
+/**
+ * Encodes an uploaded filename like `my file.jpg` into a safe, host-relative url as
+ * `/my%20file.jpg`.
+ * @param {string} name
+ * @return {string}
+ */
+export const readableFileUrl = name => `/${encodeURI(name)}`;
+
 export function replaceFileRefs(docStr, files) {
   for (const {name, url} of files) {
-    docStr = docStr.replace(new RegExp(`/${name}`, 'g'), url);
+    docStr = docStr.replace(
+      delimitedAttrValueRe(readableFileUrl(name)),
+      `$1${url}$2`
+    );
   }
   return docStr;
 }
