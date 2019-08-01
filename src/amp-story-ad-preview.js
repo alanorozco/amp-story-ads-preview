@@ -58,7 +58,6 @@ const WrappedIframe = () => html`
 `;
 
 const httpsCircumventionPatch = minifyInlineJs(`
-<script>
   (doc => {
     const createElement = doc.createElement;
     doc.createElement = function(tagName) {
@@ -69,7 +68,7 @@ const httpsCircumventionPatch = minifyInlineJs(`
       return el;
     };
   })(document);
-  </script>`);
+  `);
 
 const setBodyAmpStoryVisible = docStr =>
   docStr.replace(/<(body[^>]*)>/, '<$1 amp-story-visible>');
@@ -78,12 +77,15 @@ const insertHttpsCircumventionPatch = docStr =>
   addScriptToHead(docStr, httpsCircumventionPatch);
 
 const addScriptToHead = (docStr, headContent) =>
-  docStr.replace('<head>', `<head>${headContent}`);
+  docStr.replace('<head>', `<head><script>${headContent}</script>`);
+
+const addCssToHead = (docStr, headContent) =>
+  docStr.replace('<head>', `<head><style>${headContent}</style>`);
 
 const storyNavigationPatch = (docStr, pageId) =>
   addScriptToHead(docStr, navigationPatch.replace('$pageId$', pageId));
 
-const storyCssPatch = docStr => addScriptToHead(docStr, cssPatch);
+const storyCssPatch = docStr => addCssToHead(docStr, cssPatch);
 
 /**
  * Patches an <amp-story> ad document string for REPL support:
