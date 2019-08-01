@@ -15,7 +15,7 @@
  */
 import {minifyInlineJs} from './utils/minify-inline-js';
 
-export const cssPatch = minifyInlineJs(`
+export const cssPatch = `
 .i-amphtml-glass-pane {
   height: 100% !important;
   width: 100% !important;
@@ -141,7 +141,7 @@ amp-story-cta-layer {
   text-align: center;
   color: white;
 }
-`);
+`;
 
 export const navigationPatch = minifyInlineJs(`
 if (window.history && window.history.replaceState) {
