@@ -74,16 +74,16 @@ const setBodyAmpStoryVisible = docStr =>
   docStr.replace(/<(body[^>]*)>/, '<$1 amp-story-visible>');
 
 const insertHttpsCircumventionPatch = docStr =>
-  addScriptToHead(docStr, httpsCircumventionPatch);
+  addContentToHead(docStr, httpsCircumventionPatch);
 
-const addScriptToHead = (docStr, headContent) =>
+const addContentToHead = (docStr, headContent) =>
   docStr.replace('<head>', `<head><script>${headContent}</script>`);
 
 const addCssToHead = (docStr, headContent) =>
   docStr.replace('<head>', `<head><style>${headContent}</style>`);
 
 const storyNavigationPatch = (docStr, pageId) =>
-  addScriptToHead(docStr, navigationPatch.replace('$pageId$', pageId));
+  addContentToHead(docStr, navigationPatch.replace('$pageId$', pageId));
 
 const storyCssPatch = docStr => addCssToHead(docStr, cssPatch);
 
@@ -124,6 +124,7 @@ const awaitSelect = (iframeReady, selector) =>
   iframeReady.then(iframe => iframe.contentDocument.querySelector(selector));
 
 function setMetaCtaLink(win, docStr, ctaLink) {
+  debugger;
   let type = defaultCtaType;
   let url = defaultCtaUrl;
   const matches = docStr.match(metaCtaRe);
@@ -189,16 +190,35 @@ export default class AmpStoryAdPreview {
     writeToIframe(await this.adIframe_, patch(dirty));
   }
 
-  async updateOuter(dirty, dirtyInner) {
+  async updateBothAndNavigateToCover(dirty, dirtyInner) {
     this.storyDoc = dirty;
-    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
-    this.updateInnerInStory(dirtyInner);
-  }
 
-  async updateInnerInStory(dirty) {
     writeToIframe(await this.storyIframe_, patchOuter(this.storyDoc));
     await whenIframeLoaded(await this.storyIframe_);
-    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
-    writeToIframe(await this.adIframe_, patch(dirty));
+    this.adIframe_ = awaitSelect(this.storyIframe_, 'iframe');
+    this.storyCtaLink_ = awaitSelect(
+      this.storyIframe_,
+      '.i-amphtml-story-ad-link'
+    );
+    setMetaCtaLink(this.win, dirtyInner, await this.storyCtaLink_);
+
+    // debugger;
+    writeToIframe(await this.adIframe_, patch(dirtyInner));
+  }
+
+  async updateBothAndNavigateToAd(dirty, dirtyInner) {
+    this.storyDoc = dirty;
+
+    writeToIframe(await this.storyIframe_, patchOuter(this.storyDoc, 'page-1'));
+    await whenIframeLoaded(await this.storyIframe_);
+    this.adIframe_ = awaitSelect(this.storyIframe_, 'iframe');
+    this.storyCtaLink_ = awaitSelect(
+      this.storyIframe_,
+      '.i-amphtml-story-ad-link'
+    );
+    setMetaCtaLink(this.win, dirtyInner, await this.storyCtaLink_);
+
+    // debugger;
+    writeToIframe(await this.adIframe_, patch(dirtyInner));
   }
 }

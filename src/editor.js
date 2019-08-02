@@ -439,11 +439,20 @@ class Editor {
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
-    if (this.state_.isEditingInner) {
+    if (!this.switching && this.state_.isEditingInner) {
       this.preview_.updateInner(docWithFileRefs, 'page-1');
+    } else if (this.state_.isEditingInner) {
+      this.preview_.updateBothAndNavigateToAd(
+        replaceFileRefs(this.storyState_, this.state_.files),
+        this.adState_
+      );
     } else {
-      this.preview_.updateOuter(docWithFileRefs, this.adState_);
+      this.preview_.updateBothAndNavigateToCover(
+        docWithFileRefs,
+        this.adState_
+      );
     }
+    this.switching = false;
   }
 
   toggleFullPreview_() {
@@ -557,6 +566,7 @@ class Editor {
 
   modifyStoryAd_() {
     this.state_.isEditingInner = !this.state_.isEditingInner;
+    this.switching = true;
     if (!this.state_.isEditingInner) {
       this.adState_ = this.codeMirror_.getValue();
       this.codeMirror_.setValue(this.storyState_);
