@@ -442,15 +442,13 @@ class Editor {
     if (!this.switching && this.state_.isEditingInner) {
       this.preview_.updateInner(docWithFileRefs, 'page-1');
     } else if (this.state_.isEditingInner) {
-      this.preview_.updateBothAndNavigateToAd(
+      this.preview_.updateBothAndNavigate(
         replaceFileRefs(this.storyState_, this.state_.files),
-        this.adState_
+        this.adState_,
+        'page-1'
       );
     } else {
-      this.preview_.updateBothAndNavigateToCover(
-        docWithFileRefs,
-        this.adState_
-      );
+      this.preview_.updateBothAndNavigate(docWithFileRefs, this.adState_);
     }
     this.switching = false;
   }

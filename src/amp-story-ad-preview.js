@@ -190,10 +190,9 @@ export default class AmpStoryAdPreview {
     writeToIframe(await this.adIframe_, patch(dirty));
   }
 
-  async updateBothAndNavigateToCover(dirty, dirtyInner) {
+  async updateStoryAd(dirty, dirtyInner, pageId) {
     this.storyDoc = dirty;
-
-    writeToIframe(await this.storyIframe_, patchOuter(this.storyDoc));
+    writeToIframe(await this.storyIframe_, patchOuter(this.storyDoc, pageId));
     await whenIframeLoaded(await this.storyIframe_);
     this.adIframe_ = awaitSelect(this.storyIframe_, 'iframe');
     this.storyCtaLink_ = awaitSelect(
@@ -201,24 +200,6 @@ export default class AmpStoryAdPreview {
       '.i-amphtml-story-ad-link'
     );
     setMetaCtaLink(this.win, dirtyInner, await this.storyCtaLink_);
-
-    // debugger;
-    writeToIframe(await this.adIframe_, patch(dirtyInner));
-  }
-
-  async updateBothAndNavigateToAd(dirty, dirtyInner) {
-    this.storyDoc = dirty;
-
-    writeToIframe(await this.storyIframe_, patchOuter(this.storyDoc, 'page-1'));
-    await whenIframeLoaded(await this.storyIframe_);
-    this.adIframe_ = awaitSelect(this.storyIframe_, 'iframe');
-    this.storyCtaLink_ = awaitSelect(
-      this.storyIframe_,
-      '.i-amphtml-story-ad-link'
-    );
-    setMetaCtaLink(this.win, dirtyInner, await this.storyCtaLink_);
-
-    // debugger;
     writeToIframe(await this.adIframe_, patch(dirtyInner));
   }
 }
