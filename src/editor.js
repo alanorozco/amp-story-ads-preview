@@ -446,12 +446,12 @@ class Editor {
     }
     //switched back to ad mode from story mode
     else if (this.state_.isEditingInner) {
-      // this.preview_.updateBothInnerAndOuter(
-      //   replaceFileRefs(this.storyState_, this.state_.files),
-      //   this.adState_,
-      //   'page-1'
-      // );
-      this.preview_.updateInner(docWithFileRefs, 'page-1');
+      console.log(replaceFileRefs(this.storyState_, this.state_.files)),
+        this.preview_.updateBothInnerAndOuter(
+          this.storyState_,
+          replaceFileRefs(this.adState_, this.state_.files),
+          'page-1'
+        );
     }
     //editing in story mode
     else {
