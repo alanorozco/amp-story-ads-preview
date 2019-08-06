@@ -357,7 +357,7 @@ class Editor {
       [g('toggle')]: this.toggle_,
       [g('update-preview')]: this.updatePreview_,
       [g('upload-files')]: this.uploadFiles_,
-      [g('toggleInnerOuter')]: this.modifyStoryAd_,
+      [g('toggleInnerOuter')]: this.toggleStoryMode_,
     });
   }
 
@@ -378,6 +378,7 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
+  //select templates
   async selectTemplate_({target: {dataset}}) {
     const templateName = assert(dataset.name);
     const {files} = this.state_.templates[templateName];
@@ -439,16 +440,25 @@ class Editor {
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
+    //first time in ad mode
     if (!this.switching && this.state_.isEditingInner) {
       this.preview_.updateInner(docWithFileRefs, 'page-1');
-    } else if (this.state_.isEditingInner) {
-      this.preview_.updateBothAndNavigate(
-        replaceFileRefs(this.storyState_, this.state_.files),
-        this.adState_,
-        'page-1'
+    }
+    //switched back to ad mode from story mode
+    else if (this.state_.isEditingInner) {
+      // this.preview_.updateBothInnerAndOuter(
+      //   replaceFileRefs(this.storyState_, this.state_.files),
+      //   this.adState_,
+      //   'page-1'
+      // );
+      this.preview_.updateInner(docWithFileRefs, 'page-1');
+    }
+    //editing in story mode
+    else {
+      this.preview_.updateBothInnerAndOuter(
+        docWithFileRefs,
+        replaceFileRefs(this.adState_, this.state_.files)
       );
-    } else {
-      this.preview_.updateBothAndNavigate(docWithFileRefs, this.adState_);
     }
     this.switching = false;
   }
@@ -562,7 +572,7 @@ class Editor {
     }
   }
 
-  modifyStoryAd_() {
+  toggleStoryMode_() {
     this.state_.isEditingInner = !this.state_.isEditingInner;
     this.switching = true;
     if (!this.state_.isEditingInner) {

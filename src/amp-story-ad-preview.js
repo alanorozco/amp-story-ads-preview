@@ -79,13 +79,11 @@ const insertHttpsCircumventionPatch = docStr =>
 const addContentToHead = (docStr, headContent) =>
   docStr.replace('<head>', `<head><script>${headContent}</script>`);
 
-const addCssToHead = (docStr, headContent) =>
-  docStr.replace('<head>', `<head><style>${headContent}</style>`);
-
 const storyNavigationPatch = (docStr, pageId) =>
   addContentToHead(docStr, navigationPatch.replace('$pageId$', pageId));
 
-const storyCssPatch = docStr => addCssToHead(docStr, cssPatch);
+const storyCssPatch = docStr =>
+  docStr.replace('<head>', `<head><style>${cssPatch}</style>`);
 
 /**
  * Patches an <amp-story> ad document string for REPL support:
@@ -98,6 +96,7 @@ const storyCssPatch = docStr => addCssToHead(docStr, cssPatch);
 const patch = docStr =>
   setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
 
+//sets story css and starting page in head content
 function patchOuter(str, pageId) {
   str = storyCssPatch(str);
   if (!pageId) {
@@ -124,7 +123,6 @@ const awaitSelect = (iframeReady, selector) =>
   iframeReady.then(iframe => iframe.contentDocument.querySelector(selector));
 
 function setMetaCtaLink(win, docStr, ctaLink) {
-  debugger;
   let type = defaultCtaType;
   let url = defaultCtaUrl;
   const matches = docStr.match(metaCtaRe);
@@ -190,16 +188,16 @@ export default class AmpStoryAdPreview {
     writeToIframe(await this.adIframe_, patch(dirty));
   }
 
-  async updateStoryAd(dirty, dirtyInner, pageId) {
+  async updateBothInnerAndOuter(dirty, dirtyInner, pageId) {
     this.storyDoc = dirty;
     writeToIframe(await this.storyIframe_, patchOuter(this.storyDoc, pageId));
     await whenIframeLoaded(await this.storyIframe_);
-    this.adIframe_ = awaitSelect(this.storyIframe_, 'iframe');
     this.storyCtaLink_ = awaitSelect(
       this.storyIframe_,
       '.i-amphtml-story-ad-link'
     );
     setMetaCtaLink(this.win, dirtyInner, await this.storyCtaLink_);
+    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
     writeToIframe(await this.adIframe_, patch(dirtyInner));
   }
 }
