@@ -578,6 +578,7 @@ class Editor {
     if (!this.state_.isEditingInner) {
       this.adState_ = this.codeMirror_.getValue();
       this.codeMirror_.setValue(this.storyState_);
+      //change templates visibility
     } else {
       this.storyState_ = this.codeMirror_.getValue();
       this.codeMirror_.setValue(this.adState_);
