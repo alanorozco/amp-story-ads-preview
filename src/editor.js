@@ -40,9 +40,10 @@ import {hintsUrl, setAttrFileHints} from './hints';
 import {html, render} from 'lit-html';
 import {idleSuccessfulFetch} from './utils/xhr';
 import {listenAllBound, redispatchAs} from './utils/events';
-import {minifyHtml, readFileString, readFixtureHtml} from './static-data';
+import {readFileString, readFixtureHtml} from './static-data';
 import {RefreshIcon} from './icons';
 import {ToggleButton} from './toggle-button';
+import {ToggleInnerOuterContentButton} from './toggleInnerOuter';
 import {Toolbar} from './toolbar';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
@@ -63,7 +64,7 @@ const staticServerData = async () => ({
   content: await readFixtureHtml('ad'),
   // Since this is a template that is never user-edited, let's minify it to
   // keep the bundle small.
-  storyDocTemplate: minifyHtml(await readFixtureHtml('story')),
+  storyDocTemplate: await readFixtureHtml('story'),
   templatesJson: await readFileString('dist/templates.json'),
 });
 
@@ -117,6 +118,7 @@ const renderEditor = ({
   templates,
   templatesJson,
   viewportId = viewportIdDefault,
+  isEditingInner = true,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
@@ -131,6 +133,7 @@ const renderEditor = ({
       codeMirrorElement,
       content,
       templates,
+      isEditingInner,
     })}
     ${PreviewPanel({
       isFullPreview,
@@ -159,10 +162,15 @@ const ContentPanel = ({
   isFilesPanelDisplayed,
   isTemplatePanelDisplayed,
   templates,
+  isEditingInner,
 }) => html`
   <div class=${n('content')} ?hidden=${!isDisplayed}>
     ${FilesDragHint({isDisplayed: isFilesDragHintDisplayed})}
-    ${ContentToolbar({isFilesPanelDisplayed, isTemplatePanelDisplayed})}
+    ${ContentToolbar({
+      isFilesPanelDisplayed,
+      isTemplatePanelDisplayed,
+      isEditingInner,
+    })}
     ${TemplatesPanel({isDisplayed: isTemplatePanelDisplayed, templates})}
     <!--
       Default Content to load on the server and then populate codemirror on
@@ -180,7 +188,11 @@ const ContentPanel = ({
  * @param {boolean=} data.isFilesPanelDisplayed
  * @return {lit-html/TemplateResult}
  */
-const ContentToolbar = ({isFilesPanelDisplayed, isTemplatePanelDisplayed}) =>
+const ContentToolbar = ({
+  isFilesPanelDisplayed,
+  isTemplatePanelDisplayed,
+  isEditingInner,
+}) =>
   Toolbar({
     classNames: [n('content-toolbar')],
     children: [
@@ -194,6 +206,7 @@ const ContentToolbar = ({isFilesPanelDisplayed, isTemplatePanelDisplayed}) =>
         [n('templates-button')]: true,
         [n('selected')]: isTemplatePanelDisplayed,
       }),
+      ToggleInnerOuterContentButton({isEditingInner}),
     ],
   });
 
@@ -313,9 +326,14 @@ class Editor {
       previewElement,
       templates: parseTemplatesJsonScript(element),
       viewportId: viewportIdDefault,
+      isEditingInner: true,
     });
 
     batchedRender();
+
+    this.storyState_ = this.preview_.storyDoc;
+    this.adState_ = null;
+    this.isOnAdEditor_ = true;
 
     this.refreshCodeMirror_();
     this.updatePreview_();
@@ -339,6 +357,7 @@ class Editor {
       [g('toggle')]: this.toggle_,
       [g('update-preview')]: this.updatePreview_,
       [g('upload-files')]: this.uploadFiles_,
+      [g('toggleInnerOuter')]: this.toggleStoryMode_,
     });
   }
 
@@ -359,6 +378,7 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
+  //select templates
   async selectTemplate_({target: {dataset}}) {
     const templateName = assert(dataset.name);
     const {files} = this.state_.templates[templateName];
@@ -420,7 +440,27 @@ class Editor {
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
-    this.preview_.update(docWithFileRefs);
+    //first time in ad mode
+    if (!this.switching && this.state_.isEditingInner) {
+      this.preview_.updateInner(docWithFileRefs, 'page-1');
+    }
+    //switched back to ad mode from story mode
+    else if (this.state_.isEditingInner) {
+      console.log(replaceFileRefs(this.storyState_, this.state_.files)),
+        this.preview_.updateBothInnerAndOuter(
+          this.storyState_,
+          replaceFileRefs(this.adState_, this.state_.files),
+          'page-1'
+        );
+    }
+    //editing in story mode
+    else {
+      this.preview_.updateBothInnerAndOuter(
+        docWithFileRefs,
+        replaceFileRefs(this.adState_, this.state_.files)
+      );
+    }
+    this.switching = false;
   }
 
   toggleFullPreview_() {
@@ -529,6 +569,19 @@ class Editor {
     const {files} = e.dataTransfer;
     if (files && files.length) {
       this.addFiles_(files);
+    }
+  }
+
+  toggleStoryMode_() {
+    this.state_.isEditingInner = !this.state_.isEditingInner;
+    this.switching = true;
+    if (!this.state_.isEditingInner) {
+      this.adState_ = this.codeMirror_.getValue();
+      this.codeMirror_.setValue(this.storyState_);
+      //change templates visibility
+    } else {
+      this.storyState_ = this.codeMirror_.getValue();
+      this.codeMirror_.setValue(this.adState_);
     }
   }
 }

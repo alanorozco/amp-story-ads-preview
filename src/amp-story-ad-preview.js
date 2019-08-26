@@ -14,6 +14,7 @@
  */
 import './amp-story-ad-preview.css';
 import {assert} from '../lib/assert';
+import {cssPatch, navigationPatch} from './story-patch';
 import {CTA_TYPES} from './cta-types';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
@@ -67,13 +68,22 @@ const httpsCircumventionPatch = minifyInlineJs(`
       return el;
     };
   })(document);
-`);
+  `);
 
 const setBodyAmpStoryVisible = docStr =>
   docStr.replace(/<(body[^>]*)>/, '<$1 amp-story-visible>');
 
 const insertHttpsCircumventionPatch = docStr =>
-  docStr.replace('<head>', `<head><script>${httpsCircumventionPatch}</script>`);
+  addContentToHead(docStr, httpsCircumventionPatch);
+
+const addContentToHead = (docStr, headContent) =>
+  docStr.replace('<head>', `<head><script>${headContent}</script>`);
+
+const storyNavigationPatch = (docStr, pageId) =>
+  addContentToHead(docStr, navigationPatch.replace('$pageId$', pageId));
+
+const storyCssPatch = docStr =>
+  docStr.replace('<head>', `<head><style>${cssPatch}</style>`);
 
 /**
  * Patches an <amp-story> ad document string for REPL support:
@@ -82,8 +92,18 @@ const insertHttpsCircumventionPatch = docStr =>
  * @param {string} docStr
  * @return {string}
  */
+
 const patch = docStr =>
   setBodyAmpStoryVisible(insertHttpsCircumventionPatch(docStr));
+
+//sets story css and starting page in head content
+function patchOuter(str, pageId) {
+  str = storyCssPatch(str);
+  if (!pageId) {
+    return str;
+  }
+  return storyNavigationPatch(str, pageId);
+}
 
 /**
  * Gets amp-story document string from `data-template` attribute.
@@ -130,8 +150,7 @@ export default class AmpStoryAdPreview {
   constructor(win, element) {
     /** @private @const {!Window>} */
     this.win = win;
-
-    const storyDoc = getDataTemplate(element).replace(
+    this.storyDoc = getDataTemplate(element).replace(
       '{{ adSandbox }}',
       defaultIframeSandbox
     );
@@ -139,7 +158,7 @@ export default class AmpStoryAdPreview {
     this.storyIframe_ = untilAttached(element, s('.iframe'))
       .then(whenIframeLoaded)
       .then(iframe => {
-        writeToIframe(iframe, storyDoc);
+        writeToIframe(iframe, patchOuter(this.storyDoc, 'page-1'));
         return whenIframeLoaded(iframe);
       });
 
@@ -159,11 +178,26 @@ export default class AmpStoryAdPreview {
    * Updates the current preview with full document HTML.
    * @param {string} dirty Dirty document HTML.
    */
-  async update(dirty) {
+  async updateInner(dirty) {
     // TODO: Expose AMP runtime failures & either:
     // a) purifyHtml() from ampproject/src/purifier
     // b) reject when invalid
-    writeToIframe(await this.adIframe_, patch(dirty));
+    // Navigate back to ad page
     setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
+    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
+    writeToIframe(await this.adIframe_, patch(dirty));
+  }
+
+  async updateBothInnerAndOuter(dirty, dirtyInner, pageId) {
+    this.storyDoc = dirty;
+    writeToIframe(await this.storyIframe_, patchOuter(this.storyDoc, pageId));
+    await whenIframeLoaded(await this.storyIframe_);
+    this.storyCtaLink_ = awaitSelect(
+      this.storyIframe_,
+      '.i-amphtml-story-ad-link'
+    );
+    setMetaCtaLink(this.win, dirtyInner, await this.storyCtaLink_);
+    this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
+    writeToIframe(await this.adIframe_, patch(dirtyInner));
   }
 }
