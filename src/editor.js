@@ -43,7 +43,7 @@ import {listenAllBound, redispatchAs} from './utils/events';
 import {readFileString, readFixtureHtml} from './static-data';
 import {RefreshIcon} from './icons';
 import {ToggleButton} from './toggle-button';
-import {ToggleInnerOuterContentButton} from './toggleInnerOuter';
+import {ToggleInnerOuterContentButton} from './toggle-inner-outer';
 import {Toolbar} from './toolbar';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
