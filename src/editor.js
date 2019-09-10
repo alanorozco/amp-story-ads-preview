@@ -329,6 +329,7 @@ class Editor {
       isEditingInner: true,
     });
 
+    // Lit html takeover.
     batchedRender();
 
     this.storyState_ = this.preview_.storyDoc;
@@ -439,27 +440,29 @@ class Editor {
 
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
+    debugger;
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
-    //first time in ad mode
-    if (!this.switching && this.state_.isEditingInner) {
-      this.preview_.updateInner(docWithFileRefs, 'page-1');
-    }
+    // //first time in ad mode
+    // if (!this.switching && this.state_.isEditingInner) {
+    //   this.preview_.updateInner(docWithFileRefs, 'page-1');
+    // }
     //switched back to ad mode from story mode
-    else if (this.state_.isEditingInner) {
-      console.log(replaceFileRefs(this.storyState_, this.state_.files)),
-        this.preview_.updateBothInnerAndOuter(
-          this.storyState_,
-          replaceFileRefs(this.adState_, this.state_.files),
-          'page-1'
-        );
-    }
-    //editing in story mode
-    else {
-      this.preview_.updateBothInnerAndOuter(
-        docWithFileRefs,
-        replaceFileRefs(this.adState_, this.state_.files)
-      );
-    }
+    // else if (this.state_.isEditingInner) {
+    //   console.log(replaceFileRefs(this.storyState_, this.state_.files)),
+    //     this.preview_.updateBothInnerAndOuter(
+    //       this.storyState_,
+    //       replaceFileRefs(this.adState_, this.state_.files),
+    //       'page-1'
+    //     );
+    // }
+    // //editing in story mode
+    // else {
+    //   this.preview_.updateBothInnerAndOuter(
+    //     docWithFileRefs,
+    //     replaceFileRefs(this.adState_, this.state_.files)
+    //   );
+    // }
+    this.preview_.update(docWithFileRefs);
     this.switching = false;
   }
 

@@ -23,8 +23,8 @@ import {Deferred} from '../../vendor/ampproject/amphtml/src/utils/promise';
  */
 export async function writeToIframe(iframe, srcdoc) {
   iframe.src = 'about:blank';
-  const loaded = await whenIframeLoaded(iframe);
-  const childDoc = loaded.contentWindow.document;
+  // const loaded = await whenIframeLoaded(iframe);
+  const childDoc = iframe.contentWindow.document;
   childDoc.open();
   childDoc.write(srcdoc);
   childDoc.close();
