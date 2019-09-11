@@ -16,6 +16,7 @@
 import './file-upload.css';
 import {assert} from '../lib/assert';
 import {classMap} from 'lit-html/directives/class-map';
+import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
 import {getNamespace} from '../lib/namespace';
 import {html} from 'lit-html';
 import {memoize} from 'lodash-es';
@@ -26,6 +27,12 @@ import {Toolbar} from './toolbar';
 const {g, n} = getNamespace('file-upload');
 
 /**
+ * @typedef {Object} UploadedFile
+ * @property {string} name - filename
+ * @property {string} data - base64 encoded data url
+ */
+
+/**
  * @param {{name: string}} a
  * @param {{name: string}} b
  * @return {number}
@@ -33,14 +40,22 @@ const {g, n} = getNamespace('file-upload');
 export const fileSortCompare = ({name: a}, {name: b}) => (a > b ? 1 : -1);
 
 /**
- * @param {Window} win
  * @param {File} file
- * @return {{name: string, url: string}}
+ * @return {UploadedFile}
  */
-export const attachBlobUrl = (win, file) => ({
-  name: file.name,
-  url: win.URL.createObjectURL(file),
-});
+export const attachDataUrl = file => {
+  const {promise, resolve, reject} = new Deferred();
+  const reader = new FileReader();
+  reader.onload = e => {
+    resolve({
+      name: file.name,
+      data: e.target.result,
+    });
+  };
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+  return promise;
+};
 
 export const FilesDragHint = ({isDisplayed}) => html`
   <div
@@ -142,15 +157,13 @@ export const FileUploadButton = () => html`
   </div>
 `;
 
-export function removeFileRevokeUrl(win, files, index) {
-  const [deleted] = files.splice(index, 1);
-  const {url} = deleted;
-
-  // not all urls are blob urls
-  if (/^blob:/.test(url)) {
-    win.URL.revokeObjectURL(url);
-  }
-
+/**
+ * Remove given index from files array.
+ * @param {!Array<UploadedFile>} files
+ * @param {number} index
+ */
+export function removeUploadedFile(files, index) {
+  files.splice(index, 1);
   return files;
 }
 
@@ -173,17 +186,29 @@ const delimitedAttrValueRe = memoize(
  */
 export const readableFileUrl = name => `/${encodeURI(name)}`;
 
+/**
+ *
+ * @param {string} docStr
+ * @param {Array<UploadedFile>} files
+ */
 export function replaceFileRefs(docStr, files) {
-  for (const {name, url} of files) {
+  for (const {name, data} of files) {
     docStr = docStr.replace(
       delimitedAttrValueRe(readableFileUrl(name)),
-      `$1${url}$2`
+      `$1${data}$2`
     );
   }
   return docStr;
 }
 
-export const concatAttachBlobUrl = (win, source, files) =>
-  source
-    .concat(Array.from(files).map(f => attachBlobUrl(win, f)))
-    .sort(fileSortCompare);
+/**
+ * Read new files to data url and add them to existing files array.
+ * @param {!Array} source
+ * @param {!files} files
+ * @return {!Promise<Array<UploadedFile>>}
+ */
+export const concatAttachBlobUrl = async (source, files) => {
+  const filePromises = Array.from(files).map(f => attachDataUrl(f));
+  const newFiles = await Promise.all(filePromises);
+  return source.concat(newFiles).sort(fileSortCompare);
+};

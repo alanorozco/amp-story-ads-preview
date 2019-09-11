@@ -14,21 +14,13 @@
  */
 import './amp-story-ad-preview.css';
 import {assert} from '../lib/assert';
-import {CTA_TYPES} from './cta-types';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
-import {memoize} from 'lodash-es';
 import {minifyInlineJs} from './utils/minify-inline-js';
-import {navigationPatch} from './story-patch';
 import {untilAttached} from './utils/until-attached';
 import {whenIframeLoaded, writeToIframe} from './utils/iframe';
 
 const {n, s} = getNamespace('amp-story-ad-preview');
-
-const defaultCtaType = 'LEARN_MORE';
-const defaultCtaUrl = 'https://amp.dev';
-
-const metaCtaRe = /<meta\s+[^>]*name=['"]?amp-cta-(type|url)['"]?[^>]*>/gi;
 
 const defaultIframeSandbox = [
   'allow-scripts',
@@ -40,7 +32,7 @@ const defaultIframeSandbox = [
 ].join(' ');
 
 /**
- * Renders a wrapped iframe with optional srcdoc.
+ * Renders a wrapped iframe for story to be rendered into.
  * @return {lit-html/TemplateResult}
  */
 const WrappedIframe = () => html`
@@ -51,6 +43,7 @@ const WrappedIframe = () => html`
       class=${n('iframe')}
       sandbox=${defaultIframeSandbox}
       title="AMP Story Ad Preview"
+      srcdoc="PUT LOADER HERE PUT LOADER HERE PUT LOADER HERE"
     >
       <p>Loading…</p>
     </iframe>
@@ -83,41 +76,23 @@ const blobCorsPatch = minifyInlineJs(`
   })(window);
 `);
 
-// const fakeHeadPatch = '<!-- <head> -->';
+const addContentToHead = (docStr, headContent) =>
+  docStr.replace('<head>', `<head><script>${headContent}</script>`);
 
 const insertHttpsCircumventionPatch = docStr =>
   addContentToHead(docStr, httpsCircumventionPatch);
 
-const addContentToHead = (docStr, headContent) =>
-  docStr.replace('<head>', `<head><script>${headContent}</script>`);
-
-// const addContentToHtml = (docStr, content) =>
-//   docStr.replace('<html amp4ads>', `<html amp4ads>\n${content}`);
-
-const storyNavigationPatch = (docStr, pageId) =>
-  addContentToHead(docStr, navigationPatch.replace('$pageId$', pageId));
-
 const insertBlobCorsPatch = docStr => addContentToHead(docStr, blobCorsPatch);
 
-// const insertFakeHeadPatch = docStr => addContentToHtml(docStr, fakeHeadPatch);
-
 /**
- * Patches an <amp-story> ad document string for REPL support:
- * - Sets `amp-story-visible` attribute on `<body>` for interop.
+ * Patches an <amp-story>  document string for REPL support:
  * - Monkey-patches `document.createElement()` to circumvent AMP's HTTPS checks.
+ * - Monkey-patches `window.fetch()` to allow blob url without adding amp cors param.
  * @param {string} docStr
  * @return {string}
  */
-const patch = docStr =>
+const patchStoryDoc = docStr =>
   insertHttpsCircumventionPatch(insertBlobCorsPatch(docStr));
-
-// Sets starting page in head content.
-function patchOuter(str, pageId) {
-  if (!pageId) {
-    return str;
-  }
-  return storyNavigationPatch(str, pageId);
-}
 
 /**
  * Gets amp-story document string from `data-template` attribute.
@@ -131,36 +106,6 @@ function getDataTemplate(element) {
   return assert(template, `Expected [data-template] on ${element}`);
 }
 
-const htmlParserFor = memoize(win => win.document.createElement('div'));
-
-const awaitSelect = (iframeReady, selector) =>
-  iframeReady.then(iframe => iframe.contentDocument.querySelector(selector));
-
-// TODO(ccordry): reintroduce this once new rendering engine is finalized.
-function setMetaCtaLink(win, docStr, ctaLink) {
-  let type = defaultCtaType;
-  let url = defaultCtaUrl;
-  const matches = docStr.match(metaCtaRe);
-  if (matches && matches.length > 0) {
-    const parser = htmlParserFor(win);
-    parser.innerHTML = matches.join('\n');
-    const metas = parser.querySelectorAll('meta');
-    parser.innerHTML = '';
-    for (const meta of metas) {
-      const name = meta.getAttribute('name');
-      const content = meta.getAttribute('content');
-      if (name == 'amp-cta-type') {
-        type = content;
-      }
-      if (name == 'amp-cta-url') {
-        url = content;
-      }
-    }
-  }
-  ctaLink.setAttribute('href', url);
-  ctaLink.textContent = assert(CTA_TYPES[type], `Unknown CTA type ${type}`);
-}
-
 export default class AmpStoryAdPreview {
   constructor(win, element) {
     /** @private @const {!Window>} */
@@ -169,59 +114,40 @@ export default class AmpStoryAdPreview {
     /** @public {string} */
     this.storyDoc = getDataTemplate(element);
 
-    /** @private @const {!Promise<HTMLIFrameElement>} */
+    /** @private {!Promise<HTMLIFrameElement>} */
     this.storyIframe_ = untilAttached(element, s('.iframe'))
-      // First load is upon lit hydration.
+      // First load is upon lit client side takeover.
       .then(whenIframeLoaded);
-    // .then(iframe => {
-    //   debugger;
-    //   writeToIframe(iframe, patchOuter(this.storyDoc, 'page-1'));
-    //   return whenIframeLoaded(iframe);
-    // });
-
-    /** @private @const {!Promise<HTMLIFrameElement>} */
-    this.autoAdEl_ = awaitSelect(this.storyIframe_, 'amp-story-auto-ads'); // xzibit.png
-
-    /** @private @const {!Promise<Element>} */
-    this.storyCtaLink_ = awaitSelect(
-      this.storyIframe_,
-      '.i-amphtml-story-ad-link'
-    );
 
     render(WrappedIframe(), element);
   }
 
-  // /**
-  //  * Updates the current preview with full document HTML.
-  //  * @param {string} dirty Dirty document HTML.
-  //  */
-  // async updateInner(dirty) {
-  //   // TODO: Expose AMP runtime failures & either:
-  //   // a) purifyHtml() from ampproject/src/purifier
-  //   // b) reject when invalid
-  //   // Navigate back to ad page
-  //   setMetaCtaLink(this.win, dirty, await this.storyCtaLink_);
-  //   this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
-  //   writeToIframe(await this.adIframe_, patch(dirty));
-  // }
-
-  // async updateBothInnerAndOuter(dirty, dirtyInner, pageId) {
-  //   this.storyDoc = dirty;
-  //   writeToIframe(await this.storyIframe_, patchOuter(this.storyDoc, pageId));
-  //   await whenIframeLoaded(await this.storyIframe_);
-  //   this.storyCtaLink_ = awaitSelect(
-  //     this.storyIframe_,
-  //     '.i-amphtml-story-ad-link'
-  //   );
-  //   setMetaCtaLink(this.win, dirtyInner, await this.storyCtaLink_);
-  //   this.adIframe_ = await awaitSelect(this.storyIframe_, 'iframe');
-  //   writeToIframe(await this.adIframe_, patch(dirtyInner));
-  // }
-
   async update(dirty) {
-    const blob = new Blob([dirty], {type: 'text/html'}); // the blob
+    // Deletion/replacement of iframe is necessary so that AMP runtime
+    // does not complain about defining custom elements over and over again.
+    const oldFrame = await this.storyIframe_;
+    const newFrame = oldFrame.cloneNode();
+    newFrame.style.visibility = 'hidden';
+
+    const container = oldFrame.parentElement;
+    container.appendChild(newFrame);
+
+    const blob = new Blob([dirty], {type: 'text/html'});
     const adSrc = URL.createObjectURL(blob);
     const storyDoc = this.storyDoc.replace('$adSrc$', adSrc);
-    writeToIframe(await this.storyIframe_, patch(storyDoc));
+    writeToIframe(newFrame, patchStoryDoc(storyDoc));
+    // Listen for page change event from story that is broadcast when
+    // amp-story-auto-ads forces the ad to show.
+    newFrame.contentWindow.document.addEventListener(
+      'ampstory:switchpage',
+      e => {
+        if (e.detail.targetPageId === 'i-amphtml-ad-page-1') {
+          newFrame.style.visibility = 'visible';
+          container.removeChild(oldFrame);
+        }
+      },
+      {once: true}
+    );
+    this.storyIframe_ = whenIframeLoaded(newFrame);
   }
 }

@@ -30,7 +30,7 @@ import {
   FilesPanel,
   FileUploadButton,
   readableFileUrl,
-  removeFileRevokeUrl,
+  removeUploadedFile,
   replaceFileRefs,
 } from './file-upload';
 import {CTA_TYPES} from './cta-types';
@@ -278,6 +278,7 @@ const PreviewToolbar = ({isFullPreview, viewportId}) =>
       UpdatePreviewButton(),
     ],
   });
+
 /**
  * Renders preview element.
  * This is then managed independently by AmpStoryAdPreview after hydration.
@@ -337,6 +338,8 @@ class Editor {
     this.isOnAdEditor_ = true;
 
     this.refreshCodeMirror_();
+    // This call happens before AmpStoryPreview render(), but the
+    // AmpStoryPreview#update method awaits the resolution of the render.
     this.updatePreview_();
 
     // We only run amp4ads in this REPL.
@@ -379,7 +382,7 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
-  //select templates
+  // Select templates.
   async selectTemplate_({target: {dataset}}) {
     const templateName = assert(dataset.name);
     const {files} = this.state_.templates[templateName];
@@ -404,9 +407,9 @@ class Editor {
    * @param {IArrayLike<File>} files
    * @private
    */
-  addFiles_(files) {
+  async addFiles_(files) {
     this.state_.isFilesPanelDisplayed = true;
-    this.state_.files = concatAttachBlobUrl(this.win, this.state_.files, files);
+    this.state_.files = await concatAttachBlobUrl(this.state_.files, files);
     this.updateFileHints_();
   }
 
@@ -440,7 +443,6 @@ class Editor {
 
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
-    debugger;
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
     // //first time in ad mode
     // if (!this.switching && this.state_.isEditingInner) {
@@ -495,7 +497,7 @@ class Editor {
   deleteFile_({target}) {
     const {dataset} = assert(target.closest('[data-index]'));
     const index = parseInt(assert(dataset.index), 10);
-    this.state_.files = removeFileRevokeUrl(this.win, this.state_.files, index);
+    this.state_.files = removeUploadedFile(this.state_.files, index);
     this.updateFileHints_();
   }
 
