@@ -16,8 +16,8 @@
 
 export const ampStoryAutoAdsRE = /<amp-story-auto-ads[^]*<\/amp-story-auto-ads>$/m;
 
-export const storyAdsConfig = (src, forceAd) => `
-  <amp-story-auto-ads id="i-amphtml-demo-1"${forceAd ? ' development' : ''}>
+export const storyAdsConfig = (src, forceAd) =>
+  `<amp-story-auto-ads id="i-amphtml-demo-1"${forceAd ? ' development' : ''}>
     <script type="application/json">
       {
         "ad-attributes": {
