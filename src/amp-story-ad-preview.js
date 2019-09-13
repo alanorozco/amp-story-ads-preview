@@ -19,6 +19,7 @@ import {assert} from '../lib/assert';
 import {getBlobUrl} from './utils/blob';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
+import {loaderString} from './loader';
 import {minifyInlineJs} from './utils/minify-inline-js';
 import {untilAttached} from './utils/until-attached';
 import {whenIframeLoaded, writeToIframe} from './utils/iframe';
@@ -46,7 +47,7 @@ const WrappedIframe = () => html`
       class=${n('iframe')}
       sandbox=${defaultIframeSandbox}
       title="AMP Story Ad Preview"
-      srcdoc="PUT LOADER HERE PUT LOADER HERE PUT LOADER HERE"
+      srcdoc=${loaderString}
     >
       <p>Loading…</p>
     </iframe>
@@ -192,7 +193,7 @@ export default class AmpStoryAdPreview {
    * @param {!HTMLIFrameElement} oldFrame
    */
   addReadyListener_(newFrame, oldFrame) {
-    newFrame.contentWindow.document.addEventListener(
+    newFrame.contentDocument.addEventListener(
       'ampstory:switchpage',
       e => {
         if (
