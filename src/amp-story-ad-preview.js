@@ -12,8 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import './amp-story-ad-preview.css';
+import {ampStoryAutoAdsRE, storyAdsConfig} from './story-ad-config';
 import {assert} from '../lib/assert';
+import {getBlobUrl} from './utils/blob';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {minifyInlineJs} from './utils/minify-inline-js';
@@ -115,39 +118,102 @@ export default class AmpStoryAdPreview {
     this.storyDoc = getDataTemplate(element);
 
     /** @private {!Promise<HTMLIFrameElement>} */
-    this.storyIframe_ = untilAttached(element, s('.iframe'))
+    this.visibleStoryFrame_ = untilAttached(element, s('.iframe'))
       // First load is upon lit client side takeover.
       .then(whenIframeLoaded);
+
+    /** @private {?HTMLIFrameElement} */
+    this.pendingFrame_ = null;
 
     render(WrappedIframe(), element);
   }
 
+  getAdUrl() {
+    return this.adUrl_;
+  }
+
+  /**
+   * Refresh preview in ad mode.
+   * @param {string} dirty
+   */
   async update(dirty) {
-    // Deletion/replacement of iframe is necessary so that AMP runtime
-    // does not complain about defining custom elements over and over again.
-    const oldFrame = await this.storyIframe_;
+    const {oldFrame, newFrame} = await this.removeAndReplaceFrame_('hidden');
+    this.adUrl_ = getBlobUrl(dirty);
+    this.storyDoc = this.storyDoc.replace(
+      ampStoryAutoAdsRE,
+      storyAdsConfig(this.adUrl_, /* forceAd */ true)
+    );
+    this.writeStoryFrame_(newFrame);
+    this.addReadyListener_(newFrame, oldFrame);
+    this.pendingFrame_ = newFrame;
+  }
+
+  /**
+   * Refresh preview in story mode.
+   * @param {string} dirty
+   */
+  async updateOuter(dirty) {
+    const {oldFrame, newFrame} = await this.removeAndReplaceFrame_('visible');
+    this.storyDoc = dirty;
+    this.writeStoryFrame_(newFrame);
+    this.container_.removeChild(oldFrame);
+    this.visibleStoryFrame_ = Promise.resolve(newFrame);
+  }
+
+  /**
+   * Deletion/replacement of iframe is necessary so that AMP runtime
+   * does not complain about defining custom elements over and over again.
+   * @param {string} visibility
+   * @return {{oldFrame: HTMLIFrameElement, newFrame: HTMLIFrameElement}}
+   */
+  async removeAndReplaceFrame_(visibility) {
+    const oldFrame = await this.visibleStoryFrame_;
     const newFrame = oldFrame.cloneNode();
-    newFrame.style.visibility = 'hidden';
+    this.container_ = this.container_ || oldFrame.parentElement;
+    this.maybeClearUnfinishedFrame_();
+    newFrame.style.visibility = visibility;
+    this.container_.appendChild(newFrame);
+    return {oldFrame, newFrame};
+  }
 
-    const container = oldFrame.parentElement;
-    container.appendChild(newFrame);
+  /**
+   * Write content to existing iframe element.
+   * @param {!HTMLIFrameElement} newFrame
+   */
+  writeStoryFrame_(newFrame) {
+    writeToIframe(newFrame, patchStoryDoc(this.storyDoc));
+  }
 
-    const blob = new Blob([dirty], {type: 'text/html'});
-    const adSrc = URL.createObjectURL(blob);
-    const storyDoc = this.storyDoc.replace('$adSrc$', adSrc);
-    writeToIframe(newFrame, patchStoryDoc(storyDoc));
-    // Listen for page change event from story that is broadcast when
-    // amp-story-auto-ads forces the ad to show.
+  /**
+   * Listen for page change event from story that is broadcast when
+   * amp-story-auto-ads forces the ad to show. When ready make the new
+   * frame visible, and delete the old one for a _smooth_ transition.
+   * @param {!HTMLIFrameElement} newFrame
+   * @param {!HTMLIFrameElement} oldFrame
+   */
+  addReadyListener_(newFrame, oldFrame) {
     newFrame.contentWindow.document.addEventListener(
       'ampstory:switchpage',
       e => {
-        if (e.detail.targetPageId === 'i-amphtml-ad-page-1') {
+        if (
+          e.detail.targetPageId === 'i-amphtml-ad-page-1' &&
+          // Protection against this listener trying to display and delete an
+          // ad which never loaded before a new update.
+          this.pendingFrame_ === newFrame
+        ) {
           newFrame.style.visibility = 'visible';
-          container.removeChild(oldFrame);
+          this.container_.removeChild(oldFrame);
+          this.visibleStoryFrame_ = Promise.resolve(newFrame);
+          this.pendingFrame_ = null;
         }
       },
       {once: true}
     );
-    this.storyIframe_ = whenIframeLoaded(newFrame);
+  }
+
+  maybeClearUnfinishedFrame_() {
+    if (this.pendingFrame_) {
+      this.container_.removeChild(this.pendingFrame_);
+    }
   }
 }

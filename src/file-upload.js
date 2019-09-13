@@ -29,7 +29,7 @@ const {g, n} = getNamespace('file-upload');
 /**
  * @typedef {Object} UploadedFile
  * @property {string} name - filename
- * @property {string} data - base64 encoded data url
+ * @property {string} url - base64 encoded data url
  */
 
 /**
@@ -49,7 +49,7 @@ export const attachDataUrl = file => {
   reader.onload = e => {
     resolve({
       name: file.name,
-      data: e.target.result,
+      url: e.target.result,
     });
   };
   reader.onerror = reject;
@@ -192,10 +192,10 @@ export const readableFileUrl = name => `/${encodeURI(name)}`;
  * @param {Array<UploadedFile>} files
  */
 export function replaceFileRefs(docStr, files) {
-  for (const {name, data} of files) {
+  for (const {name, url} of files) {
     docStr = docStr.replace(
       delimitedAttrValueRe(readableFileUrl(name)),
-      `$1${data}$2`
+      `$1${url}$2`
     );
   }
   return docStr;

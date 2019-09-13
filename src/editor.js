@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import './editor.css';
+import {ampStoryAutoAdsRE, storyAdsConfig} from './story-ad-config';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {
@@ -318,6 +319,8 @@ class Editor {
 
     const batchedRender = batchedApplier(win, () => this.render_());
 
+    this.adState_ = null;
+
     this.state_ = appliedState(batchedRender, {
       // No need to bookkeep `content` since we've populated codemirror with it.
       codeMirrorElement,
@@ -332,10 +335,6 @@ class Editor {
 
     // Lit html takeover.
     batchedRender();
-
-    this.storyState_ = this.preview_.storyDoc;
-    this.adState_ = null;
-    this.isOnAdEditor_ = true;
 
     this.refreshCodeMirror_();
     // This call happens before AmpStoryPreview render(), but the
@@ -444,28 +443,13 @@ class Editor {
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
-    // //first time in ad mode
-    // if (!this.switching && this.state_.isEditingInner) {
-    //   this.preview_.updateInner(docWithFileRefs, 'page-1');
-    // }
-    //switched back to ad mode from story mode
-    // else if (this.state_.isEditingInner) {
-    //   console.log(replaceFileRefs(this.storyState_, this.state_.files)),
-    //     this.preview_.updateBothInnerAndOuter(
-    //       this.storyState_,
-    //       replaceFileRefs(this.adState_, this.state_.files),
-    //       'page-1'
-    //     );
-    // }
-    // //editing in story mode
-    // else {
-    //   this.preview_.updateBothInnerAndOuter(
-    //     docWithFileRefs,
-    //     replaceFileRefs(this.adState_, this.state_.files)
-    //   );
-    // }
-    this.preview_.update(docWithFileRefs);
-    this.switching = false;
+    // Editing ad.
+    if (this.state_.isEditingInner) {
+      return this.preview_.update(docWithFileRefs);
+    }
+
+    // Editing outer story.
+    this.preview_.updateOuter(docWithFileRefs);
   }
 
   toggleFullPreview_() {
@@ -579,15 +563,20 @@ class Editor {
 
   toggleStoryMode_() {
     this.state_.isEditingInner = !this.state_.isEditingInner;
-    this.switching = true;
+    // Story Mode. We save the ad state in case user switches back to ad mode,
+    // write the last known ad url into the editor, and turn off the forced
+    // navigation to the ad.
     if (!this.state_.isEditingInner) {
       this.adState_ = this.codeMirror_.getValue();
-      this.codeMirror_.setValue(this.storyState_);
-      //change templates visibility
-    } else {
-      this.storyState_ = this.codeMirror_.getValue();
-      this.codeMirror_.setValue(this.adState_);
+      const storyDoc = this.preview_.storyDoc.replace(
+        ampStoryAutoAdsRE,
+        storyAdsConfig(this.preview_.getAdUrl())
+      );
+      return this.codeMirror_.setValue(storyDoc);
     }
+
+    // Ad Mode.
+    this.codeMirror_.setValue(this.adState_);
   }
 }
 

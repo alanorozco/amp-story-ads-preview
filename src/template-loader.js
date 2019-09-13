@@ -29,7 +29,7 @@ import {getNamespace} from '../lib/namespace';
 const {g, n, s} = getNamespace('template-loader');
 
 export const templateFileUrl = (templateName, filename) =>
-  `/static/templates/${templateName}/${filename}`;
+  `${window.location.origin}/static/templates/${templateName}/${filename}`;
 
 const templatePreviewFileUrl = (name, ext) =>
   templateFileUrl(name, `_preview.${ext}`);
