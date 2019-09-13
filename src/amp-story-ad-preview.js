@@ -20,7 +20,7 @@ import {getBlobUrl} from './utils/blob';
 import {getNamespace} from '../lib/namespace';
 import {html, render} from 'lit-html';
 import {loaderString} from './loader';
-import {minifyInlineJs} from './utils/minify-inline-js';
+import {patchStoryDoc} from './story-patch';
 import {untilAttached} from './utils/until-attached';
 import {whenIframeLoaded, writeToIframe} from './utils/iframe';
 
@@ -53,50 +53,6 @@ const WrappedIframe = () => html`
     </iframe>
   </div>
 `;
-
-const httpsCircumventionPatch = minifyInlineJs(`
-  (doc => {
-    const createElement = doc.createElement;
-    doc.createElement = function(tagName) {
-      const el = createElement.apply(doc, arguments);
-      if (/^a$/i.test(tagName)) {
-        Object.defineProperty(el, 'protocol', {value: 'https:'});
-      }
-      return el;
-    };
-  })(document);
-  `);
-
-const blobCorsPatch = minifyInlineJs(`
-  (win => {
-    const realFetch = win.fetch;
-    win.fetch = function(url) {
-      const args = Array.prototype.slice.call(arguments);
-      if (url.startsWith('blob:')) {
-        args[0] = url.split('?')[0];
-      }
-      return realFetch.apply(win, args);
-    }
-  })(window);
-`);
-
-const addContentToHead = (docStr, headContent) =>
-  docStr.replace('<head>', `<head><script>${headContent}</script>`);
-
-const insertHttpsCircumventionPatch = docStr =>
-  addContentToHead(docStr, httpsCircumventionPatch);
-
-const insertBlobCorsPatch = docStr => addContentToHead(docStr, blobCorsPatch);
-
-/**
- * Patches an <amp-story>  document string for REPL support:
- * - Monkey-patches `document.createElement()` to circumvent AMP's HTTPS checks.
- * - Monkey-patches `window.fetch()` to allow blob url without adding amp cors param.
- * @param {string} docStr
- * @return {string}
- */
-const patchStoryDoc = docStr =>
-  insertHttpsCircumventionPatch(insertBlobCorsPatch(docStr));
 
 /**
  * Gets amp-story document string from `data-template` attribute.
