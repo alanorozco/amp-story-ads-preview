@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import './editor.css';
+import {ampStoryAutoAdsRE, storyAdsConfig} from './story-ad-config';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {
@@ -30,7 +31,7 @@ import {
   FilesPanel,
   FileUploadButton,
   readableFileUrl,
-  removeFileRevokeUrl,
+  removeUploadedFile,
   replaceFileRefs,
 } from './file-upload';
 import {CTA_TYPES} from './cta-types';
@@ -43,7 +44,7 @@ import {listenAllBound, redispatchAs} from './utils/events';
 import {readFileString, readFixtureHtml} from './static-data';
 import {RefreshIcon} from './icons';
 import {ToggleButton} from './toggle-button';
-import {ToggleInnerOuterContentButton} from './toggleInnerOuter';
+import {ToggleInnerOuterContentButton} from './toggle-inner-outer';
 import {Toolbar} from './toolbar';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
@@ -278,6 +279,7 @@ const PreviewToolbar = ({isFullPreview, viewportId}) =>
       UpdatePreviewButton(),
     ],
   });
+
 /**
  * Renders preview element.
  * This is then managed independently by AmpStoryAdPreview after hydration.
@@ -317,6 +319,8 @@ class Editor {
 
     const batchedRender = batchedApplier(win, () => this.render_());
 
+    this.adState_ = null;
+
     this.state_ = appliedState(batchedRender, {
       // No need to bookkeep `content` since we've populated codemirror with it.
       codeMirrorElement,
@@ -329,13 +333,12 @@ class Editor {
       isEditingInner: true,
     });
 
+    // Lit html takeover.
     batchedRender();
 
-    this.storyState_ = this.preview_.storyDoc;
-    this.adState_ = null;
-    this.isOnAdEditor_ = true;
-
     this.refreshCodeMirror_();
+    // This call happens before AmpStoryPreview render(), but the
+    // AmpStoryPreview#update method awaits the resolution of the render.
     this.updatePreview_();
 
     // We only run amp4ads in this REPL.
@@ -378,7 +381,7 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
-  //select templates
+  // Select templates.
   async selectTemplate_({target: {dataset}}) {
     const templateName = assert(dataset.name);
     const {files} = this.state_.templates[templateName];
@@ -403,9 +406,9 @@ class Editor {
    * @param {IArrayLike<File>} files
    * @private
    */
-  addFiles_(files) {
+  async addFiles_(files) {
     this.state_.isFilesPanelDisplayed = true;
-    this.state_.files = concatAttachBlobUrl(this.win, this.state_.files, files);
+    this.state_.files = await concatAttachBlobUrl(this.state_.files, files);
     this.updateFileHints_();
   }
 
@@ -440,27 +443,13 @@ class Editor {
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
-    //first time in ad mode
-    if (!this.switching && this.state_.isEditingInner) {
-      this.preview_.updateInner(docWithFileRefs, 'page-1');
+    // Editing ad.
+    if (this.state_.isEditingInner) {
+      return this.preview_.update(docWithFileRefs);
     }
-    //switched back to ad mode from story mode
-    else if (this.state_.isEditingInner) {
-      console.log(replaceFileRefs(this.storyState_, this.state_.files)),
-        this.preview_.updateBothInnerAndOuter(
-          this.storyState_,
-          replaceFileRefs(this.adState_, this.state_.files),
-          'page-1'
-        );
-    }
-    //editing in story mode
-    else {
-      this.preview_.updateBothInnerAndOuter(
-        docWithFileRefs,
-        replaceFileRefs(this.adState_, this.state_.files)
-      );
-    }
-    this.switching = false;
+
+    // Editing outer story.
+    this.preview_.updateOuter(docWithFileRefs);
   }
 
   toggleFullPreview_() {
@@ -492,7 +481,7 @@ class Editor {
   deleteFile_({target}) {
     const {dataset} = assert(target.closest('[data-index]'));
     const index = parseInt(assert(dataset.index), 10);
-    this.state_.files = removeFileRevokeUrl(this.win, this.state_.files, index);
+    this.state_.files = removeUploadedFile(this.state_.files, index);
     this.updateFileHints_();
   }
 
@@ -574,15 +563,20 @@ class Editor {
 
   toggleStoryMode_() {
     this.state_.isEditingInner = !this.state_.isEditingInner;
-    this.switching = true;
+    // Story Mode. We save the ad state in case user switches back to ad mode,
+    // write the last known ad url into the editor, and turn off the forced
+    // navigation to the ad.
     if (!this.state_.isEditingInner) {
       this.adState_ = this.codeMirror_.getValue();
-      this.codeMirror_.setValue(this.storyState_);
-      //change templates visibility
-    } else {
-      this.storyState_ = this.codeMirror_.getValue();
-      this.codeMirror_.setValue(this.adState_);
+      const storyDoc = this.preview_.storyDoc.replace(
+        ampStoryAutoAdsRE,
+        storyAdsConfig(this.preview_.getAdUrl())
+      );
+      return this.codeMirror_.setValue(storyDoc);
     }
+
+    // Ad Mode.
+    this.codeMirror_.setValue(this.adState_);
   }
 }
 
