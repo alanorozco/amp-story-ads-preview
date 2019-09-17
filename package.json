@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@babel/runtime": "7.4.5",
+    "jszip": "^3.2.2",
     "lodash-es": "^4.17.14"
   },
   "devDependencies": {

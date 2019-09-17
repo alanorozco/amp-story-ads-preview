@@ -122,6 +122,7 @@ const moduleAliases = async name => ({
   ...genericExecBundleAlias(name),
   ...(await twoWayLitHtmlAliases()),
   ...(await shakenRuntimeDepsAliases()),
+  ...jsZipAlias(),
 });
 
 /** Connects generic executable `lib/bundle` to any component module.  */
@@ -173,6 +174,12 @@ async function shakenRuntimeDepsAliases() {
   }
   return aliases;
 }
+
+/**
+ * jszip is using a format that borks rollup plugins, but rollup can handle the
+ * dist build just fine.
+ */
+const jsZipAlias = () => ({'jszip': 'node_modules/jszip/dist/jszip.js'});
 
 const withAllBundles = cb =>
   Promise.all(Object.entries(bundles).map(([...args]) => cb(...args)));
