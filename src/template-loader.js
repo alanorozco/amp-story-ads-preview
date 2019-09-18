@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import './template-loader.css';
 import {assert} from '../lib/assert';
 import {classMap} from 'lit-html/directives/class-map';
@@ -29,7 +30,7 @@ import {getNamespace} from '../lib/namespace';
 const {g, n, s} = getNamespace('template-loader');
 
 export const templateFileUrl = (templateName, filename) =>
-  `/static/templates/${templateName}/${filename}`;
+  `${window.location.origin}/static/templates/${templateName}/${filename}`;
 
 const templatePreviewFileUrl = (name, ext) =>
   templateFileUrl(name, `_preview.${ext}`);

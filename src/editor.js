@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import './editor.css';
+import {ampStoryAutoAdsRE, storyAdsConfig} from './story-ad-config';
 import {appliedState, batchedApplier} from './utils/applied-state';
 import {assert} from '../lib/assert';
 import {
@@ -30,11 +32,12 @@ import {
   FilesPanel,
   FileUploadButton,
   readableFileUrl,
-  removeFileRevokeUrl,
+  removeUploadedFile,
   replaceFileRefs,
 } from './file-upload';
 import {CTA_TYPES} from './cta-types';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
+import {ExportButton, ExportModal, VideoDownloadWarning} from './export';
 import {getNamespace} from '../lib/namespace';
 import {hintsUrl, setAttrFileHints} from './hints';
 import {html, render} from 'lit-html';
@@ -42,8 +45,9 @@ import {idleSuccessfulFetch} from './utils/xhr';
 import {listenAllBound, redispatchAs} from './utils/events';
 import {readFileString, readFixtureHtml} from './static-data';
 import {RefreshIcon} from './icons';
+import {save} from './save';
 import {ToggleButton} from './toggle-button';
-import {ToggleInnerOuterContentButton} from './toggleInnerOuter';
+import {ToggleInnerOuterContentButton} from './toggle-inner-outer';
 import {Toolbar} from './toolbar';
 import {until} from 'lit-html/directives/until';
 import {untilAttached} from './utils/until-attached';
@@ -56,6 +60,7 @@ import {
 } from './viewport';
 import {WrappedCodemirror} from './wrapped-codemirror';
 import AmpStoryAdPreview from './amp-story-ad-preview';
+import JSZip from 'jszip';
 
 const {id, g, n, s} = getNamespace('editor');
 
@@ -109,16 +114,19 @@ const renderEditor = ({
   codeMirrorElement,
   content = '',
   files = [],
+  isDownloading = false,
+  isEditingInner = true,
+  isExporting = false,
   isFilesDragHintDisplayed = false,
   isFilesPanelDisplayed = false,
   isFullPreview = false,
   isTemplatePanelDisplayed = false,
   previewElement,
+  showVideoWarning = false,
   storyDocTemplate = '',
   templates,
   templatesJson,
   viewportId = viewportIdDefault,
-  isEditingInner = true,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
@@ -141,7 +149,9 @@ const renderEditor = ({
       storyDocTemplate,
       viewportId,
     })}
+    ${ExportModal({isExporting, isDownloading})}
     ${TemplatesJsonScriptOptional(templatesJson)}
+    ${showVideoWarning ? VideoDownloadWarning() : ''}
   </div>
 `;
 
@@ -207,6 +217,7 @@ const ContentToolbar = ({
         [n('selected')]: isTemplatePanelDisplayed,
       }),
       ToggleInnerOuterContentButton({isEditingInner}),
+      ExportButton(),
     ],
   });
 
@@ -278,6 +289,7 @@ const PreviewToolbar = ({isFullPreview, viewportId}) =>
       UpdatePreviewButton(),
     ],
   });
+
 /**
  * Renders preview element.
  * This is then managed independently by AmpStoryAdPreview after hydration.
@@ -317,25 +329,31 @@ class Editor {
 
     const batchedRender = batchedApplier(win, () => this.render_());
 
+    this.adState_ = null;
+
+    this.hasVideoWarned_ = false;
+
     this.state_ = appliedState(batchedRender, {
       // No need to bookkeep `content` since we've populated codemirror with it.
       codeMirrorElement,
       files: [],
       isFullPreview: false,
+      isDownloading: false,
+      isEditingInner: true,
+      isExporting: false,
       isTemplatePanelDisplayed: false,
       previewElement,
+      showVideoWarning: false,
       templates: parseTemplatesJsonScript(element),
       viewportId: viewportIdDefault,
-      isEditingInner: true,
     });
 
+    // Lit html takeover.
     batchedRender();
 
-    this.storyState_ = this.preview_.storyDoc;
-    this.adState_ = null;
-    this.isOnAdEditor_ = true;
-
     this.refreshCodeMirror_();
+    // This call happens before AmpStoryPreview render(), but the
+    // AmpStoryPreview#update method awaits the resolution of the render.
     this.updatePreview_();
 
     // We only run amp4ads in this REPL.
@@ -350,14 +368,17 @@ class Editor {
       dragover: this.dragover_,
       drop: this.drop_,
       [g('delete-file')]: this.deleteFile_,
+      [g('download-files')]: this.downloadFiles_,
+      [g('dismiss-warning')]: this.dismissVideoWarning_,
       [g('insert-file-ref')]: this.insertFileRef_,
       [g('select-template')]: this.selectTemplate_,
       [g('select-viewport')]: this.selectViewport_,
+      [g('toggle-inner-outer')]: this.toggleStoryMode_,
+      [g('toggle-export')]: this.toggleExportModal_,
       [g('toggle-templates')]: this.toggleTemplates_,
       [g('toggle')]: this.toggle_,
       [g('update-preview')]: this.updatePreview_,
       [g('upload-files')]: this.uploadFiles_,
-      [g('toggleInnerOuter')]: this.toggleStoryMode_,
     });
   }
 
@@ -378,7 +399,7 @@ class Editor {
     assert(false, `I don't know how to toggle "${name}".`);
   }
 
-  //select templates
+  // Select templates.
   async selectTemplate_({target: {dataset}}) {
     const templateName = assert(dataset.name);
     const {files} = this.state_.templates[templateName];
@@ -403,9 +424,9 @@ class Editor {
    * @param {IArrayLike<File>} files
    * @private
    */
-  addFiles_(files) {
+  async addFiles_(files) {
     this.state_.isFilesPanelDisplayed = true;
-    this.state_.files = concatAttachBlobUrl(this.win, this.state_.files, files);
+    this.state_.files = await concatAttachBlobUrl(this.state_.files, files);
     this.updateFileHints_();
   }
 
@@ -440,27 +461,13 @@ class Editor {
   updatePreview_() {
     const doc = this.codeMirror_.getValue();
     const docWithFileRefs = replaceFileRefs(doc, this.state_.files);
-    //first time in ad mode
-    if (!this.switching && this.state_.isEditingInner) {
-      this.preview_.updateInner(docWithFileRefs, 'page-1');
+    // Editing ad.
+    if (this.state_.isEditingInner) {
+      return this.preview_.update(docWithFileRefs);
     }
-    //switched back to ad mode from story mode
-    else if (this.state_.isEditingInner) {
-      console.log(replaceFileRefs(this.storyState_, this.state_.files)),
-        this.preview_.updateBothInnerAndOuter(
-          this.storyState_,
-          replaceFileRefs(this.adState_, this.state_.files),
-          'page-1'
-        );
-    }
-    //editing in story mode
-    else {
-      this.preview_.updateBothInnerAndOuter(
-        docWithFileRefs,
-        replaceFileRefs(this.adState_, this.state_.files)
-      );
-    }
-    this.switching = false;
+
+    // Editing outer story.
+    this.preview_.updateOuter(docWithFileRefs);
   }
 
   toggleFullPreview_() {
@@ -492,7 +499,7 @@ class Editor {
   deleteFile_({target}) {
     const {dataset} = assert(target.closest('[data-index]'));
     const index = parseInt(assert(dataset.index), 10);
-    this.state_.files = removeFileRevokeUrl(this.win, this.state_.files, index);
+    this.state_.files = removeUploadedFile(this.state_.files, index);
     this.updateFileHints_();
   }
 
@@ -574,15 +581,67 @@ class Editor {
 
   toggleStoryMode_() {
     this.state_.isEditingInner = !this.state_.isEditingInner;
-    this.switching = true;
+    // Story Mode. We save the ad state in case user switches back to ad mode,
+    // write the last known ad url into the editor, and turn off the forced
+    // navigation to the ad.
     if (!this.state_.isEditingInner) {
       this.adState_ = this.codeMirror_.getValue();
-      this.codeMirror_.setValue(this.storyState_);
-      //change templates visibility
-    } else {
-      this.storyState_ = this.codeMirror_.getValue();
-      this.codeMirror_.setValue(this.adState_);
+      const storyDoc = this.preview_.storyDoc.replace(
+        ampStoryAutoAdsRE,
+        storyAdsConfig(this.preview_.getAdUrl())
+      );
+      return this.codeMirror_.setValue(storyDoc);
     }
+
+    // Ad Mode.
+    this.codeMirror_.setValue(this.adState_);
+  }
+
+  toggleExportModal_() {
+    this.state_.isExporting = !this.state_.isExporting;
+  }
+
+  async downloadFiles_(e) {
+    const {target} = e.target.dataset;
+    this.state_.isDownloading = true;
+    // Yield thread to give lit a chance to render the loader before the
+    // expensive operations below.
+    // TODO: still seems laggy. Find a better way...
+    await setTimeout(null, 10);
+
+    const zip = JSZip();
+    const html = this.state_.isEditingInner
+      ? this.codeMirror_.getValue()
+      : this.adState_;
+    zip.file('index.html', html);
+
+    const filePromises = this.state_.files.map(({name, url}) => {
+      if (target !== 'local' && name.endsWith('.mp4')) {
+        this.maybeshowVideoWarning_();
+      }
+      return fetch(url)
+        .then(res => res.blob())
+        .then(blob => zip.file(name, blob));
+    });
+
+    await Promise.all(filePromises);
+
+    const blob = await zip.generateAsync({type: 'blob'});
+    save(blob);
+
+    this.state_.isDownloading = false;
+    this.state_.isExporting = false;
+  }
+
+  maybeshowVideoWarning_() {
+    if (!this.hasVideoWarned_) {
+      this.state_.showVideoWarning = true;
+      this.hasVideoWarned_ = true;
+    }
+  }
+
+  dismissVideoWarning_() {
+    this.state_.showVideoWarning = false;
   }
 }
 
