@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import './editor.css';
 import {ampStoryAutoAdsRE, storyAdsConfig} from './story-ad-config';
 import {appliedState, batchedApplier} from './utils/applied-state';
@@ -36,6 +37,7 @@ import {
 } from './file-upload';
 import {CTA_TYPES} from './cta-types';
 import {Deferred} from '../vendor/ampproject/amphtml/src/utils/promise';
+import {ExportButton, ExportModal, VideoDownloadWarning} from './export';
 import {getNamespace} from '../lib/namespace';
 import {hintsUrl, setAttrFileHints} from './hints';
 import {html, render} from 'lit-html';
@@ -43,6 +45,7 @@ import {idleSuccessfulFetch} from './utils/xhr';
 import {listenAllBound, redispatchAs} from './utils/events';
 import {readFileString, readFixtureHtml} from './static-data';
 import {RefreshIcon} from './icons';
+import {save} from './save';
 import {ToggleButton} from './toggle-button';
 import {ToggleInnerOuterContentButton} from './toggle-inner-outer';
 import {Toolbar} from './toolbar';
@@ -57,6 +60,7 @@ import {
 } from './viewport';
 import {WrappedCodemirror} from './wrapped-codemirror';
 import AmpStoryAdPreview from './amp-story-ad-preview';
+import JSZip from 'jszip';
 
 const {id, g, n, s} = getNamespace('editor');
 
@@ -110,16 +114,19 @@ const renderEditor = ({
   codeMirrorElement,
   content = '',
   files = [],
+  isDownloading = false,
+  isEditingInner = true,
+  isExporting = false,
   isFilesDragHintDisplayed = false,
   isFilesPanelDisplayed = false,
   isFullPreview = false,
   isTemplatePanelDisplayed = false,
   previewElement,
+  showVideoWarning = false,
   storyDocTemplate = '',
   templates,
   templatesJson,
   viewportId = viewportIdDefault,
-  isEditingInner = true,
 }) => html`
   <div id=${id} class=${n('wrap')}>
     ${FilesPanel({
@@ -142,7 +149,9 @@ const renderEditor = ({
       storyDocTemplate,
       viewportId,
     })}
+    ${ExportModal({isExporting, isDownloading})}
     ${TemplatesJsonScriptOptional(templatesJson)}
+    ${showVideoWarning ? VideoDownloadWarning() : ''}
   </div>
 `;
 
@@ -208,6 +217,7 @@ const ContentToolbar = ({
         [n('selected')]: isTemplatePanelDisplayed,
       }),
       ToggleInnerOuterContentButton({isEditingInner}),
+      ExportButton(),
     ],
   });
 
@@ -321,16 +331,21 @@ class Editor {
 
     this.adState_ = null;
 
+    this.hasVideoWarned_ = false;
+
     this.state_ = appliedState(batchedRender, {
       // No need to bookkeep `content` since we've populated codemirror with it.
       codeMirrorElement,
       files: [],
       isFullPreview: false,
+      isDownloading: false,
+      isEditingInner: true,
+      isExporting: false,
       isTemplatePanelDisplayed: false,
       previewElement,
+      showVideoWarning: false,
       templates: parseTemplatesJsonScript(element),
       viewportId: viewportIdDefault,
-      isEditingInner: true,
     });
 
     // Lit html takeover.
@@ -353,14 +368,17 @@ class Editor {
       dragover: this.dragover_,
       drop: this.drop_,
       [g('delete-file')]: this.deleteFile_,
+      [g('download-files')]: this.downloadFiles_,
+      [g('dismiss-warning')]: this.dismissVideoWarning_,
       [g('insert-file-ref')]: this.insertFileRef_,
       [g('select-template')]: this.selectTemplate_,
       [g('select-viewport')]: this.selectViewport_,
+      [g('toggle-inner-outer')]: this.toggleStoryMode_,
+      [g('toggle-export')]: this.toggleExportModal_,
       [g('toggle-templates')]: this.toggleTemplates_,
       [g('toggle')]: this.toggle_,
       [g('update-preview')]: this.updatePreview_,
       [g('upload-files')]: this.uploadFiles_,
-      [g('toggleInnerOuter')]: this.toggleStoryMode_,
     });
   }
 
@@ -577,6 +595,53 @@ class Editor {
 
     // Ad Mode.
     this.codeMirror_.setValue(this.adState_);
+  }
+
+  toggleExportModal_() {
+    this.state_.isExporting = !this.state_.isExporting;
+  }
+
+  async downloadFiles_(e) {
+    const {target} = e.target.dataset;
+    this.state_.isDownloading = true;
+    // Yield thread to give lit a chance to render the loader before the
+    // expensive operations below.
+    // TODO: still seems laggy. Find a better way...
+    await setTimeout(null, 10);
+
+    const zip = JSZip();
+    const html = this.state_.isEditingInner
+      ? this.codeMirror_.getValue()
+      : this.adState_;
+    zip.file('index.html', html);
+
+    const filePromises = this.state_.files.map(({name, url}) => {
+      if (target !== 'local' && name.endsWith('.mp4')) {
+        this.maybeshowVideoWarning_();
+      }
+      return fetch(url)
+        .then(res => res.blob())
+        .then(blob => zip.file(name, blob));
+    });
+
+    await Promise.all(filePromises);
+
+    const blob = await zip.generateAsync({type: 'blob'});
+    save(blob);
+
+    this.state_.isDownloading = false;
+    this.state_.isExporting = false;
+  }
+
+  maybeshowVideoWarning_() {
+    if (!this.hasVideoWarned_) {
+      this.state_.showVideoWarning = true;
+      this.hasVideoWarned_ = true;
+    }
+  }
+
+  dismissVideoWarning_() {
+    this.state_.showVideoWarning = false;
   }
 }
 

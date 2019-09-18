@@ -38,29 +38,6 @@ const css = `
   }
 }
 
-.i-amphtml-loader {
-  position: absolute;
-  display: block;
-  height: 10px;
-  top: 50%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-50%);
-  transform-origin: 50% 50%;
-  white-space: nowrap;
-}
-
-@keyframes i-amphtml-loader-dots {
-  0%, 100% {
-    transform: scale(.7);
-    background-color: rgba(0, 0, 0, .3);
-  }
-
-  50% {
-    transform: scale(.8);
-    background-color: rgba(0, 0, 0, .5);
-  }
-}
-
 .i-amphtml-loader-dot {
   position: relative;
   display: inline-block;
@@ -77,8 +54,7 @@ const css = `
 }
 `;
 
-const html = `
-<div class="i-amphtml-loader">
+export const html = `<div class="i-amphtml-loader">
   <div class="i-amphtml-loader-dot"></div>
   <div class="i-amphtml-loader-dot"></div>
   <div class="i-amphtml-loader-dot"></div>
