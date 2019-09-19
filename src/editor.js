@@ -401,6 +401,9 @@ class Editor {
 
   // Select templates.
   async selectTemplate_({target: {dataset}}) {
+    if (!this.state_.isEditingInner) {
+      this.toggleStoryMode_();
+    }
     const templateName = assert(dataset.name);
     const {files} = this.state_.templates[templateName];
     this.codeMirror_.setValue(await this.fetchTemplateContent_(templateName));
