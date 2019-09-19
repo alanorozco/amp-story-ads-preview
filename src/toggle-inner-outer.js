@@ -17,9 +17,9 @@ import {getNamespace} from '../lib/namespace';
 import {html} from 'lit-html';
 import {redispatchAs} from './utils/events';
 
-const {g} = getNamespace('toggleInnerOuter');
+const {g} = getNamespace('toggle-inner-outer');
 
-const toggleInnerOuter = redispatchAs(g('toggleInnerOuter'));
+const toggleInnerOuter = redispatchAs(g('toggle-inner-outer'));
 
 export const ToggleInnerOuterContentButton = ({isEditingInner}) => html`
   <div class="${g('text-button')}" @click="${toggleInnerOuter}">
